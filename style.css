@@ -56,6 +56,19 @@ body.hide-ru .ru { display: none; }
 }
 .card:hover { border-color: var(--accent); }
 .card h3 { margin: 0 0 6px; }
+.progress { font-size: 14px; color: var(--muted); }
+.progress.done { color: var(--ok); }
+.reset {
+  margin-top: 16px;
+  padding: 6px 10px;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+}
 
 /* Lesson */
 .back { color: var(--accent); text-decoration: none; font-size: 14px; }

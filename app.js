@@ -1,8 +1,14 @@
 const app = document.getElementById('app');
 const showRu = document.getElementById('showRu');
+let redraw = null; // draw() of the open lesson, called again on resize
 
 showRu.addEventListener('change', () => {
   document.body.classList.toggle('hide-ru', !showRu.checked);
+});
+
+// The canvas size depends on the window: redraw after resize or phone rotation
+window.addEventListener('resize', () => {
+  if (redraw) redraw();
 });
 
 // KaTeX: $...$ inline, $$...$$ display
@@ -16,6 +22,33 @@ function renderMath(el) {
       throwOnError: false,
     });
   }
+}
+
+// Progress lives only in this browser. Storage can be unavailable (private mode), so never fail.
+const STORAGE_KEY = 'mathlab-progress';
+
+function loadProgress() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveSolved(lessonId, qi) {
+  const progress = loadProgress();
+  const solved = new Set(progress[lessonId] || []);
+  solved.add(qi);
+  progress[lessonId] = [...solved];
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+  } catch (e) {}
+}
+
+function resetProgress() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (e) {}
 }
 
 // Canvas helper: maps math coordinates to pixels
@@ -95,49 +128,73 @@ function makePlot(canvas, xr, yr) {
   };
 }
 
-// Quiz: wrong answers can be retried; the right one shows the explanation
-function renderQuiz(el, questions) {
+// Quiz: wrong answers can be retried; the right one shows the explanation and is remembered
+function renderQuiz(el, lesson) {
+  const solved = loadProgress()[lesson.id] || [];
   el.innerHTML = '<h3>Check yourself <span class="ru">· Проверьте себя</span></h3>';
-  questions.forEach(qst => {
+
+  lesson.quiz.forEach((qst, qi) => {
     const block = document.createElement('div');
     block.className = 'question';
     block.innerHTML = `${qst.q}<div class="options"></div><div class="feedback"></div>`;
     const optionsEl = block.querySelector('.options');
     const feedback = block.querySelector('.feedback');
 
-    qst.options.forEach((o, i) => {
+    const buttons = qst.options.map(o => {
       const btn = document.createElement('button');
       // Numbers are the same in both languages: show them once
       btn.innerHTML = o.en === o.ru ? o.en : bi(o.en, o.ru);
-      btn.addEventListener('click', () => {
-        if (i === qst.answer) {
-          btn.classList.add('correct');
-          optionsEl.querySelectorAll('button').forEach(b => b.disabled = true);
-          feedback.className = 'feedback ok';
-          feedback.innerHTML = qst.explain;
-        } else {
-          btn.classList.add('wrong');
-          btn.disabled = true;
-          feedback.className = 'feedback bad';
-          feedback.innerHTML = qst.hint;
-        }
-        renderMath(block);
-      });
       optionsEl.appendChild(btn);
+      return btn;
     });
+
+    function showSolved() {
+      buttons[qst.answer].classList.add('correct');
+      buttons.forEach(b => b.disabled = true);
+      feedback.className = 'feedback ok';
+      feedback.innerHTML = qst.explain;
+    }
+
+    buttons.forEach((btn, i) => btn.addEventListener('click', () => {
+      if (i === qst.answer) {
+        showSolved();
+        saveSolved(lesson.id, qi);
+      } else {
+        btn.classList.add('wrong');
+        btn.disabled = true;
+        feedback.className = 'feedback bad';
+        feedback.innerHTML = qst.hint;
+      }
+      renderMath(block);
+    }));
+
+    if (solved.includes(qi)) showSolved();
     el.appendChild(block);
   });
 }
 
 function showHome() {
+  redraw = null;
+  const progress = loadProgress();
+  const anySolved = Object.keys(progress).length > 0;
+
   app.innerHTML = `${bi(
     'Interactive lessons: see the idea, play with it, then check yourself.',
     'Интерактивные уроки: увидеть идею, потрогать её руками, потом проверить себя.'
-  )}<div class="cards">${LESSONS.map(l => `
+  )}<div class="cards">${LESSONS.map(l => {
+    const done = (progress[l.id] || []).length;
+    const total = l.quiz.length;
+    return `
     <a class="card" href="#${l.id}">
       <h3>${l.title.en}</h3>
       <div class="ru">${l.title.ru}</div>
-    </a>`).join('')}</div>`;
+      <div class="progress${done === total ? ' done' : ''}">${done === total ? '✓ ' : ''}${done} / ${total} solved <span class="ru">· решено</span></div>
+    </a>`;
+  }).join('')}</div>
+  ${anySolved ? '<button class="reset">Reset progress <span class="ru">· Сбросить прогресс</span></button>' : ''}`;
+
+  const reset = app.querySelector('.reset');
+  if (reset) reset.addEventListener('click', () => { resetProgress(); showHome(); });
 }
 
 function showLesson(lesson) {
@@ -148,8 +205,8 @@ function showLesson(lesson) {
     <div>${lesson.intro}</div>
     <section class="lesson-widget"></section>
     <section class="quiz"></section>`;
-  lesson.render(app.querySelector('.lesson-widget'));
-  renderQuiz(app.querySelector('.quiz'), lesson.quiz);
+  redraw = lesson.render(app.querySelector('.lesson-widget'));
+  renderQuiz(app.querySelector('.quiz'), lesson);
   renderMath(app);
   window.scrollTo(0, 0);
 }

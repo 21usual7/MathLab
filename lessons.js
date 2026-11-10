@@ -1,4 +1,5 @@
-// Bilingual text block: English always visible, Russian can be hidden with the toggle
+// Bilingual text block: English always visible, Russian can be hidden with the toggle.
+// Math goes between $...$ and is rendered by KaTeX.
 function bi(en, ru) {
   return `<div class="en">${en}</div><div class="ru">${ru}</div>`;
 }
@@ -8,13 +9,15 @@ function opt(en, ru = en) {
   return { en, ru };
 }
 
+// Each lesson: render(root) builds the widget and returns its draw() function
+// (app.js calls it again when the window is resized).
 const LESSONS = [
   {
     id: 'derivative',
     title: { en: 'Derivative = slope of the tangent', ru: 'Производная = наклон касательной' },
     intro: bi(
-      'Zoom in on any curve far enough and it looks like a straight line. Its slope is the derivative. Move the sliders: the red secant line through two points turns into the tangent as the gap h shrinks to 0. One grid square is 1 unit on both axes, so slope 2 means "up 2 for every 1 to the right".',
-      'Приблизьте любую кривую достаточно сильно — и она станет похожа на прямую. Её наклон и есть производная. Двигайте ползунки: красная секущая через две точки превращается в касательную, когда расстояние h стремится к 0. Одна клетка сетки — 1 единица по обеим осям, поэтому наклон 2 значит «вверх на 2 на каждую 1 вправо».'
+      'Zoom in on any curve far enough and it looks like a straight line. Its slope is the derivative. Move the sliders: the red secant line through two points turns into the tangent as the gap $h$ shrinks to $0$. One grid square is 1 unit on both axes, so slope 2 means "up 2 for every 1 to the right".',
+      'Приблизьте любую кривую достаточно сильно — и она станет похожа на прямую. Её наклон и есть производная. Двигайте ползунки: красная секущая через две точки превращается в касательную, когда расстояние $h$ стремится к $0$. Одна клетка сетки — 1 единица по обеим осям, поэтому наклон 2 значит «вверх на 2 на каждую 1 вправо».'
     ),
 
     render(root) {
@@ -63,25 +66,26 @@ const LESSONS = [
 
       root.querySelectorAll('input').forEach(i => i.addEventListener('input', draw));
       draw();
+      return draw;
     },
 
     quiz: [
       {
-        q: bi('Predict: what is the slope of f(x) = x² at x = 0?', 'Предскажите: каков наклон f(x) = x² в точке x = 0?'),
+        q: bi('Predict: what is the slope of $f(x) = x^2$ at $x = 0$?', 'Предскажите: каков наклон $f(x) = x^2$ в точке $x = 0$?'),
         options: [opt('0'), opt('1'), opt('2')],
         answer: 0,
-        hint: bi('Use f′(x) = 2x. Picture the bottom of the parabola.', 'Используйте f′(x) = 2x. Представьте дно параболы.'),
-        explain: bi('Yes: the tangent at the vertex of the parabola is flat, so the slope is 0.', 'Да: касательная в вершине параболы горизонтальна, наклон равен 0.'),
+        hint: bi('Use $f\'(x) = 2x$. Picture the bottom of the parabola.', 'Используйте $f\'(x) = 2x$. Представьте дно параболы.'),
+        explain: bi('Yes: the tangent at the vertex of the parabola is flat, so the slope is $0$.', 'Да: касательная в вершине параболы горизонтальна, наклон равен $0$.'),
       },
       {
-        q: bi('What is the slope of f(x) = x² at x = 1.5?', 'Каков наклон f(x) = x² в точке x = 1.5?'),
+        q: bi('What is the slope of $f(x) = x^2$ at $x = 1.5$?', 'Каков наклон $f(x) = x^2$ в точке $x = 1.5$?'),
         options: [opt('1.5'), opt('2'), opt('3')],
         answer: 2,
-        hint: bi('Derivative rule for x²: f′(x) = 2x. Plug in x = 1.5.', 'Правило для x²: f′(x) = 2x. Подставьте x = 1.5.'),
-        explain: bi('2 · 1.5 = 3.', '2 · 1.5 = 3.'),
+        hint: bi('Derivative rule for $x^2$: $f\'(x) = 2x$. Plug in $x = 1.5$.', 'Правило для $x^2$: $f\'(x) = 2x$. Подставьте $x = 1.5$.'),
+        explain: bi('$2 \\cdot 1.5 = 3$.', '$2 \\cdot 1.5 = 3$.'),
       },
       {
-        q: bi('What happens to the secant line as h → 0?', 'Что происходит с секущей при h → 0?'),
+        q: bi('What happens to the secant line as $h \\to 0$?', 'Что происходит с секущей при $h \\to 0$?'),
         options: [
           opt('It becomes the tangent', 'Становится касательной'),
           opt('It becomes vertical', 'Становится вертикальной'),
@@ -98,8 +102,8 @@ const LESSONS = [
     id: 'quadratic',
     title: { en: 'Quadratics: roots, vertex, discriminant', ru: 'Квадратичная функция: корни, вершина, дискриминант' },
     intro: bi(
-      'Plot y = ax² + bx + c. Change a, b and c and watch the parabola. The discriminant D = b² − 4ac tells you how many times it crosses the x-axis.',
-      'Постройте y = ax² + bx + c. Меняйте a, b и c и смотрите на параболу. Дискриминант D = b² − 4ac показывает, сколько раз парабола пересекает ось x.'
+      'Plot $y = ax^2 + bx + c$. Change $a$, $b$ and $c$ and watch the parabola. The discriminant $D = b^2 - 4ac$ tells you how many times it crosses the x-axis.',
+      'Постройте $y = ax^2 + bx + c$. Меняйте $a$, $b$ и $c$ и смотрите на параболу. Дискриминант $D = b^2 - 4ac$ показывает, сколько раз парабола пересекает ось x.'
     ),
 
     render(root) {
@@ -159,33 +163,34 @@ const LESSONS = [
 
       Object.values(inputs).forEach(i => i.addEventListener('input', draw));
       draw();
+      return draw;
     },
 
     quiz: [
       {
-        q: bi('If a > 0, which way does the parabola open?', 'Если a > 0, куда открыты ветви параболы?'),
+        q: bi('If $a > 0$, which way does the parabola open?', 'Если $a > 0$, куда открыты ветви параболы?'),
         options: [opt('Up', 'Вверх'), opt('Down', 'Вниз')],
         answer: 0,
-        hint: bi('Look at the x² term: its sign decides the direction.', 'Посмотрите на знак при x².'),
-        explain: bi('Positive x² coefficient → the arms go up.', 'Положительный коэффициент при x² → ветви вверх.'),
+        hint: bi('Look at the $x^2$ term: its sign decides the direction.', 'Посмотрите на знак при $x^2$.'),
+        explain: bi('Positive $x^2$ coefficient → the arms go up.', 'Положительный коэффициент при $x^2$ → ветви вверх.'),
       },
       {
-        q: bi('If D < 0, the graph…', 'Если D < 0, график…'),
+        q: bi('If $D < 0$, the graph…', 'Если $D < 0$, график…'),
         options: [
           opt('crosses the x-axis twice', 'пересекает ось x дважды'),
           opt('touches the x-axis once', 'касается оси x один раз'),
           opt('never touches the x-axis', 'никогда не касается оси x'),
         ],
         answer: 2,
-        hint: bi('A negative discriminant means √D has no real value.', 'Отрицательный дискриминант: из D нельзя извлечь вещественный корень.'),
+        hint: bi('A negative discriminant means $\\sqrt{D}$ has no real value.', 'Отрицательный дискриминант: из $D$ нельзя извлечь вещественный корень.'),
         explain: bi('No real roots, so the parabola stays entirely above or below the x-axis.', 'Вещественных корней нет, парабола целиком выше или ниже оси x.'),
       },
       {
-        q: bi('What is the x-coordinate of the vertex of x² − 4x + 1?', 'Чему равна координата x вершины x² − 4x + 1?'),
+        q: bi('What is the x-coordinate of the vertex of $x^2 - 4x + 1$?', 'Чему равна координата x вершины $x^2 - 4x + 1$?'),
         options: [opt('2'), opt('−2'), opt('4')],
         answer: 0,
-        hint: bi('Use x = −b / (2a) with a = 1, b = −4.', 'Используйте x = −b / (2a), где a = 1, b = −4.'),
-        explain: bi('x = −(−4) / 2 = 2.', 'x = −(−4) / 2 = 2.'),
+        hint: bi('Use $x = -\\frac{b}{2a}$ with $a = 1$, $b = -4$.', 'Используйте $x = -\\frac{b}{2a}$, где $a = 1$, $b = -4$.'),
+        explain: bi('$x = -\\frac{-4}{2 \\cdot 1} = 2$.', '$x = -\\frac{-4}{2 \\cdot 1} = 2$.'),
       },
     ],
   },
