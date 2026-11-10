@@ -1,0 +1,386 @@
+// 2D view on a canvas. Equal units on both axes, so slopes and shapes are true.
+// Immediate mode: onDraw(plot) is called on every render and draws with the primitives below.
+// Interaction: drag to pan, wheel / pinch to zoom, drag handles (points that topics make movable).
+
+import { THEME } from '../core/palette.js';
+import { tween, lerp } from '../core/anim.js';
+import { renderTex } from '../ui/tex.js';
+
+// 1, 2 or 5 × 10^k, at least `raw`
+function niceStep(raw) {
+  const pow = 10 ** Math.floor(Math.log10(raw));
+  return [1, 2, 5, 10].map(m => m * pow).find(s => s >= raw);
+}
+const label = v => String(Number(v.toPrecision(6)));
+
+export class Plot2D {
+  constructor(container, onDraw, view = {}) {
+    this.onDraw = onDraw;
+    this.view = { cx: 0, cy: 0, unit: 60, ...view };
+    this.home = { ...this.view };
+    this.axisNames = { x: 'x', y: 'y' };
+
+    this.el = document.createElement('div');
+    this.el.className = 'plot2d';
+    this.canvas = document.createElement('canvas');
+    this.overlay = document.createElement('div');
+    this.overlay.className = 'plot-overlay';
+    this.el.append(this.canvas, this.overlay);
+    container.appendChild(this.el);
+
+    this.ctx = this.canvas.getContext('2d');
+    this.handles = [];
+    this.labels = new Map(); // key → { el, tex }
+    this.frame = null;
+    this.stopTween = null;
+    this.ro = new ResizeObserver(() => this.request());
+    this.ro.observe(this.el);
+    this.bindEvents();
+    this.request();
+  }
+
+  request() {
+    if (!this.frame) this.frame = requestAnimationFrame(() => { this.frame = null; this.render(); });
+  }
+
+  render() {
+    const dpr = window.devicePixelRatio || 1;
+    const w = this.el.clientWidth, h = this.el.clientHeight;
+    if (!w || !h) return;
+    if (this.canvas.width !== Math.round(w * dpr) || this.canvas.height !== Math.round(h * dpr)) {
+      this.canvas.width = Math.round(w * dpr);
+      this.canvas.height = Math.round(h * dpr);
+    }
+    const ctx = this.ctx;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.w = w; this.h = h;
+    const u = this.view.unit;
+    this.xr = [this.view.cx - w / 2 / u, this.view.cx + w / 2 / u];
+    this.yr = [this.view.cy - h / 2 / u, this.view.cy + h / 2 / u];
+
+    ctx.fillStyle = THEME.bg;
+    ctx.fillRect(0, 0, w, h);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    this.handles = [];
+    for (const l of this.labels.values()) l.used = false;
+
+    this.drawGrid();
+    // Objects may rename the axes for this frame (a slice of a surface is drawn over x or y, height is z)
+    this.axisNames = { x: 'x', y: 'y' };
+    this.onDraw(this);
+    this.drawAxisNames();
+
+    for (const l of this.labels.values()) l.el.style.display = l.used ? '' : 'none';
+  }
+
+  drawAxisNames() {
+    const ctx = this.ctx, ox = this.sx(0), oy = this.sy(0);
+    ctx.font = 'italic 500 15px Fraunces, Georgia, serif';
+    ctx.fillStyle = THEME.text;
+    ctx.textAlign = 'right';
+    if (oy >= 0 && oy <= this.h) ctx.fillText(this.axisNames.x, this.w - 8, oy - 8);
+    ctx.textAlign = 'left';
+    if (ox >= 0 && ox <= this.w) ctx.fillText(this.axisNames.y, ox + 8, 18);
+  }
+
+  sx(x) { return (x - this.xr[0]) * this.view.unit; }
+  sy(y) { return this.h - (y - this.yr[0]) * this.view.unit; }
+  toX(px) { return this.xr[0] + px / this.view.unit; }
+  toY(py) { return this.yr[0] + (this.h - py) / this.view.unit; }
+
+  drawGrid() {
+    const ctx = this.ctx, { w, h } = this;
+    const step = niceStep(90 / this.view.unit), minor = step / 5;
+
+    const lines = (s, style) => {
+      ctx.strokeStyle = style;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let x = Math.ceil(this.xr[0] / s) * s; x <= this.xr[1]; x += s) { const px = Math.round(this.sx(x)) + 0.5; ctx.moveTo(px, 0); ctx.lineTo(px, h); }
+      for (let y = Math.ceil(this.yr[0] / s) * s; y <= this.yr[1]; y += s) { const py = Math.round(this.sy(y)) + 0.5; ctx.moveTo(0, py); ctx.lineTo(w, py); }
+      ctx.stroke();
+    };
+    lines(minor, THEME.grid);
+    lines(step, THEME.gridMajor);
+
+    // Axes
+    const ox = this.sx(0), oy = this.sy(0);
+    ctx.strokeStyle = THEME.axis;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    if (ox >= 0 && ox <= w) { ctx.moveTo(ox, 0); ctx.lineTo(ox, h); }
+    if (oy >= 0 && oy <= h) { ctx.moveTo(0, oy); ctx.lineTo(w, oy); }
+    ctx.stroke();
+
+    // Numbers (stick to the edge when an axis is off-screen)
+    ctx.fillStyle = THEME.label;
+    ctx.font = '500 11px Inter, system-ui, sans-serif';
+    const ly = Math.max(14, Math.min(h - 6, oy + 16));
+    const lx = Math.max(6, Math.min(w - 6, ox - 6));
+    ctx.textAlign = 'center';
+    for (let x = Math.ceil(this.xr[0] / step) * step; x <= this.xr[1]; x += step) {
+      if (Math.abs(x) > step / 2) ctx.fillText(label(x), this.sx(x), ly);
+    }
+    ctx.textAlign = ox - 6 < 30 ? 'left' : 'right';
+    for (let y = Math.ceil(this.yr[0] / step) * step; y <= this.yr[1]; y += step) {
+      if (Math.abs(y) > step / 2) ctx.fillText(label(y), ox - 6 < 30 ? Math.max(lx, 6) : lx, this.sy(y) + 4);
+    }
+  }
+
+  // ---------- Primitives ----------
+
+  stroke(color, width = 3, dash = []) {
+    const ctx = this.ctx;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.setLineDash(dash);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // y = f(x). A jump taller than the view is a break (tan x at π/2), not a steep line.
+  curve(f, color, width = 3, from = -Infinity, to = Infinity) {
+    const ctx = this.ctx, h = this.h;
+    const clamp = py => Math.max(-h, Math.min(2 * h, py));
+    const p0 = Math.max(0, Math.floor(this.sx(from))), p1 = Math.min(this.w, Math.ceil(this.sx(to)));
+    ctx.beginPath();
+    let prev = null;
+    for (let px = p0; px <= p1; px += 1) {
+      const y = f(this.toX(px));
+      if (!isFinite(y)) { prev = null; continue; }
+      const py = this.sy(y);
+      if (prev === null || Math.abs(py - prev) > h) ctx.moveTo(px, clamp(py));
+      else ctx.lineTo(px, clamp(py));
+      prev = py;
+    }
+    this.stroke(color, width);
+  }
+
+  // (fx(t), fy(t)) for t in [t0, t1]
+  param(fx, fy, t0, t1, color, width = 3, n = 800) {
+    const ctx = this.ctx;
+    ctx.beginPath();
+    let pen = false, prev = null;
+    for (let i = 0; i <= n; i++) {
+      const t = t0 + (t1 - t0) * i / n, x = fx(t), y = fy(t);
+      if (!isFinite(x) || !isFinite(y)) { pen = false; continue; }
+      const px = this.sx(x), py = this.sy(y);
+      if (pen && prev && Math.hypot(px - prev[0], py - prev[1]) < this.h) ctx.lineTo(px, py);
+      else ctx.moveTo(px, py);
+      pen = true;
+      prev = [px, py];
+    }
+    this.stroke(color, width);
+  }
+
+  // Segment; with extend: the whole line through the two points, cut to a band around the view
+  line(x1, y1, x2, y2, color, { width = 2, dash = [], extend = false } = {}) {
+    let xa = x1, xb = x2;
+    const k = (y2 - y1) / (x2 - x1);
+    if (extend && isFinite(k)) {
+      const span = this.yr[1] - this.yr[0];
+      xa = this.xr[0]; xb = this.xr[1];
+      if (k !== 0) {
+        const xl = x1 + (this.yr[0] - span - y1) / k, xh = x1 + (this.yr[1] + span - y1) / k;
+        xa = Math.max(xa, Math.min(xl, xh));
+        xb = Math.min(xb, Math.max(xl, xh));
+      }
+    }
+    const ya = isFinite(k) ? y1 + k * (xa - x1) : y1, yb = isFinite(k) ? y1 + k * (xb - x1) : y2;
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.sx(xa), this.sy(ya));
+    this.ctx.lineTo(this.sx(xb), this.sy(yb));
+    this.stroke(color, width, dash);
+  }
+
+  dot(x, y, color, r = 5) {
+    if (!isFinite(x) || !isFinite(y)) return;
+    const ctx = this.ctx;
+    ctx.beginPath();
+    ctx.arc(this.sx(x), this.sy(y), r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = THEME.bg;
+    ctx.stroke();
+  }
+
+  // Shaded area between y = f(x) and the x-axis on [a, b]
+  area(f, a, b, color) {
+    const lo = Math.max(Math.min(a, b), this.xr[0]), hi = Math.min(Math.max(a, b), this.xr[1]);
+    if (lo >= hi) return;
+    const ctx = this.ctx;
+    ctx.beginPath();
+    ctx.moveTo(this.sx(lo), this.sy(0));
+    for (let px = this.sx(lo); px <= this.sx(hi); px += 1) {
+      const y = f(this.toX(px));
+      if (isFinite(y)) ctx.lineTo(px, Math.max(-this.h, Math.min(2 * this.h, this.sy(y))));
+    }
+    ctx.lineTo(this.sx(hi), this.sy(0));
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+
+  // Level curves of z = f(x, y): how a surface looks from above (marching squares)
+  contour(f, color, count = 10) {
+    const nx = 96, ny = Math.max(8, Math.round(nx * this.h / this.w));
+    const xs = i => this.xr[0] + (this.xr[1] - this.xr[0]) * i / nx;
+    const ys = j => this.yr[0] + (this.yr[1] - this.yr[0]) * j / ny;
+    const v = [];
+    let min = Infinity, max = -Infinity;
+    for (let j = 0; j <= ny; j++) {
+      const row = [];
+      for (let i = 0; i <= nx; i++) {
+        const z = f(xs(i), ys(j));
+        row.push(z);
+        if (isFinite(z)) { min = Math.min(min, z); max = Math.max(max, z); }
+      }
+      v.push(row);
+    }
+    if (!(max > min)) return;
+    const step = niceStep((max - min) / count);
+    const ctx = this.ctx;
+    for (let L = Math.ceil(min / step) * step; L <= max; L += step) {
+      ctx.beginPath();
+      for (let j = 0; j < ny; j++) {
+        for (let i = 0; i < nx; i++) {
+          const a = v[j][i], b = v[j][i + 1], c = v[j + 1][i + 1], d = v[j + 1][i];
+          if (!isFinite(a) || !isFinite(b) || !isFinite(c) || !isFinite(d)) continue;
+          const pts = [];
+          const edge = (z1, z2, x1, y1, x2, y2) => {
+            if ((z1 < L) !== (z2 < L)) { const k = (L - z1) / (z2 - z1); pts.push([lerp(x1, x2, k), lerp(y1, y2, k)]); }
+          };
+          edge(a, b, i, j, i + 1, j);
+          edge(b, c, i + 1, j, i + 1, j + 1);
+          edge(c, d, i + 1, j + 1, i, j + 1);
+          edge(d, a, i, j + 1, i, j);
+          for (let k = 0; k + 1 < pts.length; k += 2) {
+            ctx.moveTo(this.sx(xs(pts[k][0])), this.sy(ys(pts[k][1])));
+            ctx.lineTo(this.sx(xs(pts[k + 1][0])), this.sy(ys(pts[k + 1][1])));
+          }
+        }
+      }
+      ctx.globalAlpha = Math.abs(L) < step / 2 ? 0.55 : 0.28;
+      this.stroke(color, Math.abs(L) < step / 2 ? 1.5 : 1);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // Formula label (KaTeX) near a point, in HTML over the canvas
+  tex(key, tex, x, y, color, { dx = 10, dy = -10, align = 'left' } = {}) {
+    if (!isFinite(x) || !isFinite(y)) return;
+    let l = this.labels.get(key);
+    if (!l) {
+      l = { el: document.createElement('div'), tex: null };
+      l.el.className = 'plot-label';
+      this.overlay.appendChild(l.el);
+      this.labels.set(key, l);
+    }
+    if (l.tex !== tex) { renderTex(l.el, tex); l.tex = tex; }
+    l.used = true;
+    l.el.style.color = color;
+    l.el.style.transform = `translate(${this.sx(x) + dx}px, ${this.sy(y) + dy}px) translate(${align === 'right' ? '-100%' : align === 'center' ? '-50%' : '0'}, -50%)`;
+  }
+
+  // A point the user can drag; onDrag(x, y) receives math coordinates
+  handle(x, y, color, onDrag) {
+    if (!isFinite(x) || !isFinite(y)) return;
+    const ctx = this.ctx, px = this.sx(x), py = this.sy(y);
+    ctx.beginPath();
+    ctx.arc(px, py, 11, 0, Math.PI * 2);
+    ctx.fillStyle = color + '33';
+    ctx.fill();
+    this.dot(x, y, color, 6);
+    this.handles.push({ px, py, onDrag });
+  }
+
+  // ---------- View ----------
+
+  setView(v, ms = 900) {
+    if (this.stopTween) this.stopTween();
+    const from = { ...this.view }, to = { ...this.view, ...v };
+    // Zoom is interpolated in log space so it feels uniform
+    this.stopTween = tween(ms, k => {
+      this.view.cx = lerp(from.cx, to.cx, k);
+      this.view.cy = lerp(from.cy, to.cy, k);
+      this.view.unit = Math.exp(lerp(Math.log(from.unit), Math.log(to.unit), k));
+      this.request();
+    });
+  }
+
+  zoomAt(factor, px, py) {
+    const x0 = this.toX(px), y0 = this.toY(py);
+    this.view.unit = Math.min(1e5, Math.max(1, this.view.unit * factor));
+    this.view.cx = x0 - (px - this.w / 2) / this.view.unit;
+    this.view.cy = y0 + (py - this.h / 2) / this.view.unit;
+    this.request();
+  }
+
+  reset() { this.setView(this.home); }
+
+  bindEvents() {
+    const c = this.canvas;
+    const pointers = new Map();
+    let drag = null, pinch = null;
+    const pos = e => { const r = c.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+    const nearHandle = (px, py) => this.handles.find(hd => Math.hypot(hd.px - px, hd.py - py) < 16);
+
+    c.addEventListener('pointerdown', e => {
+      c.setPointerCapture(e.pointerId);
+      const [px, py] = pos(e);
+      pointers.set(e.pointerId, [px, py]);
+      if (this.stopTween) this.stopTween();
+      if (pointers.size === 2) {
+        const [p, q] = [...pointers.values()];
+        pinch = { d: Math.hypot(p[0] - q[0], p[1] - q[1]) };
+        drag = null;
+        return;
+      }
+      const hd = nearHandle(px, py);
+      drag = hd ? { handle: hd } : { px, py, cx: this.view.cx, cy: this.view.cy };
+      c.classList.add('dragging');
+    });
+    c.addEventListener('pointermove', e => {
+      const [px, py] = pos(e);
+      if (!pointers.has(e.pointerId)) {
+        c.classList.toggle('over-handle', !!nearHandle(px, py));
+        return;
+      }
+      pointers.set(e.pointerId, [px, py]);
+      if (pinch && pointers.size === 2) {
+        const [p, q] = [...pointers.values()];
+        const d = Math.hypot(p[0] - q[0], p[1] - q[1]);
+        this.zoomAt(d / pinch.d, (p[0] + q[0]) / 2, (p[1] + q[1]) / 2);
+        pinch.d = d;
+      } else if (drag && drag.handle) {
+        drag.handle.onDrag(this.toX(px), this.toY(py));
+      } else if (drag) {
+        this.view.cx = drag.cx - (px - drag.px) / this.view.unit;
+        this.view.cy = drag.cy + (py - drag.py) / this.view.unit;
+        this.request();
+      }
+    });
+    const up = e => {
+      pointers.delete(e.pointerId);
+      if (pointers.size < 2) pinch = null;
+      if (!pointers.size) { drag = null; c.classList.remove('dragging'); }
+    };
+    c.addEventListener('pointerup', up);
+    c.addEventListener('pointercancel', up);
+    c.addEventListener('wheel', e => {
+      e.preventDefault();
+      const [px, py] = pos(e);
+      this.zoomAt(Math.exp(-e.deltaY * 0.0015), px, py);
+    }, { passive: false });
+    c.addEventListener('dblclick', () => this.reset());
+  }
+
+  dispose() {
+    if (this.frame) cancelAnimationFrame(this.frame);
+    if (this.stopTween) this.stopTween();
+    this.ro.disconnect();
+    this.el.remove();
+  }
+}
