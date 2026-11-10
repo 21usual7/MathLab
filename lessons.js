@@ -13,14 +13,14 @@ const LESSONS = [
     id: 'derivative',
     title: { en: 'Derivative = slope of the tangent', ru: 'Производная = наклон касательной' },
     intro: bi(
-      'Zoom in on any curve far enough and it looks like a straight line. Its slope is the derivative. Move the sliders: the red secant line through two points turns into the tangent as the gap h shrinks to 0.',
-      'Приблизьте любую кривую достаточно сильно — и она станет похожа на прямую. Её наклон и есть производная. Двигайте ползунки: красная секущая через две точки превращается в касательную, когда расстояние h стремится к 0.'
+      'Zoom in on any curve far enough and it looks like a straight line. Its slope is the derivative. Move the sliders: the red secant line through two points turns into the tangent as the gap h shrinks to 0. One grid square is 1 unit on both axes, so slope 2 means "up 2 for every 1 to the right".',
+      'Приблизьте любую кривую достаточно сильно — и она станет похожа на прямую. Её наклон и есть производная. Двигайте ползунки: красная секущая через две точки превращается в касательную, когда расстояние h стремится к 0. Одна клетка сетки — 1 единица по обеим осям, поэтому наклон 2 значит «вверх на 2 на каждую 1 вправо».'
     ),
 
     render(root) {
       root.innerHTML = `
         <div class="widget">
-          <canvas class="plot"></canvas>
+          <canvas class="plot tall"></canvas>
           <div class="controls">
             <label>x₀ <input type="range" id="x0" min="-2" max="2" step="0.01" value="1"><span id="x0v"></span></label>
             <label>h  <input type="range" id="h" min="0.01" max="1" step="0.01" value="1"><span id="hv"></span></label>
@@ -39,7 +39,7 @@ const LESSONS = [
         root.querySelector('#x0v').textContent = x0.toFixed(2);
         root.querySelector('#hv').textContent = h.toFixed(2);
 
-        const p = makePlot(canvas, [-3, 3], [-1, 9]);
+        const p = makePlot(canvas, 0, [-0.5, 9.5]);
         p.axes();
         p.curve(f, '#2b6cb0');
 

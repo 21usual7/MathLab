@@ -29,11 +29,26 @@ function makePlot(canvas, xr, yr) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
 
+  // xr as a number = center of the x-axis: the x-range is chosen from the canvas size
+  // so that one unit has the same length on both axes (slopes look true)
+  if (typeof xr === 'number') {
+    const span = (yr[1] - yr[0]) * w / h;
+    xr = [xr - span / 2, xr + span / 2];
+  }
+
   const sx = x => (x - xr[0]) / (xr[1] - xr[0]) * w;
   const sy = y => h - (y - yr[0]) / (yr[1] - yr[0]) * h;
 
   return {
     axes() {
+      // Grid: one line per unit
+      ctx.strokeStyle = '#eee';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let x = Math.ceil(xr[0]); x <= xr[1]; x++) { ctx.moveTo(sx(x), 0); ctx.lineTo(sx(x), h); }
+      for (let y = Math.ceil(yr[0]); y <= yr[1]; y++) { ctx.moveTo(0, sy(y)); ctx.lineTo(w, sy(y)); }
+      ctx.stroke();
+
       ctx.strokeStyle = '#bbb';
       ctx.lineWidth = 1;
       ctx.beginPath();

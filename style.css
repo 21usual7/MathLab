@@ -76,6 +76,7 @@ canvas.plot {
   background: #fff;
   border-radius: 6px;
 }
+canvas.plot.tall { height: 440px; }
 
 .controls { margin-top: 12px; }
 .controls label {
@@ -126,4 +127,5 @@ canvas.plot {
 
 @media (max-width: 480px) {
   canvas.plot { height: 240px; }
+  canvas.plot.tall { height: 340px; }
 }
