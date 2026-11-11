@@ -10,12 +10,24 @@ export const TRACKS = [
 ];
 
 export const CATALOG = [
-  { id: 'graph', track: 'functions', status: 'planned',
-    title: { en: 'A function: a machine and a picture', ru: 'Функция: машина и картинка' } },
-  { id: 'transform', track: 'functions', status: 'planned', prereqs: ['graph'],
-    title: { en: 'Shifting and stretching graphs', ru: 'Сдвиги и растяжения графиков' } },
-  { id: 'exp-log', track: 'functions', status: 'planned', prereqs: ['graph'],
-    title: { en: 'Exponent and logarithm', ru: 'Экспонента и логарифм' } },
+  { id: 'graph', track: 'functions', status: 'ready', minutes: 8, next: ['transform', 'exp-log', 'limit'],
+    title: { en: 'A function: a machine and a picture', ru: 'Функция: машина и картинка' },
+    summary: {
+      en: 'A function turns an input into an output; its graph is every answer drawn at once. How to read it forward and backward.',
+      ru: 'Функция превращает вход в выход, а её график — все ответы, нарисованные разом. Как читать его вперёд и назад.',
+    } },
+  { id: 'transform', track: 'functions', status: 'ready', minutes: 10, prereqs: ['graph'], next: ['exp-log', 'derivative'],
+    title: { en: 'Shifting and stretching graphs', ru: 'Сдвиги и растяжения графиков' },
+    summary: {
+      en: 'Why f(x − 2) moves right, f(2x) squeezes, and the vertex of a(x − h)² + k is simply (h, k).',
+      ru: 'Почему f(x − 2) сдвигает вправо, f(2x) сжимает, а вершина a(x − h)² + k — просто (h, k).',
+    } },
+  { id: 'exp-log', track: 'functions', status: 'ready', minutes: 10, prereqs: ['graph'], next: ['e', 'derivative'],
+    title: { en: 'Exponent and logarithm', ru: 'Экспонента и логарифм' },
+    summary: {
+      en: 'An exponent multiplies by the same number at every step; a logarithm counts the steps. The same curve, seen in a mirror.',
+      ru: 'Экспонента на каждом шаге умножает на одно и то же число, логарифм считает шаги. Это одна кривая, увиденная в зеркале.',
+    } },
 
   { id: 'limit', track: 'limits', status: 'planned', prereqs: ['graph'],
     title: { en: 'What a limit really is', ru: 'Что такое предел на самом деле' } },
@@ -53,6 +65,9 @@ export const CATALOG = [
 export const topicMeta = id => CATALOG.find(x => x.id === id);
 
 const MODULES = {
+  graph: () => import('./graph.js'),
+  transform: () => import('./transform.js'),
+  'exp-log': () => import('./exp-log.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
 };

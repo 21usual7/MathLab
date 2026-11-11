@@ -1,5 +1,7 @@
 // Topic player: the story on the left, the live scene on the right (on top on phones).
 // Scrolling to a step moves the scene to that step's state: parameters, visible objects, view, camera.
+// A step may ask a question first ("predict, then check"): the answer is shown on the scene by
+// check.reveal(scene, stage) only after the student has made a guess. A hint opens on demand.
 
 import { Scene } from '../core/scene.js';
 import { Stage } from '../ui/stage.js';
@@ -46,6 +48,14 @@ export async function mountTopic(root, id) {
               <h2>${t(s.title)}</h2>
               <div class="step-text">${t(s.text)}</div>
               ${s.try ? `<p class="try"><span class="try-label">Try</span>${t(s.try)}</p>` : ''}
+              ${s.check ? `
+                <div class="check">
+                  <span class="check-label">Predict, then check</span>
+                  <div class="check-q">${t(s.check.q)}</div>
+                  <div class="check-options">${s.check.options.map((o, k) => `<button type="button" data-k="${k}">${t(o.text)}</button>`).join('')}</div>
+                  <div class="check-explain"></div>
+                </div>` : ''}
+              ${s.hint ? `<details class="hint"><summary>${t(s.hint.title) || 'Stuck? Open a hint'}</summary><div class="hint-body">${t(s.hint.text || s.hint)}</div></details>` : ''}
             </section>`).join('')}
           <section class="step end">
             <h2>Where next</h2>
@@ -81,7 +91,7 @@ export async function mountTopic(root, id) {
   const updateLegend = () => {
     const scope = scene.scope();
     const entries = [
-      ...scene.items.filter(i => i.visible && i.info.tex && i.info.kind !== 'param').map(i => `\\textcolor{${i.color}}{${i.info.tex}}`),
+      ...scene.items.filter(i => i.visible && i.legend && i.info.tex && i.info.kind !== 'param').map(i => `\\textcolor{${i.color}}{${i.info.tex}}`),
       ...scene.custom.filter(c => c.visible && c.legend).map(c => c.legend({ ...scope }, scene)),
     ];
     const key = entries.join('|');
@@ -122,8 +132,31 @@ export async function mountTopic(root, id) {
     (st.play || []).forEach(name => scene.play(name, true));
     setControls(st.controls || topic.controls || []);
     if (step.enter) step.enter(scene, stage);
+    if (answered.has(i) && step.check.reveal) step.check.reveal(scene, stage);
     scene.changed();
   };
+
+  // ---- Questions: one guess, then the explanation and the answer on the scene ----
+  const answered = new Set();
+  steps.forEach((el, i) => {
+    const check = topic.steps[i].check;
+    if (!check) return;
+    const box = el.querySelector('.check'), explain = box.querySelector('.check-explain');
+    box.querySelectorAll('button[data-k]').forEach(b => b.addEventListener('click', () => {
+      if (answered.has(i)) return;
+      answered.add(i);
+      const k = +b.dataset.k, ok = !!check.options[k].ok;
+      box.querySelectorAll('button[data-k]').forEach(o => {
+        o.disabled = true;
+        if (check.options[+o.dataset.k].ok) o.classList.add('right');
+      });
+      if (!ok) b.classList.add('wrong');
+      box.classList.add('answered');
+      explain.innerHTML = `<span class="verdict ${ok ? 'right' : 'wrong'}">${ok ? 'Right.' : 'Not quite.'}</span> ${t(check.explain)}`;
+      renderMath(explain);
+      if (i === active && check.reveal) { check.reveal(scene, stage); scene.changed(); }
+    }));
+  });
 
   // The active step is the last one whose top passed the reading line
   const pick = () => {
@@ -149,7 +182,8 @@ export async function mountTopic(root, id) {
   // The current scene, editable, in the Lab
   $('[data-act=lab]').addEventListener('click', () => {
     const used = new Set();
-    const items = scene.items.filter(i => i.visible && i.info.kind !== 'error').map(i => {
+    // The user's functions (f(x) = …) go along even when hidden: the visible lines may use them
+    const items = scene.items.filter(i => (i.visible || i.info.name) && i.info.kind !== 'error').map(i => {
       (i.info.params || []).forEach(p => used.add(p));
       return i.text;
     });

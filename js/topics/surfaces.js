@@ -102,6 +102,14 @@ export default {
         ru: 'Новый ландшафт: $\\purple{z = \\frac{x^2 - y^2}{3}}$. Режем вдоль $x$ — и каждый разрез оказывается параболой ветвями <b>вверх</b>…',
       },
       try: { en: 'Play $c$ and watch: always up.', ru: 'Запустите $c$: ветви всегда вверх.' },
+      check: {
+        q: { en: 'And if we freeze $x$ and walk along $y$ — which way will the cuts open?', ru: 'А если заморозить $x$ и идти вдоль $y$ — куда смотрят ветви разрезов?' },
+        options: [{ text: { en: 'up as well', ru: 'тоже вверх' } }, { text: { en: 'down', ru: 'вниз' }, ok: true }],
+        explain: {
+          en: 'With $x$ fixed, $z = \\frac{x^2}{3} - \\frac{y^2}{3}$ is a constant minus $\\frac{y^2}{3}$: a parabola opening down. The next step shows it.',
+          ru: 'При постоянном $x$ получается $z = \\frac{x^2}{3} - \\frac{y^2}{3}$ — число минус $\\frac{y^2}{3}$, парабола ветвями вниз. Следующий шаг это покажет.',
+        },
+      },
       state: { view: 'split', show: ['saddle', 'sliceY'], params: { c: 0 }, camera: [7, -6.5, 4.5], controls: ['c'] },
     },
     {

@@ -4,6 +4,16 @@
 import { renderTex } from './tex.js';
 import { paramControl } from './params.js';
 import { fmt } from '../core/numeric.js';
+import { derivative } from '../core/expr.js';
+
+// Text of the derivative of a function row: y = f'(x) for the user's f, the formula itself otherwise
+function derivativeText(item) {
+  if (item.info.name) return `y = ${item.info.name}'(x)`;
+  // null when the formula calls the user's function: math.js cannot differentiate f(x - 1)
+  const d = derivative(item.info.node);
+  if (!d) return null;
+  return `y = ${d.toString({ implicit: 'hide' }).replace(/ \^ /g, '^')}`;
+}
 
 export class ExprList {
   constructor(container, scene, { onStructure } = {}) {
@@ -46,8 +56,21 @@ export class ExprList {
   autoParams(item) {
     for (const name of item.info.params || []) {
       const exists = this.scene.items.some(i => i.info.kind === 'param' && i.info.name === name);
-      if (!exists) this.scene.add(`${name} = ${fmt(this.scene.params.get(name).value)}`);
+      if (!exists) this.scene.add(`${name} = ${fmt(this.scene.params.get(name).value)}`).auto = true;
     }
+    // "y = f(x)" typed before "f(x) = …" made f a slider; now f is a function and the slider goes
+    this.scene.items.filter(i => i.auto && this.scene.defs.has(i.text.split('=')[0].trim())).forEach(i => this.scene.remove(i));
+  }
+
+  // A new row right under `after`
+  insertAfter(after, text) {
+    const item = this.scene.add(text);
+    const list = this.scene.items;
+    list.splice(list.indexOf(item), 1);
+    list.splice(list.indexOf(after) + 1, 0, item);
+    this.autoParams(item);
+    this.rebuild();
+    this.onStructure();
   }
 
   rebuild() {
@@ -65,9 +88,10 @@ export class ExprList {
         <input class="edit" spellcheck="false" autocomplete="off" autocapitalize="off">
         <div class="row-error"></div>
       </div>
+      <button class="deriv" type="button" title="Add the derivative of this function">f′</button>
       <button class="del" type="button" title="Remove" aria-label="Remove">×</button>`;
     this.rowsEl.appendChild(row);
-    const [swatch, body, del] = row.children;
+    const [swatch, body, deriv, del] = row.children;
     const [formula, edit, error] = body.children;
     let control = null, shownTex = null;
 
@@ -75,6 +99,7 @@ export class ExprList {
       row.style.setProperty('--c', item.color);
       row.classList.toggle('off', !item.visible);
       row.classList.toggle('is-param', item.info.kind === 'param');
+      row.classList.toggle('is-function', item.info.kind === 'function');
       if (item.info.kind === 'error') {
         formula.textContent = item.text;
         formula.classList.add('raw');
@@ -121,6 +146,11 @@ export class ExprList {
       item.visible = !item.visible;
       this.scene.changed();
       render();
+    });
+    deriv.addEventListener('click', () => {
+      const text = derivativeText(item);
+      if (text) this.insertAfter(item, text);
+      else { error.textContent = 'Name it first: f(x) = …, then add y = f\'(x)'; }
     });
     del.addEventListener('click', () => {
       this.scene.remove(item);

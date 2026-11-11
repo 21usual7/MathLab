@@ -20,8 +20,8 @@ const TEXT = {
       text: { en: 'Topics are connected. If something is unclear, step back to what it is built on.', ru: 'Темы связаны. Если что-то непонятно, можно шагнуть назад — к тому, на чём это построено.' } },
   ],
   map: {
-    en: 'Topics are connected: each one says what it builds on. Two are ready, the rest are on the way.',
-    ru: 'Темы связаны: у каждой написано, на чём она построена. Две готовы, остальные в пути.',
+    en: n => `Topics are connected: each one says what it builds on. ${n} are ready, the rest are on the way.`,
+    ru: n => `Темы связаны: у каждой написано, на чём она построена. Готово: ${n}, остальные в пути.`,
   },
 };
 
@@ -34,7 +34,8 @@ export function mountHome(root) {
           <h1>See the idea.<br><em>Then</em> the formula.</h1>
           <p class="lead">${t(TEXT.lead)}</p>
           <div class="cta">
-            <a class="btn primary" href="#topic/derivative">Start with the derivative</a>
+            <a class="btn primary" href="#topic/graph">Start from the beginning</a>
+            <a class="btn" href="#topic/derivative">The derivative</a>
             <a class="btn" href="#lab">Open the Lab</a>
           </div>
         </div>
@@ -50,7 +51,7 @@ export function mountHome(root) {
       </section>
 
       <section class="map" id="map">
-        <div class="section-head"><h2>Map</h2><p>${t(TEXT.map)}</p></div>
+        <div class="section-head"><h2>Map</h2><p>${t(TEXT.map)(CATALOG.filter(m => m.status === 'ready').length)}</p></div>
         <div class="tracks">
           ${TRACKS.map(tr => `
             <div class="track">

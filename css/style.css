@@ -244,6 +244,31 @@ button { font: inherit; color: inherit; }
 .stage-nav .counter { font: 12px var(--mono); color: var(--muted); min-width: 44px; text-align: center; }
 .spacer { flex: 1; }
 
+/* Predict, then check: a question inside a step */
+.check { margin: 22px 0 0; padding: 14px 16px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.check-label { display: block; font: 600 11px var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--blue); margin-bottom: 4px; }
+.check-q { color: var(--text); font-size: 16px; line-height: 1.6; }
+.check-options { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.check-options button { border: 1px solid var(--line); background: var(--bg); color: var(--soft); border-radius: 10px; padding: 7px 14px; font-size: 15px; cursor: pointer; transition: border-color 0.15s, color 0.15s, background 0.15s; }
+.check-options button:hover:not(:disabled) { border-color: var(--blue); color: var(--text); }
+.check-options button:disabled { cursor: default; }
+.check-options button.right { border-color: var(--green); color: var(--green); background: rgba(131, 193, 103, 0.08); }
+.check-options button.wrong { border-color: var(--red); color: var(--red); background: rgba(252, 98, 85, 0.06); }
+.check-explain { display: none; margin-top: 12px; color: var(--soft); font-size: 15px; line-height: 1.65; }
+.check.answered .check-explain { display: block; }
+.check-explain .verdict { font-weight: 600; margin-right: 4px; }
+.check-explain .verdict.right { color: var(--green); }
+.check-explain .verdict.wrong { color: var(--red); }
+
+/* "Stuck?": a hint that opens on demand */
+.hint { margin: 14px 0 0; border-left: 2px solid var(--line); padding-left: 14px; }
+.hint summary { cursor: pointer; color: var(--muted); font-size: 14px; font-weight: 500; list-style: none; }
+.hint summary::-webkit-details-marker { display: none; }
+.hint summary::before { content: '+'; display: inline-block; width: 16px; color: var(--faint); }
+.hint[open] summary::before { content: '−'; }
+.hint summary:hover { color: var(--text); }
+.hint-body { margin-top: 8px; color: var(--soft); font-size: 15px; line-height: 1.7; }
+
 /* ---------- Lab ---------- */
 
 .lab { display: grid; grid-template-columns: 380px minmax(0, 1fr); height: calc(100vh - var(--header)); height: calc(100dvh - var(--header)); }
@@ -275,12 +300,21 @@ button { font: inherit; color: inherit; }
 .row.editing .formula { display: none; }
 .row-error { color: var(--red); font-size: 13px; }
 .row-error:empty { display: none; }
+.deriv { flex: none; display: none; border: 1px solid transparent; background: none; color: var(--faint); font: italic 14px var(--serif); padding: 1px 6px; margin-top: 3px; border-radius: 6px; cursor: pointer; }
+.row.is-function .deriv { display: block; }
+.deriv:hover { color: var(--yellow); border-color: var(--line); }
 .del { flex: none; border: 0; background: none; color: var(--faint); font-size: 20px; line-height: 1; padding: 4px 2px; cursor: pointer; }
 .del:hover { color: var(--red); }
 .add-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px 10px 18px; border-bottom: 1px solid var(--line-soft); }
 .add-row .plus { color: var(--faint); font-size: 18px; }
 .add-row input { flex: 1; min-width: 0; padding: 8px 0; border: 0; background: none; color: var(--text); font: 15px var(--mono); outline: none; }
 .add-row input::placeholder { color: var(--faint); }
+.help { margin: 14px 16px 0; border: 1px solid var(--line-soft); border-radius: 10px; background: var(--bg); }
+.help summary { padding: 9px 12px; cursor: pointer; color: var(--soft); font-size: 13px; font-weight: 500; }
+.help summary:hover { color: var(--text); }
+.help dl { margin: 0; padding: 2px 12px 12px; display: grid; grid-template-columns: auto 1fr; gap: 7px 12px; align-items: baseline; }
+.help dt code { font: 12px var(--mono); color: var(--blue); white-space: nowrap; }
+.help dd { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
 .examples { padding: 16px 16px 24px; display: flex; flex-direction: column; gap: 12px; }
 .ex-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .ex-group span { width: 100%; font: 600 11px var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }

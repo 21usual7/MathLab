@@ -1,10 +1,11 @@
 // Scene: what is on the stage. Shared by the Lab and the topics.
-//   items  — objects typed as text (functions, surfaces, curves, points, parameters)
+//   items  — objects typed as text (functions, surfaces, curves, points, parameters, vertical lines).
+//            A function written as f(x) = … can be used by the others: y = f(x - 1), y = f'(x).
 //   custom — objects drawn by code (a secant, a slicing plane...), used by topics
 //   params — named numbers with a range; can be animated or played ▶
 // Views subscribe with on() and redraw at most once per frame.
 
-import { analyze, compile, numTex, symTex } from './expr.js';
+import { analyze, compile, definedName, numTex, symTex } from './expr.js';
 import { CYCLE, color } from './palette.js';
 import { tween, lerp } from './anim.js';
 import { fmt } from './numeric.js';
@@ -22,6 +23,7 @@ export class Scene {
     this.stopTween = null;
     this.playFrame = null;
     this.lastTime = 0;
+    this.defs = new Set(); // names of the user's functions
   }
 
   on(fn) {
@@ -39,10 +41,34 @@ export class Scene {
     });
   }
 
-  // Current parameter values as a math.js scope
+  // Current parameter values and the user's functions (f, f' and f'') as a math.js scope
   scope() {
     const s = {};
     for (const [name, p] of this.params) s[name] = p.value;
+    const defs = this.items.filter(i => i.info.name && i.fn);
+    if (!defs.length) return s;
+    let depth = 0; // f(x) = g(x), g(x) = f(x) must not hang
+    const own = [];
+    for (const d of defs) {
+      // Every function has its own scope object, so evaluating it never changes the caller's x
+      const local = {};
+      own.push(local);
+      const f = v => {
+        if (depth > 24) return NaN;
+        depth++;
+        const prev = local.x;
+        local.x = v;
+        const r = d.fn(local);
+        local.x = prev;
+        depth--;
+        return r;
+      };
+      const h1 = 1e-5, h2 = 1e-3;
+      s[d.info.name] = f;
+      s[`${d.info.name}_d1`] = v => (f(v + h1) - f(v - h1)) / (2 * h1);
+      s[`${d.info.name}_d2`] = v => (f(v + h2) - 2 * f(v) + f(v - h2)) / (h2 * h2);
+    }
+    own.forEach(local => Object.assign(local, s));
     return s;
   }
 
@@ -54,6 +80,8 @@ export class Scene {
       visible: opts.visible ?? true,
       label: opts.label || null,
       only: opts.only || null, // '2d' or '3d': drawn in that view only
+      dim: opts.dim || false, // drawn thin and faint: the "before" picture next to the "after"
+      legend: opts.legend ?? true, // listed under the stage of a topic
     };
     this.items.push(item);
     this.setText(item, text);
@@ -64,10 +92,26 @@ export class Scene {
 
   setText(item, text) {
     item.text = text;
-    item.info = analyze(text);
+    // A new or removed f(x) = … changes how every other line reads ("f(x)" is a call, not f·x)
+    if (this.updateDefs()) this.items.forEach(i => { if (i !== item) this.analyzeItem(i); });
+    this.analyzeItem(item);
+    this.changed();
+  }
+
+  updateDefs() {
+    const next = new Set(this.items.map(i => definedName(i.text)).filter(Boolean));
+    const same = next.size === this.defs.size && [...next].every(n => this.defs.has(n));
+    this.defs = next;
+    return !same;
+  }
+
+  analyzeItem(item) {
+    item.info = analyze(item.text, this.defs);
     const info = item.info;
     item.fn = info.node ? compile(info.node) : null;
     item.fns = info.nodes ? info.nodes.map(compile) : null;
+    item.lo = info.domain && info.domain.lo ? compile(info.domain.lo) : null;
+    item.hi = info.domain && info.domain.hi ? compile(info.domain.hi) : null;
     (info.params || []).forEach(name => this.ensureParam(name));
     if (info.kind === 'param') {
       const p = this.ensureParam(info.name, info.value);
@@ -76,22 +120,29 @@ export class Scene {
       if (info.value < p.min) p.min = Math.floor(info.value);
       if (info.value > p.max) p.max = Math.ceil(info.value);
     }
-    this.changed();
   }
 
   remove(item) {
     this.items = this.items.filter(i => i !== item);
+    if (this.updateDefs()) this.items.forEach(i => this.analyzeItem(i));
     this.changed();
+  }
+
+  // Range of x for a function, of t for a curve: [lo, hi] (the ends can be parameters)
+  range(item, scope, lo, hi) {
+    const a = item.lo ? item.lo(scope) : lo, b = item.hi ? item.hi(scope) : hi;
+    return [isFinite(a) ? a : lo, isFinite(b) ? b : hi];
   }
 
   get(id) {
     return this.items.find(i => i.id === id) || this.custom.find(c => c.id === id);
   }
 
-  // Only these ids are visible (items and custom objects); used by topic steps
+  // Only these ids are visible (items and custom objects); used by topic steps.
+  // Objects marked `always` (like the explorer that reads the graph under the pointer) stay.
   showOnly(ids) {
     const set = new Set(ids);
-    [...this.items, ...this.custom].forEach(o => { o.visible = set.has(o.id); });
+    [...this.items, ...this.custom].forEach(o => { if (!o.always) o.visible = set.has(o.id); });
     this.changed();
   }
 

@@ -15,9 +15,11 @@ const FUNCTIONS = ['sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'asin', 'acos', 'at
 // Words that are never split into letters
 const WORDS = [...FUNCTIONS, ...GREEK, 'pi', 'tau'].sort((a, b) => b.length - a.length);
 
+const NONE = new Set();
+
 // "xsin" → "x*sin", "ax" → "a*x", "pix" → "pi*x": Desmos-style implicit multiplication of letters
-function splitWord(w) {
-  if (WORDS.includes(w) || w.length === 1 || /[\d_]/.test(w)) return w;
+function splitWord(w, fns = NONE) {
+  if (WORDS.includes(w) || fns.has(w) || w.length === 1 || /[\d_]/.test(w)) return w;
   const parts = [];
   for (let i = 0; i < w.length;) {
     const word = WORDS.find(k => k.length > 1 && w.startsWith(k, i));
@@ -27,21 +29,40 @@ function splitWord(w) {
   return parts.join('*');
 }
 
-// Typing conveniences → math.js syntax
-export function normalize(text) {
+// Typing conveniences → math.js syntax. fns: names of the user's own functions (f(x) = …),
+// which are called, not multiplied: f(x + 1), and can be differentiated: f'(x) → f_d1(x).
+export function normalize(text, fns = NONE) {
   return String(text).trim()
     .replace(/[−–]/g, '-')
     .replace(/[×·]/g, '*')
+    .replace(/≤/g, '<=')
+    .replace(/≥/g, '>=')
     .replace(/π/g, 'pi')
     .replace(/√\s*\(/g, 'sqrt(')
     .replace(/\bln\s*\(/g, 'log(')
     .replace(/\btg\b/g, 'tan')
     .replace(/\bctg\b/g, 'cot')
     .replace(/\barc(sin|cos|tan)\b/g, 'a$1')
-    .replace(/[A-Za-z_][A-Za-z0-9_]*/g, splitWord)
-    // a single letter before "(" is multiplication: a(x + 1), x(x - 1), e^x(…)
-    .replace(/\b([A-Za-z])\s*\(/g, '$1*(');
+    .replace(/\b([A-Za-z][A-Za-z0-9]*)('+)\s*\(/g, (m, name, primes) => `${name}_d${primes.length}(`)
+    .replace(/[A-Za-z_][A-Za-z0-9_]*/g, w => splitWord(w, fns))
+    // a single letter before "(" is multiplication: a(x + 1), x(x - 1), e^x(…) — unless it is the user's function
+    .replace(/\b([A-Za-z])\s*\(/g, (m, l) => (fns.has(l) ? m : `${l}*(`));
 }
+
+// "f(x) = …" → "f"; null for anything else. Used to know the user's functions before parsing.
+const DEF = /^\s*([A-Za-z][A-Za-z0-9]*)\s*\(\s*x\s*\)\s*=(?!=)/;
+export function definedName(text) {
+  const m = String(text).match(DEF);
+  if (!m) return null;
+  const name = m[1];
+  return VARIABLES.has(name) || CONSTANTS.has(name) || FUNCTIONS.includes(name) || name === 'y' ? null : name;
+}
+
+// f_d2 → { base: 'f', order: 2 }
+const derivName = name => {
+  const m = name.match(/^([A-Za-z][A-Za-z0-9]*)_d(\d)$/);
+  return m ? { base: m[1], order: +m[2] } : null;
+};
 
 // Split on a separator at bracket depth 0 ("=" is skipped when part of <=, >=, ==, !=)
 function splitTop(s, sep) {
@@ -74,15 +95,19 @@ function splitTuple(s) {
   return parts.length >= 2 ? parts : null;
 }
 
-// Parse one expression and check that every function is a known one
-export function parseNode(s) {
+// Parse one expression and check that every function is a known one (built in or the user's own)
+export function parseNode(s, fns = NONE) {
   if (!s.trim()) throw new Error('Empty expression');
   const node = math.parse(s);
   node.traverse((n, path, parent) => {
-    if (n.isFunctionNode && !FUNCTIONS.includes(n.fn.name)) {
+    if (n.isFunctionNode && !FUNCTIONS.includes(n.fn.name) && !fns.has(n.fn.name)) {
+      const d = derivName(n.fn.name);
+      if (d && fns.has(d.base)) { if (d.order > 2) throw new Error('Only f\'(x) and f\'\'(x) are supported'); return; }
+      if (d) throw new Error(`Define ${d.base}(x) = … on its own line first`);
       throw new Error(`Unknown function "${n.fn.name}"`);
     }
-    if (n.isSymbolNode && FUNCTIONS.includes(n.name) && !(parent && parent.isFunctionNode && path === 'fn')) {
+    const isCalled = parent && parent.isFunctionNode && path === 'fn';
+    if (n.isSymbolNode && (FUNCTIONS.includes(n.name) || fns.has(n.name)) && !isCalled) {
       throw new Error(`Write ${n.name}(…) with parentheses`);
     }
     if (n.isAssignmentNode || n.isFunctionAssignmentNode) throw new Error('Unexpected "="');
@@ -100,54 +125,119 @@ export function freeSymbols(node) {
 
 const paramsOf = syms => [...syms].filter(s => !VARIABLES.has(s));
 
-// Text → { kind, ... }. Kinds: function (y = f(x)), surface (z = f(x, y)), curve2/curve3 ((f(t), g(t)[, h(t)])),
-// point2/point3, param (a = 1.5), empty, error. Never throws.
-export function analyze(text) {
+// "{0 <= x <= 4}", "{x > 0}", "{0 < t < 4pi}" → { lo, hi } nodes for the variable v
+function parseDomain(cond, v, fns) {
+  const parts = normalize(cond, fns).split(/(<=|>=|<|>)/).map(p => p.trim());
+  const lessThan = op => op === '<' || op === '<=';
+  let lo = null, hi = null;
+  const bound = (side, node) => { if (side === 'lo') lo = node; else hi = node; };
+  const read = (a, op, b) => {
+    // a op b where one side is the variable
+    if (a === v && b !== v) bound(lessThan(op) ? 'hi' : 'lo', parseNode(b, fns));
+    else if (b === v && a !== v) bound(lessThan(op) ? 'lo' : 'hi', parseNode(a, fns));
+    else throw new Error(`Write the range as {0 <= ${v} <= 4}`);
+  };
+  if (parts.length === 5 && parts[2] === v) { read(parts[0], parts[1], v); read(v, parts[3], parts[4]); }
+  else if (parts.length === 3) read(parts[0], parts[1], parts[2]);
+  else throw new Error(`Write the range as {0 <= ${v} <= 4}`);
+  for (const n of [lo, hi]) {
+    if (n && [...freeSymbols(n)].some(name => VARIABLES.has(name))) throw new Error('The ends of a range must be numbers');
+  }
+  return { lo, hi };
+}
+
+const domainTex = (d, v) => {
+  const L = d.lo ? `${tex(d.lo)} \\le ` : '', H = d.hi ? ` \\le ${tex(d.hi)}` : '';
+  return `\\quad \\left\\{${L}${v}${H}\\right\\}`;
+};
+
+// Text → { kind, ... }. Kinds: function (y = f(x), or the user's own f(x) = …), surface (z = f(x, y)),
+// vline (x = c), curve2/curve3 ((f(t), g(t)[, h(t)])), point2/point3, param (a = 1.5), empty, error.
+// fns: names of the user's functions, known in advance (see definedName). Never throws.
+export function analyze(text, fns = NONE) {
   try {
-    const s = normalize(text);
-    if (!s) return { kind: 'empty' };
+    // A range at the end: "y = sqrt(x) {0 <= x <= 4}", "(cos(t), sin(t)) {0 <= t <= pi}"
+    let raw = String(text), cond = null;
+    const braces = raw.match(/^(.*?)\{([^{}]*)\}\s*$/);
+    if (braces) { raw = braces[1]; cond = braces[2]; }
 
-    const sides = splitTop(s, '=');
-    if (sides.length > 2) throw new Error('Too many "="');
-    const lhs = sides.length === 2 ? sides[0].trim() : null;
-    const rhs = sides[sides.length - 1].trim();
-
-    const tuple = splitTuple(rhs);
-    if (tuple) {
-      if (lhs !== null) throw new Error('A point or a curve has no left side');
-      if (tuple.length > 3) throw new Error('Use 2 or 3 coordinates');
-      const nodes = tuple.map(parseNode);
-      const syms = new Set(nodes.flatMap(n => [...freeSymbols(n)]));
-      if (['x', 'y', 'z'].some(v => syms.has(v))) throw new Error('A curve uses t as its parameter: (cos(t), sin(t))');
-      const curve = syms.has('t');
-      const kind = (curve ? 'curve' : 'point') + nodes.length;
-      return { kind, nodes, params: paramsOf(syms), tex: `\\left(${nodes.map(tex).join(',\\ ')}\\right)` };
+    const info = analyzeBody(raw, fns);
+    if (info.kind === 'empty' || info.kind === 'error') return info;
+    if (cond !== null) {
+      const v = info.kind === 'function' ? 'x' : info.kind.startsWith('curve') ? 't' : null;
+      if (!v) throw new Error('Only functions of x and curves of t can have a range');
+      info.domain = parseDomain(cond, v, fns);
+      const extra = [info.domain.lo, info.domain.hi].filter(Boolean).flatMap(n => [...freeSymbols(n)]);
+      info.params = [...new Set([...info.params, ...paramsOf(new Set(extra))])];
+      info.tex += domainTex(info.domain, v);
     }
-
-    const node = parseNode(rhs);
-    const syms = freeSymbols(node);
-
-    if (lhs !== null && lhs !== 'y' && lhs !== 'z') {
-      if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(lhs) || VARIABLES.has(lhs) || CONSTANTS.has(lhs) || FUNCTIONS.includes(lhs)) {
-        throw new Error(lhs === 'x' ? 'Vertical lines x = c are not supported yet' : 'Write y = …, z = … or a = number');
-      }
-      if (syms.size) throw new Error(`A parameter needs a number: ${lhs} = 1`);
-      const value = node.evaluate();
-      if (typeof value !== 'number' || !isFinite(value)) throw new Error('A parameter needs a real number');
-      return { kind: 'param', name: lhs, value, params: [], tex: paramTex(lhs, value) };
-    }
-
-    if (syms.has('t')) throw new Error('t is for curves: (cos(t), sin(t))');
-    if (lhs === 'y' && (syms.has('y') || syms.has('z'))) throw new Error('y = … can only use x');
-    if (lhs === 'z' || syms.has('y')) {
-      if (syms.has('z')) throw new Error('z = … can only use x and y');
-      return { kind: 'surface', node, params: paramsOf(syms), tex: `z = ${tex(node)}` };
-    }
-    if (syms.has('z')) throw new Error('Write z = f(x, y) for a surface');
-    return { kind: 'function', node, params: paramsOf(syms), tex: `y = ${tex(node)}` };
+    return info;
   } catch (e) {
     return { kind: 'error', message: e.message.replace(/\(char \d+\)/, '').trim() };
   }
+}
+
+function analyzeBody(text, fns) {
+  // The user's own function: f(x) = …
+  const name = definedName(text);
+  if (name) {
+    const node = parseNode(normalize(text.slice(text.indexOf('=') + 1), fns), fns);
+    const syms = freeSymbols(node);
+    if (['y', 'z', 't'].some(v => syms.has(v))) throw new Error(`${name}(x) = … can only use x`);
+    let self = false;
+    node.traverse(n => { if (n.isFunctionNode && (n.fn.name === name || derivName(n.fn.name)?.base === name)) self = true; });
+    if (self) throw new Error(`${name} cannot use itself`);
+    return { kind: 'function', name, node, params: paramsOf(syms), tex: `${symTex(name)}(x) = ${tex(node)}` };
+  }
+
+  const s = normalize(text, fns);
+  if (!s) return { kind: 'empty' };
+
+  const sides = splitTop(s, '=');
+  if (sides.length > 2) throw new Error('Too many "="');
+  const lhs = sides.length === 2 ? sides[0].trim() : null;
+  const rhs = sides[sides.length - 1].trim();
+
+  const tuple = splitTuple(rhs);
+  if (tuple) {
+    if (lhs !== null) throw new Error('A point or a curve has no left side');
+    if (tuple.length > 3) throw new Error('Use 2 or 3 coordinates');
+    const nodes = tuple.map(p => parseNode(p, fns));
+    const syms = new Set(nodes.flatMap(n => [...freeSymbols(n)]));
+    if (['x', 'y', 'z'].some(v => syms.has(v))) throw new Error('A curve uses t as its parameter: (cos(t), sin(t))');
+    const curve = syms.has('t');
+    const kind = (curve ? 'curve' : 'point') + nodes.length;
+    return { kind, nodes, params: paramsOf(syms), tex: `\\left(${nodes.map(tex).join(',\\ ')}\\right)` };
+  }
+
+  const node = parseNode(rhs, fns);
+  const syms = freeSymbols(node);
+
+  // A vertical line: x = 2, x = a
+  if (lhs === 'x') {
+    if (['x', 'y', 'z', 't'].some(v => syms.has(v))) throw new Error('x = … must be a number: x = 2 or x = a');
+    return { kind: 'vline', node, params: paramsOf(syms), tex: `x = ${tex(node)}` };
+  }
+
+  if (lhs !== null && lhs !== 'y' && lhs !== 'z') {
+    if (fns.has(lhs)) throw new Error(`${lhs} is already a function`);
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(lhs) || VARIABLES.has(lhs) || CONSTANTS.has(lhs) || FUNCTIONS.includes(lhs)) {
+      throw new Error('Write y = …, z = …, x = …, f(x) = … or a = number');
+    }
+    if (syms.size) throw new Error(`A parameter needs a number: ${lhs} = 1`);
+    const value = node.evaluate();
+    if (typeof value !== 'number' || !isFinite(value)) throw new Error('A parameter needs a real number');
+    return { kind: 'param', name: lhs, value, params: [], tex: paramTex(lhs, value) };
+  }
+
+  if (syms.has('t')) throw new Error('t is for curves: (cos(t), sin(t))');
+  if (lhs === 'y' && (syms.has('y') || syms.has('z'))) throw new Error('y = … can only use x');
+  if (lhs === 'z' || syms.has('y')) {
+    if (syms.has('z')) throw new Error('z = … can only use x and y');
+    return { kind: 'surface', node, params: paramsOf(syms), tex: `z = ${tex(node)}` };
+  }
+  if (syms.has('z')) throw new Error('Write z = f(x, y) for a surface');
+  return { kind: 'function', node, params: paramsOf(syms), tex: `y = ${tex(node)}` };
 }
 
 // Compiled evaluator: scope → number (NaN for complex values and errors)
@@ -292,6 +382,14 @@ function emitFn(n) {
       if (args.length === 2) return { s: `\\log_{${arg(1)}}${fnArg(args[0])}`, p: 6, k: 'fn' };
   }
   if (FN_TEX[name] && args.length === 1) return { s: FN_TEX[name] + fnArg(args[0]), p: 6, k: 'fn' };
+  // The user's functions: f(x - 1), f'(x). Plain brackets unless the argument is tall: \left( after a letter adds a gap
+  const call = base => {
+    const inner = args.map(a => emit(a).s).join(', ');
+    return { s: /\\frac|\^/.test(inner) ? `${base}${par(inner)}` : `${base}(${inner})`, p: 6, k: 'call' };
+  };
+  const d = derivName(name);
+  if (d) return call(symTex(d.base) + "'".repeat(d.order));
+  if (!FUNCTIONS.includes(name)) return call(symTex(name));
   return { s: `\\operatorname{${name}}${par(args.map(a => emit(a).s).join(', '))}`, p: 6, k: 'fn' };
 }
 

@@ -1,6 +1,7 @@
 // 2D view on a canvas. Equal units on both axes, so slopes and shapes are true.
 // Immediate mode: onDraw(plot) is called on every render and draws with the primitives below.
 // Interaction: drag to pan, wheel / pinch to zoom, drag handles (points that topics make movable).
+// `pointer` is where the mouse hovers (or where a finger tapped): objects may read the graph there.
 
 import { THEME } from '../core/palette.js';
 import { tween, lerp } from '../core/anim.js';
@@ -30,6 +31,7 @@ export class Plot2D {
 
     this.ctx = this.canvas.getContext('2d');
     this.handles = [];
+    this.pointer = null; // { px, py } in canvas pixels
     this.labels = new Map(); // key → { el, tex }
     this.frame = null;
     this.stopTween = null;
@@ -157,8 +159,8 @@ export class Plot2D {
     this.stroke(color, width);
   }
 
-  // (fx(t), fy(t)) for t in [t0, t1]
-  param(fx, fy, t0, t1, color, width = 3, n = 800) {
+  // (fx(t), fy(t)) for t in [t0, t1]; long ranges get more samples
+  param(fx, fy, t0, t1, color, width = 3, n = Math.min(6000, Math.max(800, Math.round(130 * (t1 - t0))))) {
     const ctx = this.ctx;
     ctx.beginPath();
     let pen = false, prev = null;
@@ -192,6 +194,50 @@ export class Plot2D {
     this.ctx.moveTo(this.sx(xa), this.sy(ya));
     this.ctx.lineTo(this.sx(xb), this.sy(yb));
     this.stroke(color, width, dash);
+  }
+
+  // Arrow from (x1, y1) to (x2, y2): where a point moves; the head is drawn only if the arrow is long enough
+  arrow(x1, y1, x2, y2, color, { width = 2, dash = [] } = {}) {
+    if (![x1, y1, x2, y2].every(isFinite)) return;
+    const ax = this.sx(x1), ay = this.sy(y1), bx = this.sx(x2), by = this.sy(y2);
+    const len = Math.hypot(bx - ax, by - ay);
+    if (len < 4) return;
+    const ux = (bx - ax) / len, uy = (by - ay) / len, head = Math.min(10, len / 2);
+    const ctx = this.ctx;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(bx - ux * head * 0.6, by - uy * head * 0.6);
+    this.stroke(color, width, dash);
+    ctx.beginPath();
+    ctx.moveTo(bx, by);
+    ctx.lineTo(bx - ux * head - uy * head * 0.5, by - uy * head + ux * head * 0.5);
+    ctx.lineTo(bx - ux * head + uy * head * 0.5, by - uy * head - ux * head * 0.5);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+
+  // Vertical line x = c across the whole view
+  vline(c, color, width = 3, dash = []) {
+    if (!isFinite(c)) return;
+    const px = this.sx(c);
+    this.ctx.beginPath();
+    this.ctx.moveTo(px, 0);
+    this.ctx.lineTo(px, this.h);
+    this.stroke(color, width, dash);
+  }
+
+  // Hollow point: a notable point that can be inspected (root, extremum, intersection)
+  ring(x, y, color, r = 4.5) {
+    if (!isFinite(x) || !isFinite(y)) return;
+    const ctx = this.ctx;
+    ctx.beginPath();
+    ctx.arc(this.sx(x), this.sy(y), r, 0, Math.PI * 2);
+    ctx.fillStyle = THEME.bg;
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = color;
+    ctx.stroke();
   }
 
   dot(x, y, color, r = 5) {
@@ -327,10 +373,12 @@ export class Plot2D {
     const pos = e => { const r = c.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
     const nearHandle = (px, py) => this.handles.find(hd => Math.hypot(hd.px - px, hd.py - py) < 16);
 
+    let tap = null;
     c.addEventListener('pointerdown', e => {
       c.setPointerCapture(e.pointerId);
       const [px, py] = pos(e);
       pointers.set(e.pointerId, [px, py]);
+      tap = pointers.size === 1 ? { px, py, time: e.timeStamp } : null;
       if (this.stopTween) this.stopTween();
       if (pointers.size === 2) {
         const [p, q] = [...pointers.values()];
@@ -346,8 +394,12 @@ export class Plot2D {
       const [px, py] = pos(e);
       if (!pointers.has(e.pointerId)) {
         c.classList.toggle('over-handle', !!nearHandle(px, py));
+        if (e.pointerType === 'mouse') { this.pointer = { px, py }; this.request(); }
         return;
       }
+      if (tap && Math.hypot(px - tap.px, py - tap.py) > 6) tap = null;
+      // While the view is panned the readout under the pointer would jump around: hide it
+      if (!tap && drag && !drag.handle && this.pointer) { this.pointer = null; this.request(); }
       pointers.set(e.pointerId, [px, py]);
       if (pinch && pointers.size === 2) {
         const [p, q] = [...pointers.values()];
@@ -363,12 +415,21 @@ export class Plot2D {
       }
     });
     const up = e => {
+      // A tap (no movement) reads the graph at that place; on a phone this replaces hovering
+      if (e.type === 'pointerup' && tap && e.timeStamp - tap.time < 500 && !(drag && drag.handle)) {
+        this.pointer = { px: tap.px, py: tap.py };
+        this.request();
+      }
+      tap = null;
       pointers.delete(e.pointerId);
       if (pointers.size < 2) pinch = null;
       if (!pointers.size) { drag = null; c.classList.remove('dragging'); }
     };
     c.addEventListener('pointerup', up);
     c.addEventListener('pointercancel', up);
+    c.addEventListener('pointerleave', e => {
+      if (e.pointerType === 'mouse' && !pointers.size) { this.pointer = null; this.request(); }
+    });
     c.addEventListener('wheel', e => {
       e.preventDefault();
       const [px, py] = pos(e);

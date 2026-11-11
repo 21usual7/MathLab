@@ -29,7 +29,7 @@ export function paramControl(scene, name, labelTex = symTex(name)) {
     slider.min = p.min;
     slider.max = p.max;
     if (document.activeElement !== slider) slider.value = p.value;
-    pval.textContent = fmt(p.value);
+    pval.textContent = fmt(Math.round(p.value * 1000) / 1000);
     play.textContent = p.playing ? '❚❚' : '▶';
     el.classList.toggle('playing', p.playing);
   }

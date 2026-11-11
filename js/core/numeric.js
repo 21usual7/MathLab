@@ -33,6 +33,31 @@ export function findRoots(f, lo, hi, n = 800) {
   return roots.filter((r, i) => i === 0 || Math.abs(r - roots[i - 1]) > 1e-6);
 }
 
+// Peaks and valleys of f on [lo, hi]: a sample higher (lower) than both neighbours, refined by golden-section
+// search. A "peak" at a jump taller than maxJump (tan x at π/2) is a break, not an extremum.
+export function extrema(f, lo, hi, n = 600, maxJump = Infinity) {
+  const xs = [], ys = [], out = [];
+  for (let i = 0; i <= n; i++) { const x = lo + (hi - lo) * i / n; xs.push(x); ys.push(f(x)); }
+  const PHI = (Math.sqrt(5) - 1) / 2;
+  for (let i = 1; i < n; i++) {
+    const a = ys[i - 1], b = ys[i], c = ys[i + 1];
+    if (!isFinite(a) || !isFinite(b) || !isFinite(c)) continue;
+    if (Math.abs(b - a) > maxJump || Math.abs(c - b) > maxJump) continue;
+    const isMax = b > a && b > c, isMin = b < a && b < c;
+    if (!isMax && !isMin) continue;
+    const g = isMax ? x => -f(x) : f;
+    let l = xs[i - 1], r = xs[i + 1];
+    let x1 = r - PHI * (r - l), x2 = l + PHI * (r - l), g1 = g(x1), g2 = g(x2);
+    for (let k = 0; k < 60; k++) {
+      if (g1 < g2) { r = x2; x2 = x1; g2 = g1; x1 = r - PHI * (r - l); g1 = g(x1); }
+      else { l = x1; x1 = x2; g1 = g2; x2 = l + PHI * (r - l); g2 = g(x2); }
+    }
+    const x = (l + r) / 2, y = f(x);
+    if (isFinite(y)) out.push({ x, y, type: isMax ? 'max' : 'min' });
+  }
+  return out;
+}
+
 // Rounds away float noise: 0.30000000000000004 → 0.3
 export const clean = v => Math.round(v * 1e9) / 1e9;
 

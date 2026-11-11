@@ -103,6 +103,13 @@ export default {
         ru: 'Возьмём вторую точку на шаг $h$ правее. Дорога поднимается на $\\Delta y$, пока мы проходим $\\Delta x = h$ вперёд, значит её средняя крутизна — $\\red{\\frac{\\Delta y}{\\Delta x}}$. Это наклон <span class="c-red">красной прямой</span> через две точки — <i>секущей</i>.',
       },
       try: { en: 'Change $h$ and watch the secant swing.', ru: 'Меняйте $h$ — секущая поворачивается.' },
+      hint: {
+        title: { en: 'What exactly is a slope?', ru: 'Что такое наклон?' },
+        text: {
+          en: 'The slope of a line is how much it rises for one step to the right. A slope of $2$: one step right, two up. A slope of $-\\frac12$: one step right, half a step down. Between two points it is «rise over run»: $\\frac{\\Delta y}{\\Delta x}$.',
+          ru: 'Наклон прямой — на сколько она поднимается при шаге на единицу вправо. Наклон $2$: шаг вправо — два вверх. Наклон $-\\frac12$: шаг вправо — полшага вниз. Между двумя точками это «подъём делить на шаг»: $\\frac{\\Delta y}{\\Delta x}$.',
+        },
+      },
       state: { show: ['f', 'secant', 'names', 'point'], params: { a: -2, h: 1.5 }, window: { cx: 0, cy: 0, unit: 72 }, controls: ['a', 'h'] },
     },
     {
@@ -145,6 +152,15 @@ export default {
       text: {
         en: 'That new function is the derivative: $\\yellow{f\'(x) = \\frac{3x^2}{4} - 1}$. Where $\\blue{f}$ climbs, $\\yellow{f\'} > 0$; where it falls, $\\yellow{f\'} < 0$. At the top of the hill and the bottom of the valley the tangent is flat, so $\\yellow{f\'} = 0$ — the yellow curve crosses the axis exactly under them. This is how derivatives find maxima and minima.',
         ru: 'Эта новая функция и есть производная: $\\yellow{f\'(x) = \\frac{3x^2}{4} - 1}$. Где $\\blue{f}$ растёт, там $\\yellow{f\'} > 0$; где убывает — $\\yellow{f\'} < 0$. На вершине холма и на дне впадины касательная горизонтальна, значит $\\yellow{f\'} = 0$ — жёлтая кривая пересекает ось точно под ними. Так производная находит максимумы и минимумы.',
+      },
+      check: {
+        q: { en: 'Between the hill and the valley $\\blue{f}$ goes down. What is the sign of $\\yellow{f\'}$ there?', ru: 'Между холмом и впадиной $\\blue{f}$ спускается. Какой знак у $\\yellow{f\'}$ там?' },
+        options: [{ text: '$f\' > 0$' }, { text: '$f\' < 0$', ok: true }, { text: '$f\' = 0$' }],
+        explain: {
+          en: 'Going down means every tangent there points down: negative slope. The yellow curve is under the axis exactly between the two guides.',
+          ru: 'Спуск — значит каждая касательная там смотрит вниз: наклон отрицательный. Жёлтая кривая лежит под осью ровно между двумя пунктирами.',
+        },
+        reveal: scene => scene.animateParams({ a: 0 }, 1200),
       },
       state: { show: ['f', 'df', 'guides', 'tangent', 'names', 'point'], params: { a: X_EXT }, ms: 1500, window: { cx: 0, cy: 0, unit: 72 }, controls: ['a'] },
     },

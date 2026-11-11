@@ -1,0 +1,12 @@
+{
+  "name": "mathlab",
+  "private": true,
+  "type": "module",
+  "description": "No build step. npm is only used to run the tests of the engine.",
+  "scripts": {
+    "test": "node --test tests/"
+  },
+  "devDependencies": {
+    "mathjs": "12.4.2"
+  }
+}
