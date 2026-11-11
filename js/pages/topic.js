@@ -9,7 +9,7 @@ import { paramControl } from '../ui/params.js';
 import { renderTex, renderMath } from '../ui/tex.js';
 import { t } from '../core/i18n.js';
 import { fmt } from '../core/numeric.js';
-import { TRACKS, topicMeta, loadTopic } from '../topics/index.js';
+import { SUBJECTS, TRACKS, topicMeta, loadTopic } from '../topics/index.js';
 import { encodeLab } from './lab.js';
 
 const chip = id => {
@@ -36,7 +36,7 @@ export async function mountTopic(root, id) {
     <article class="topic">
       <div class="topic-text">
         <header class="topic-head">
-          <div class="crumbs"><a href="#">Map</a><span>/</span><span>${t(track.title)}</span></div>
+          <div class="crumbs"><a href="#">Map</a><span>/</span><span>${t(SUBJECTS.find(x => x.id === track.subject).title)}</span><span>/</span><span>${t(track.title)}</span></div>
           <h1>${t(meta.title)}</h1>
           <p class="lead">${t(meta.summary)}</p>
           ${meta.prereqs && meta.prereqs.length ? `<div class="prereqs"><span class="label">Builds on</span>${meta.prereqs.map(chip).join('')}</div>` : ''}
@@ -74,7 +74,7 @@ export async function mountTopic(root, id) {
             <span class="counter"></span>
             <button class="ghost" data-nav="1" aria-label="Next step">→</button>
             <span class="spacer"></span>
-            <button class="ghost" data-act="lab">Open in Lab</button>
+            ${topic.lab === false ? '' : '<button class="ghost" data-act="lab">Open in Lab</button>'}
           </div>
         </div>
       </aside>
@@ -129,6 +129,7 @@ export async function mountTopic(root, id) {
     if (st.params) scene.animateParams(st.params, st.ms || 1000);
     if (st.window && stage.p2) stage.p2.setView(typeof st.window === 'function' ? st.window(scene) : st.window, st.windowMs || 1200);
     if (st.camera && stage.p3) stage.p3.setCamera(st.camera);
+    if (stage.p3) stage.p3.autoRotate(!!st.rotate);
     (st.play || []).forEach(name => scene.play(name, true));
     setControls(st.controls || topic.controls || []);
     if (step.enter) step.enter(scene, stage);
@@ -180,7 +181,7 @@ export async function mountTopic(root, id) {
   }));
 
   // The current scene, editable, in the Lab
-  $('[data-act=lab]').addEventListener('click', () => {
+  if (topic.lab !== false) $('[data-act=lab]').addEventListener('click', () => {
     const used = new Set();
     // The user's functions (f(x) = …) go along even when hidden: the visible lines may use them
     const items = scene.items.filter(i => (i.visible || i.info.name) && i.info.kind !== 'error').map(i => {

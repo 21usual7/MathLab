@@ -1,4 +1,4 @@
-// Router: #  ·  #lab?s=...  ·  #topic/<id>
+// Router: #  ·  #algebra / #geometry (the map, scrolled to that subject)  ·  #lab?s=...  ·  #topic/<id>
 // Every page returns a cleanup function (stops animations, frees WebGL) that runs before the next one.
 
 import { mountHome } from './pages/home.js';
@@ -22,7 +22,11 @@ async function route() {
   let c;
   if (page === 'lab') c = mountLab(app, new URLSearchParams(query || ''));
   else if (page === 'topic') c = await mountTopic(app, id);
-  else c = mountHome(app);
+  else {
+    c = mountHome(app);
+    const subject = document.getElementById(page);
+    if (subject) subject.scrollIntoView();
+  }
 
   // A newer route started while this one was loading
   if (my !== seq) { if (c) c(); return; }

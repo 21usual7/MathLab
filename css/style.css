@@ -139,6 +139,8 @@ button { font: inherit; color: inherit; }
 .plot-label { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 15px; text-shadow: 0 0 6px var(--stage), 0 0 2px var(--stage); }
 .axis-label { color: #c9d1dc; font: italic 400 16px var(--serif); }
 .tick-label { color: var(--faint); font: 500 10px var(--sans); }
+.vertex-label { color: #dfe4ec; font: italic 500 17px var(--serif); text-shadow: 0 0 6px var(--stage), 0 0 3px var(--stage); }
+.vertex-label sub { font-size: 0.68em; font-style: normal; }
 
 /* Parameter control */
 .param { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -182,10 +184,14 @@ button { font: inherit; color: inherit; }
 .principle p { margin: 0; color: var(--muted); font-size: 15px; }
 
 .map { padding: 80px 0 40px; }
+.subject { margin-bottom: 44px; scroll-margin-top: 80px; }
+.subject-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 1px solid var(--line-soft); }
+.subject-head h3 { font-size: 24px; }
+.subject-head span { color: var(--faint); font-size: 14px; }
 .section-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 24px; margin-bottom: 28px; }
 .section-head h2 { font-size: 36px; }
 .section-head p { margin: 0; color: var(--muted); }
-.tracks { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+.tracks { display: grid; grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr)); gap: 16px; }
 .track h3 { font: 600 12px var(--sans); text-transform: uppercase; letter-spacing: 0.12em; color: var(--faint); margin: 0 0 12px; }
 .node { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; margin-bottom: 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--text); }
 .node-title { font-family: var(--serif); font-size: 17px; line-height: 1.3; }
@@ -327,6 +333,10 @@ button { font: inherit; color: inherit; }
 
 /* ---------- Phones and narrow windows ---------- */
 
+@media (max-width: 430px) {
+  .brand-name { display: none; }
+}
+
 @media (max-width: 1100px) {
   .tracks { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
@@ -366,5 +376,6 @@ button { font: inherit; color: inherit; }
   .stage-bar button { white-space: nowrap; }
   .stage-bar .seg button { padding: 5px 9px; font-size: 12px; }
   .stage-bar .ghost { padding: 5px 10px; font-size: 13px; }
-  .site-nav a { padding: 6px 8px; }
+  .site-nav a { padding: 6px 8px; font-size: 14px; }
+  .site-header { gap: 10px; }
 }

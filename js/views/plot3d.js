@@ -8,11 +8,15 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { THEME } from '../core/palette.js';
 import { tween, lerp } from '../core/anim.js';
+import { facesOf, frontFaces } from '../core/geom.js';
 
 const WHITE = new THREE.Color('#ffffff');
 
+// Solid geometry is drawn as in a school book: edges you can see are solid, edges behind the solid are
+// dashed, and this is recomputed as the camera turns (objects may have onCamera(eye)).
+
 export class Plot3D {
-  constructor(container, onDraw, { R = 4, zmax = 4, camera = [7, -9, 6] } = {}) {
+  constructor(container, onDraw, { R = 4, zmax = 4, camera = [7, -9, 6], axes = true } = {}) {
     this.onDraw = onDraw;
     this.R = R;
     this.zmax = zmax;
@@ -53,7 +57,7 @@ export class Plot3D {
     // Keep surfaces inside the box: cut above zmax and below -zmax
     this.clip = [new THREE.Plane(new THREE.Vector3(0, 0, -1), zmax), new THREE.Plane(new THREE.Vector3(0, 0, 1), zmax)];
 
-    this.buildAxes();
+    if (axes) this.buildAxes();
     this.objs = new Map();
     this.needBuild = true;
     this.dirty = true;
@@ -68,6 +72,8 @@ export class Plot3D {
       const moved = this.controls.update();
       if (moved || this.dirty) {
         this.dirty = false;
+        const eye = this.camera.position.toArray();
+        for (const o of this.objs.values()) if (o.onCamera) o.onCamera(eye);
         renderer.render(this.scene, this.camera);
         this.labelRenderer.render(this.scene, this.camera);
       }
@@ -100,10 +106,11 @@ export class Plot3D {
     this.dirty = true;
   }
 
+  // Text label in HTML over the 3D view; "A1" is written A₁
   label(text, pos, cls = 'axis-label') {
     const div = document.createElement('div');
     div.className = cls;
-    div.textContent = text;
+    div.innerHTML = String(text).replace(/^([A-Z])(\d+)$/, '$1<sub>$2</sub>');
     const obj = new CSS2DObject(div);
     obj.position.set(...pos);
     return obj;
@@ -259,6 +266,87 @@ export class Plot3D {
     o.group.position.set(axis === 'x' ? value : 0, axis === 'y' ? value : 0, 0);
   }
 
+  // ---------- Solid geometry ----------
+
+  // Segment that is solid where seen and dashed where hidden. With `poly` its visibility follows the faces
+  // it lies on (inside the solid: always dashed); `hidden: true` makes it always dashed.
+  segment(key, a, b, color, { poly = null, hidden = false, radius = 0.028 } = {}) {
+    const o = this.entry(key, () => ({ group: new THREE.Group() }));
+    this.disposeObj(o.group);
+    o.group.clear();
+    const solid = new THREE.Mesh(
+      new THREE.TubeGeometry(new THREE.LineCurve3(new THREE.Vector3(...a), new THREE.Vector3(...b)), 1, radius, 8, false),
+      new THREE.MeshStandardMaterial({ color, emissive: new THREE.Color(color).multiplyScalar(0.35), roughness: 0.45 }));
+    const dashed = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...a), new THREE.Vector3(...b)]),
+      new THREE.LineDashedMaterial({ color, dashSize: 0.14, gapSize: 0.1, transparent: true, opacity: 0.75 }));
+    dashed.computeLineDistances();
+    o.group.add(solid, dashed);
+    const faces = poly ? facesOf(poly, a).filter(i => facesOf(poly, b).includes(i)) : [];
+    o.onCamera = eye => {
+      const front = poly ? frontFaces(poly, eye) : [];
+      const seen = !hidden && (!poly || faces.some(i => front[i]));
+      solid.visible = seen;
+      dashed.visible = !seen;
+    };
+    o.onCamera(this.camera.position.toArray());
+  }
+
+  // Convex polyhedron (from geom.js): faint faces, edges solid or dashed, vertex labels A, B, A₁ …
+  polyhedron(key, poly, color, { fill = 0.06, labels = true } = {}) {
+    const o = this.entry(key, () => ({ group: new THREE.Group() }));
+    this.disposeObj(o.group);
+    o.group.clear();
+    const V = poly.V;
+    const pos = [];
+    for (const f of poly.faces) for (let k = 1; k + 1 < f.pts.length; k++) pos.push(...f.pts[0], ...f.pts[k], ...f.pts[k + 1]);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    o.group.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: fill, side: THREE.DoubleSide, depthWrite: false })));
+    if (labels) {
+      for (const [name, p] of Object.entries(V)) {
+        const out = new THREE.Vector3(...p).sub(new THREE.Vector3(...poly.center)).normalize().multiplyScalar(0.32);
+        o.group.add(this.label(name, [p[0] + out.x, p[1] + out.y, p[2] + out.z], 'vertex-label'));
+      }
+    }
+    poly.edges.forEach(e => {
+      const sub = `${key}:${e.a}${e.b}`;
+      this.segment(sub, V[e.a], V[e.b], color, { poly });
+    });
+  }
+
+  // Filled flat polygon (a section), its sides drawn as segments on the faces of `poly`
+  polygon(key, pts, color, { opacity = 0.35, poly = null, outline = true } = {}) {
+    const o = this.entry(key, () => ({ group: new THREE.Group() }));
+    this.disposeObj(o.group);
+    o.group.clear();
+    if (pts.length >= 3) {
+      const pos = [];
+      for (let k = 1; k + 1 < pts.length; k++) pos.push(...pts[0], ...pts[k], ...pts[k + 1]);
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity, side: THREE.DoubleSide, depthWrite: false }));
+      mesh.renderOrder = 1;
+      o.group.add(mesh);
+    }
+    if (outline) pts.forEach((p, i) => this.segment(`${key}:${i}`, p, pts[(i + 1) % pts.length], color, { poly, radius: 0.034 }));
+  }
+
+  // A named point: a small ball and its label
+  point(key, p, color, name = null, r = 0.075) {
+    this.sphere(key, p, color, r);
+    if (!name) return;
+    const o = this.entry(`${key}:label`, () => {
+      const group = new THREE.Group();
+      const l = this.label('', [0, 0, 0], 'vertex-label');
+      group.add(l);
+      return { group, l };
+    });
+    o.l.element.innerHTML = name;
+    o.l.element.style.color = color;
+    o.l.position.set(p[0], p[1], p[2] + 0.28);
+  }
+
   // ---------- Camera ----------
 
   setCamera(pos, ms = 1200) {
@@ -276,6 +364,8 @@ export class Plot3D {
     group.traverse(m => {
       if (m.geometry) m.geometry.dispose();
       if (m.material) m.material.dispose();
+      // An HTML label is not removed with its parent group: take it out of the page
+      if (m.isCSS2DObject) m.element.remove();
     });
   }
 

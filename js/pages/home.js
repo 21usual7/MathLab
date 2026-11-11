@@ -4,7 +4,7 @@ import { Scene } from '../core/scene.js';
 import { Stage } from '../ui/stage.js';
 import { renderTex } from '../ui/tex.js';
 import { t } from '../core/i18n.js';
-import { TRACKS, CATALOG, topicMeta } from '../topics/index.js';
+import { SUBJECTS, TRACKS, CATALOG, topicMeta } from '../topics/index.js';
 
 const TEXT = {
   lead: {
@@ -24,6 +24,15 @@ const TEXT = {
     ru: n => `Темы связаны: у каждой написано, на чём она построена. Готово: ${n}, остальные в пути.`,
   },
 };
+
+// One topic on the map: a link when it is ready, a dashed card when it is planned
+function node(m) {
+  const needs = (m.prereqs || []).map(id => t(topicMeta(id).title)).join(', ');
+  const inner = `<span class="node-title">${t(m.title)}</span>
+    ${m.status === 'ready' ? `<span class="node-meta">${m.minutes} min</span>` : '<span class="node-meta">planned</span>'}
+    ${needs ? `<span class="node-needs">← ${needs}</span>` : ''}`;
+  return m.status === 'ready' ? `<a class="node ready" href="#topic/${m.id}">${inner}</a>` : `<div class="node planned">${inner}</div>`;
+}
 
 export function mountHome(root) {
   root.innerHTML = `
@@ -52,21 +61,21 @@ export function mountHome(root) {
 
       <section class="map" id="map">
         <div class="section-head"><h2>Map</h2><p>${t(TEXT.map)(CATALOG.filter(m => m.status === 'ready').length)}</p></div>
-        <div class="tracks">
-          ${TRACKS.map(tr => `
-            <div class="track">
-              <h3>${t(tr.title)}</h3>
-              ${CATALOG.filter(m => m.track === tr.id).map(m => {
-                const needs = (m.prereqs || []).map(id => t(topicMeta(id).title)).join(', ');
-                const inner = `<span class="node-title">${t(m.title)}</span>
-                  ${m.status === 'ready' ? `<span class="node-meta">${m.minutes} min</span>` : '<span class="node-meta">planned</span>'}
-                  ${needs ? `<span class="node-needs">← ${needs}</span>` : ''}`;
-                return m.status === 'ready'
-                  ? `<a class="node ready" href="#topic/${m.id}">${inner}</a>`
-                  : `<div class="node planned">${inner}</div>`;
-              }).join('')}
-            </div>`).join('')}
-        </div>
+        ${SUBJECTS.map(sub => {
+          const tracks = TRACKS.filter(tr => tr.subject === sub.id);
+          const ready = CATALOG.filter(m => tracks.some(tr => tr.id === m.track) && m.status === 'ready').length;
+          return `
+          <div class="subject" id="${sub.id}">
+            <div class="subject-head"><h3>${t(sub.title)}</h3><span>${ready} ready</span></div>
+            <div class="tracks" style="--cols: ${tracks.length}">
+              ${tracks.map(tr => `
+                <div class="track">
+                  <h3>${t(tr.title)}</h3>
+                  ${CATALOG.filter(m => m.track === tr.id).map(node).join('')}
+                </div>`).join('')}
+            </div>
+          </div>`;
+        }).join('')}
       </section>
 
       <footer class="foot">MathLab · <a href="#lab">Lab</a> · <a href="https://github.com/21usual7/MathLab">GitHub</a></footer>

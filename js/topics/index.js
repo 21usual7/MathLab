@@ -1,12 +1,21 @@
 // The map: tracks and topics. A topic lists what it needs (prereqs) and where it leads (next),
 // so a student can step back to the real cause of a gap. Planned topics are shown on the map too.
 
+// Two subjects, as at school: algebra with the beginnings of calculus, and geometry
+export const SUBJECTS = [
+  { id: 'algebra', title: { en: 'Algebra and calculus', ru: 'Алгебра и начала анализа' } },
+  { id: 'geometry', title: { en: 'Geometry', ru: 'Геометрия' } },
+];
+
 export const TRACKS = [
-  { id: 'functions', title: { en: 'Functions', ru: 'Функции' } },
-  { id: 'limits', title: { en: 'Limits', ru: 'Пределы' } },
-  { id: 'derivatives', title: { en: 'Derivatives', ru: 'Производные' } },
-  { id: 'integrals', title: { en: 'Integrals', ru: 'Интегралы' } },
-  { id: 'multivar', title: { en: 'Several variables', ru: 'Несколько переменных' } },
+  { id: 'functions', subject: 'algebra', title: { en: 'Functions', ru: 'Функции' } },
+  { id: 'limits', subject: 'algebra', title: { en: 'Limits', ru: 'Пределы' } },
+  { id: 'derivatives', subject: 'algebra', title: { en: 'Derivatives', ru: 'Производные' } },
+  { id: 'integrals', subject: 'algebra', title: { en: 'Integrals', ru: 'Интегралы' } },
+  { id: 'multivar', subject: 'algebra', title: { en: 'Several variables', ru: 'Несколько переменных' } },
+  { id: 'space', subject: 'geometry', title: { en: 'Lines and planes in space', ru: 'Прямые и плоскости' } },
+  { id: 'measure', subject: 'geometry', title: { en: 'Angles and distances', ru: 'Углы и расстояния' } },
+  { id: 'solids', subject: 'geometry', title: { en: 'Solids and volumes', ru: 'Тела и объёмы' } },
 ];
 
 export const CATALOG = [
@@ -68,6 +77,29 @@ export const CATALOG = [
     } },
   { id: 'gradient', track: 'multivar', status: 'planned', prereqs: ['surfaces'],
     title: { en: 'Gradient: the steepest way up', ru: 'Градиент: самый крутой подъём' } },
+
+  { id: 'axioms', track: 'space', status: 'planned',
+    title: { en: 'Points, lines and planes in space', ru: 'Точки, прямые и плоскости в пространстве' } },
+  { id: 'cube-sections', track: 'space', status: 'ready', minutes: 10, prereqs: ['axioms'], next: ['parallel', 'angles'],
+    title: { en: 'Sections of a cube', ru: 'Сечения куба' },
+    summary: {
+      en: 'A plane through three points cuts a cube into a polygon: from a triangle to a hexagon. How to see it and how to build it.',
+      ru: 'Плоскость через три точки режет куб по многоугольнику — от треугольника до шестиугольника. Как его увидеть и как построить.',
+    } },
+  { id: 'parallel', track: 'space', status: 'planned', prereqs: ['axioms'],
+    title: { en: 'Parallel and skew lines', ru: 'Параллельные и скрещивающиеся прямые' } },
+  { id: 'perpendicular', track: 'space', status: 'planned', prereqs: ['parallel'],
+    title: { en: 'A line perpendicular to a plane', ru: 'Перпендикуляр к плоскости' } },
+
+  { id: 'angles', track: 'measure', status: 'planned', prereqs: ['perpendicular'],
+    title: { en: 'Angles between lines and planes', ru: 'Углы между прямыми и плоскостями' } },
+  { id: 'distances', track: 'measure', status: 'planned', prereqs: ['perpendicular'],
+    title: { en: 'Distances in space', ru: 'Расстояния в пространстве' } },
+
+  { id: 'polyhedra', track: 'solids', status: 'planned', prereqs: ['axioms'],
+    title: { en: 'Prisms and pyramids', ru: 'Призмы и пирамиды' } },
+  { id: 'volumes', track: 'solids', status: 'planned', prereqs: ['polyhedra'],
+    title: { en: 'Why a pyramid is one third of a prism', ru: 'Почему пирамида — треть призмы' } },
 ];
 
 export const topicMeta = id => CATALOG.find(x => x.id === id);
@@ -78,6 +110,7 @@ const MODULES = {
   'exp-log': () => import('./exp-log.js'),
   limit: () => import('./limit.js'),
   e: () => import('./e.js'),
+  'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
 };
