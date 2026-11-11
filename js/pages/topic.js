@@ -11,6 +11,15 @@ import { t } from '../core/i18n.js';
 import { fmt } from '../core/numeric.js';
 import { SUBJECTS, TRACKS, topicMeta, loadTopic } from '../topics/index.js';
 import { encodeLab } from './lab.js';
+import { taskHTML, bindTask } from '../ui/task.js';
+
+const PRACTICE = {
+  title: { en: 'Try it yourself', ru: 'Попробуйте сами' },
+  text: {
+    en: 'Build it on the scene and press Check. A mistake is not a failure: the program says what exactly differs and where to look again.',
+    ru: 'Постройте на сцене и нажмите Check. Ошибка — не провал: программа скажет, что именно не так и куда вернуться.',
+  },
+};
 
 const chip = id => {
   const m = topicMeta(id);
@@ -43,11 +52,13 @@ export async function mountTopic(root, id) {
         </header>
         <div class="steps">
           ${topic.steps.map((s, i) => `
-            <section class="step" data-i="${i}">
-              <div class="step-num">${String(i + 1).padStart(2, '0')}</div>
+            ${s.task && !(topic.steps[i - 1] || {}).task ? `<div class="practice-head"><h2>${t(PRACTICE.title)}</h2><p>${t(PRACTICE.text)}</p></div>` : ''}
+            <section class="step${s.task ? ' task-step' : ''}" data-i="${i}">
+              <div class="step-num">${s.task ? `Task ${topic.steps.slice(0, i + 1).filter(x => x.task).length}` : String(i + 1).padStart(2, '0')}</div>
               <h2>${t(s.title)}</h2>
               <div class="step-text">${t(s.text)}</div>
               ${s.try ? `<p class="try"><span class="try-label">Try</span>${t(s.try)}</p>` : ''}
+              ${s.task ? taskHTML(s.task) : ''}
               ${s.check ? `
                 <div class="check">
                   <span class="check-label">Predict, then check</span>
@@ -134,8 +145,18 @@ export async function mountTopic(root, id) {
     setControls(st.controls || topic.controls || []);
     if (step.enter) step.enter(scene, stage);
     if (answered.has(i) && step.check.reveal) step.check.reveal(scene, stage);
+    if (tasks[i]) tasks[i].enter();
+    // In a task the Lab would show the formula of the goal graph — the answer
+    const labBtn = $('[data-act=lab]');
+    if (labBtn) labBtn.hidden = !!step.task;
     scene.changed();
   };
+
+  // ---- Tasks: built on the scene, checked, mistakes explained ----
+  const goto = k => steps[k].scrollIntoView({ behavior: 'smooth', block: matchMedia('(max-width: 900px)').matches ? 'end' : 'center' });
+  const tasks = steps.map((el, i) => topic.steps[i].task
+    ? bindTask(el, topic.steps[i].task, i, { scene, goto, stepLabel: k => `${k + 1}. ${t(topic.steps[k].title)}` })
+    : null);
 
   // ---- Questions: one guess, then the explanation and the answer on the scene ----
   const answered = new Set();

@@ -267,6 +267,26 @@ button { font: inherit; color: inherit; }
 .check-explain .verdict.right { color: var(--green); }
 .check-explain .verdict.wrong { color: var(--red); }
 
+/* Try it yourself: tasks checked by the program */
+.practice-head { padding: 48px 0 8px; border-top: 1px solid var(--line-soft); margin-top: 24px; }
+.practice-head h2 { font-size: 32px; }
+.practice-head p { margin: 10px 0 0; color: var(--muted); font-size: 15px; }
+.task-step .step-num { color: var(--orange, #ff9f5a); }
+.task { margin: 20px 0 0; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.task-form { display: flex; align-items: center; gap: 10px; width: 100%; }
+.task-y { font: italic 18px var(--serif); color: var(--soft); }
+.task-form input { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: 16px var(--mono); outline: none; }
+.task-form input:focus { border-color: var(--blue); }
+.task-form .btn, .task-check { padding: 9px 18px; }
+.task-feedback { color: var(--soft); font-size: 15px; line-height: 1.65; }
+.task-feedback:empty { display: none; }
+.task-feedback .verdict { font-weight: 600; margin-right: 4px; }
+.task-feedback .verdict.right { color: var(--green); }
+.task-feedback .verdict.wrong { color: var(--red); }
+.task-back { display: inline-block; margin-left: 4px; }
+.task.solved .task-form input { border-color: var(--green); }
+.ghost[hidden], .btn[hidden] { display: none; }
+
 /* "Stuck?": a hint that opens on demand */
 .hint { margin: 14px 0 0; border-left: 2px solid var(--line); padding-left: 14px; }
 .hint summary { cursor: pointer; color: var(--muted); font-size: 14px; font-weight: 500; list-style: none; }
@@ -351,7 +371,7 @@ button { font: inherit; color: inherit; }
   .map { padding-top: 56px; }
 
   /* Topic: title, then the stage stuck to the top, then the story scrolling under it */
-  .topic { grid-template-columns: 1fr; }
+  .topic { grid-template-columns: minmax(0, 1fr); }
   .topic-text { display: contents; }
   .topic-head { order: 1; padding: 28px 16px 20px; }
   .topic-stage { order: 2; height: 62vh; height: 62dvh; z-index: 5; border-left: 0; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); }

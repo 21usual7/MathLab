@@ -36,6 +36,11 @@ export default {
     scene.add('y = sin(b x)', { id: 'sinb', color: 'teal', visible: false });
     scene.add('y = x^2', { id: 'par', color: 'grey', dim: true, visible: false });
     scene.add('y = a (x - h)^2 + k', { id: 'vertex', color: 'blue', visible: false });
+    // Tasks: a parabola to place, and graphs whose formulas are to be found (their formulas are not in the legend)
+    scene.add('y = (x - h)^2 + k', { id: 'parT', color: 'blue', visible: false, legend: false });
+    scene.add('y = sqrt(x - 3)', { id: 'goal1', color: 'blue', visible: false, legend: false });
+    scene.add('y = -(x - 1)^2 + 2', { id: 'goal2', color: 'blue', visible: false, legend: false });
+    scene.add('y = sin(2x)', { id: 'goal3', color: 'blue', visible: false, legend: false });
     scene.ensureParam('k', 0, { min: -3, max: 3 });
     scene.ensureParam('h', 0, { min: -4, max: 4 });
     scene.ensureParam('a', 1, { min: -3, max: 3 });
@@ -83,6 +88,16 @@ export default {
           });
         },
         legend: s => `${t({ en: '\\text{vertex}', ru: '\\text{вершина}' })}\\ (\\green{h},\\ \\yellow{k}) = (${fmt(r2(s.h))},\\ ${fmt(r2(s.k))})`,
+      },
+      {
+        // The vertex to drag in the tasks: no numbers next to it, the student has to know where it goes
+        id: 'dragV',
+        draw2d(p, sc, s) {
+          p.handle(s.h, s.k, WHITE, (x, y) => {
+            sc.setParam('h', clamp(Math.round(x * 4) / 4, -5, 5));
+            sc.setParam('k', clamp(Math.round(y * 4) / 4, -4, 4));
+          });
+        },
       },
       explorer(),
     );
@@ -201,6 +216,137 @@ export default {
         ru: 'В Lab напишите любую функцию, например $f(x) = x^3 - 3x$, а затем $y = a f(b(x - h)) + k$: четыре слайдера, четыре движения. Правило на память: <b>изменения снаружи $f$ действуют на высоты как написано; изменения внутри действуют на $x$ наоборот.</b>',
       },
       state: { show: ['par', 'vertex', 'top'], params: { a: 0.5, h: 1, k: -1 }, window: { cx: 0, cy: 1.5, unit: 46 }, controls: ['a', 'h', 'k'] },
+    },
+    {
+      title: { en: 'Put the parabola in place', ru: 'Поставьте параболу на место' },
+      text: {
+        en: 'Drag the vertex so that the blue parabola becomes the graph of $y = (x - 2)^2 + 1$. Then press Check.',
+        ru: 'Перетащите вершину так, чтобы синяя парабола стала графиком $y = (x - 2)^2 + 1$. Потом нажмите Check.',
+      },
+      task: {
+        kind: 'drag',
+        target: { h: 2, k: 1 },
+        back: 6,
+        right: {
+          en: 'The vertex is at $(2,\\ 1)$: the bracket $(x - 2)$ becomes zero at $x = 2$, and $+1$ lifts the graph by one.',
+          ru: 'Вершина в $(2,\\ 1)$: скобка $(x - 2)$ обнуляется при $x = 2$, а $+1$ поднимает график на единицу.',
+        },
+        mistakes: [
+          { params: { h: -2, k: 1 }, back: 2, text: {
+            en: 'The vertex went left, to $x = -2$. But $(x - 2)^2$ is zero at $x = 2$ — that is where the vertex is. A minus inside is a delay, not a direction.',
+            ru: 'Вершина уехала влево, в $x = -2$. Но $(x - 2)^2$ равно нулю при $x = 2$ — там и вершина. Минус внутри — задержка, а не направление.' } },
+          { params: { h: 2, k: -1 }, back: 1, text: {
+            en: 'The height is wrong: $+1$ outside lifts the graph up, it does not lower it.',
+            ru: 'Не та высота: $+1$ снаружи поднимает график, а не опускает.' } },
+          { params: { h: 1, k: 2 }, text: {
+            en: 'The coordinates are swapped: the number inside the bracket moves along $x$, the number outside moves along $y$.',
+            ru: 'Координаты перепутаны: число внутри скобки двигает по $x$, число снаружи — по $y$.' } },
+          { params: { h: -2, k: -1 }, back: 2, text: {
+            en: 'Both directions are reversed. Outside, signs work as written: $+1$ is up. Inside they work backwards: $x - 2$ is right.',
+            ru: 'Оба направления наоборот. Снаружи знак работает как написан: $+1$ — вверх. Внутри наоборот: $x - 2$ — вправо.' } },
+        ],
+        hints: {
+          h: { en: 'The left–right position is off: the vertex is where the bracket $(x - 2)$ is zero.', ru: 'Не то положение по горизонтали: вершина там, где скобка $(x - 2)$ равна нулю.' },
+          k: { en: 'The height is off: the vertex is as high as the number added outside.', ru: 'Не та высота: вершина на высоте числа, прибавленного снаружи.' },
+        },
+      },
+      state: { show: ['par', 'parT', 'dragV'], params: { h: 0, k: 0 }, window: { cx: 0, cy: 1.5, unit: 46 }, controls: [] },
+    },
+    {
+      title: { en: 'One more', ru: 'Ещё одна' },
+      text: {
+        en: 'Now $y = (x + 3)^2 - 2$.',
+        ru: 'Теперь $y = (x + 3)^2 - 2$.',
+      },
+      task: {
+        kind: 'drag',
+        target: { h: -3, k: -2 },
+        back: 6,
+        right: { en: '$x + 3 = 0$ at $x = -3$, and $-2$ lowers by two: the vertex is $(-3,\\ -2)$.', ru: '$x + 3 = 0$ при $x = -3$, а $-2$ опускает на два: вершина $(-3,\\ -2)$.' },
+        mistakes: [
+          { params: { h: 3, k: -2 }, back: 2, text: {
+            en: 'Plus inside moves the graph <b>left</b>: $(x + 3)^2$ is zero at $x = -3$.',
+            ru: 'Плюс внутри сдвигает график <b>влево</b>: $(x + 3)^2$ равно нулю при $x = -3$.' } },
+          { params: { h: -3, k: 2 }, back: 1, text: { en: '$-2$ outside lowers the graph.', ru: '$-2$ снаружи опускает график.' } },
+        ],
+        hints: {
+          h: { en: 'Find where $x + 3$ is zero.', ru: 'Найдите, где $x + 3$ равно нулю.' },
+          k: { en: 'The height of the vertex is the number outside.', ru: 'Высота вершины — число снаружи.' },
+        },
+      },
+      state: { show: ['par', 'parT', 'dragV'], params: { h: 0, k: 0 }, window: { cx: 0, cy: 1, unit: 46 }, controls: [] },
+    },
+    {
+      title: { en: 'Read the formula off the graph', ru: 'Прочитайте формулу по графику' },
+      text: {
+        en: 'The grey curve is $\\sqrt{x}$. The blue one is the same root moved somewhere. Write its formula (you may use $f$: here $f(x) = \\sqrt{x}$).',
+        ru: 'Серая кривая — $\\sqrt{x}$. Синяя — тот же корень, куда-то сдвинутый. Напишите её формулу (можно через $f$: здесь $f(x) = \\sqrt{x}$).',
+      },
+      task: {
+        kind: 'formula',
+        answer: 'y = sqrt(x - 3)',
+        range: [-2, 10],
+        back: 2,
+        right: { en: 'The graph starts at $x = 3$ instead of $0$: moved $3$ to the right, so $\\sqrt{x - 3}$.', ru: 'График начинается в $x = 3$, а не в $0$: сдвиг на $3$ вправо, значит $\\sqrt{x - 3}$.' },
+        mistakes: [
+          { formula: 'y = sqrt(x) - 3', text: {
+            en: 'You lowered the graph by $3$, but it is moved to the right: look where it starts — at $(3,\\ 0)$, not at $(0,\\ -3)$. A shift to the right goes inside the root.',
+            ru: 'Вы опустили график на $3$, а он сдвинут вправо: посмотрите, где он начинается — в $(3,\\ 0)$, а не в $(0,\\ -3)$. Сдвиг вправо пишется внутри корня.' } },
+          { formula: 'y = sqrt(x) + 3', text: {
+            en: 'You lifted the graph by $3$, but the blue curve starts on the axis, at $(3,\\ 0)$: it moved right, not up.',
+            ru: 'Вы подняли график на $3$, а синяя кривая начинается на оси, в $(3,\\ 0)$: она сдвинулась вправо, а не вверх.' } },
+        ],
+      },
+      state: { show: ['ghost', 'goal1'], window: { cx: 3, cy: 1.2, unit: 50 }, controls: [] },
+    },
+    {
+      title: { en: 'A parabola upside down', ru: 'Перевёрнутая парабола' },
+      text: {
+        en: 'The grey curve is $x^2$. Write the formula of the blue parabola.',
+        ru: 'Серая кривая — $x^2$. Напишите формулу синей параболы.',
+      },
+      task: {
+        kind: 'formula',
+        answer: 'y = -(x - 1)^2 + 2',
+        range: [-4, 6],
+        back: 6,
+        right: { en: 'Flipped by the minus, vertex at $(1,\\ 2)$: $-(x - 1)^2 + 2$.', ru: 'Перевёрнута минусом, вершина в $(1,\\ 2)$: $-(x - 1)^2 + 2$.' },
+        mistakes: [
+          { formula: 'y = (x - 1)^2 + 2', back: 3, text: {
+            en: 'The vertex is right, but your branches go up, and the blue ones go down. Flip it with a minus in front of the bracket: $-(x - 1)^2 + 2$.',
+            ru: 'Вершина верная, но ваши ветви смотрят вверх, а синие — вниз. Переверните минусом перед скобкой: $-(x - 1)^2 + 2$.' } },
+          { formula: 'y = -(x - 1)^2 - 2', back: 1, text: {
+            en: 'The flip is right, but the vertex is at height $2$, not $-2$.',
+            ru: 'Переворот верный, но вершина на высоте $2$, а не $-2$.' } },
+          { formula: 'y = -(x + 1)^2 + 2', back: 2, text: {
+            en: 'The vertex is at $x = 1$: the bracket must be zero there, so $(x - 1)$.',
+            ru: 'Вершина при $x = 1$: скобка должна обнуляться там, значит $(x - 1)$.' } },
+        ],
+      },
+      state: { show: ['par', 'goal2'], window: { cx: 1, cy: 0.5, unit: 46 }, controls: [] },
+    },
+    {
+      title: { en: 'A squeezed wave', ru: 'Сжатая волна' },
+      text: {
+        en: 'The grey wave is $\\sin x$. Write the formula of the blue one.',
+        ru: 'Серая волна — $\\sin x$. Напишите формулу синей.',
+      },
+      task: {
+        kind: 'formula',
+        answer: 'y = sin(2x)',
+        range: [-6, 6],
+        back: 5,
+        right: { en: 'Two blue waves fit into one grey: the period is halved, so $\\sin(2x)$.', ru: 'В одну серую волну помещаются две синие: период вдвое короче, значит $\\sin(2x)$.' },
+        mistakes: [
+          { formula: 'y = sin(x/2)', text: {
+            en: 'Your wave is stretched, the blue one is squeezed. A factor inside acts backwards: $\\sin(2x)$ is the narrower one.',
+            ru: 'Ваша волна растянута, а синяя сжата. Множитель внутри действует наоборот: уже — это $\\sin(2x)$.' } },
+          { formula: 'y = 2sin(x)', text: {
+            en: 'You made the wave taller, but the blue one has the same height $1$ — it is narrower. The factor goes inside: $\\sin(2x)$.',
+            ru: 'Вы сделали волну выше, а у синей высота та же, $1$, — она уже. Множитель пишется внутри: $\\sin(2x)$.' } },
+        ],
+      },
+      state: { show: ['sin', 'goal3'], window: { cx: 1.5, cy: 0, unit: 58 }, controls: [] },
     },
   ],
 };

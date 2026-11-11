@@ -17,7 +17,7 @@ test('kinds', () => {
   assert.equal(kind('x = a'), 'vline');
   assert.equal(kind('x = y'), 'error');
   assert.equal(kind(''), 'empty');
-  assert.equal(kind('y = sin x'), 'error');
+  assert.equal(kind('y = sin(x'), 'error');
 });
 
 test('school notation of points', () => {
@@ -34,6 +34,22 @@ test('school notation of points', () => {
   // An upper-case parameter stays a parameter
   assert.equal(analyze('A = (1 + 2)').kind, 'param');
   assert.equal(analyze('(cos(t); sin(t))').kind, 'curve2');
+});
+
+test('functions without brackets', () => {
+  const T = s => analyze(s).tex;
+  assert.equal(T('y = sin x'), 'y = \\sin x');
+  assert.equal(T('y = sin 2x + 1'), 'y = \\sin 2 x + 1');
+  assert.equal(T('y = sinx'), 'y = \\sin x');
+  assert.equal(T('y = cos3x'), 'y = \\cos 3 x');
+  assert.equal(T('y = ln x'), 'y = \\ln x');
+  assert.equal(T('y = lnx'), 'y = \\ln x');
+  assert.equal(T('y = ln(x + 1)'), 'y = \\ln\\left(x + 1\\right)');
+  assert.equal(T('y = sinh(x)'), 'y = \\sinh x');
+  assert.equal(T('y = sinhx'), 'y = \\sinh x');
+  assert.equal(T('y = sqrt x'), 'y = \\sqrt{x}');
+  assert.equal(T('y = sin(x)'), 'y = \\sin x');
+  assert.equal(analyze('z = sin x y').kind, 'surface');
 });
 
 test('implicit multiplication', () => {

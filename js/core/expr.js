@@ -17,6 +17,11 @@ const WORDS = [...FUNCTIONS, ...GREEK, 'pi', 'tau'].sort((a, b) => b.length - a.
 
 const NONE = new Set();
 
+// Functions written without brackets, as on paper: "sin x", "sin 2x" (spaced) and "sinx", "sin2x" (glued)
+const FN_ALT = [...FUNCTIONS].sort((a, b) => b.length - a.length).join('|');
+const BARE_SPACED = new RegExp(`\\b(${FN_ALT})\\s+([0-9.]*[A-Za-z](?![A-Za-z(])|[0-9.]+(?![A-Za-z(]))`, 'g');
+const BARE_GLUED = new RegExp(`\\b(${FN_ALT})([0-9.]*)([a-z])\\b`, 'g');
+
 // "xsin" → "x*sin", "ax" → "a*x", "pix" → "pi*x": Desmos-style implicit multiplication of letters
 function splitWord(w, fns = NONE) {
   if (WORDS.includes(w) || fns.has(w) || w.length === 1 || /[\d_]/.test(w)) return w;
@@ -39,11 +44,14 @@ export function normalize(text, fns = NONE) {
     .replace(/≥/g, '>=')
     .replace(/π/g, 'pi')
     .replace(/√\s*\(/g, 'sqrt(')
-    .replace(/\bln\s*\(/g, 'log(')
+    .replace(/\bln(?=[\s(0-9]|[a-z]\b)/g, 'log')
     .replace(/\btg\b/g, 'tan')
     .replace(/\bctg\b/g, 'cot')
     .replace(/\barc(sin|cos|tan)\b/g, 'a$1')
     .replace(/\b([A-Za-z][A-Za-z0-9]*)('+)\s*\(/g, (m, name, primes) => `${name}_d${primes.length}(`)
+    // sin x, sin 2x, ln x, sinx, cos3t: a function without brackets takes the number and the letter after it
+    .replace(BARE_SPACED, (m, fn, arg) => `${fn}(${arg})`)
+    .replace(BARE_GLUED, (m, fn, num, v) => (FUNCTIONS.includes(m) ? m : `${fn}(${num}${v})`))
     .replace(/[A-Za-z_][A-Za-z0-9_]*/g, w => splitWord(w, fns))
     // a single letter before "(" is multiplication: a(x + 1), x(x - 1), e^x(…) — unless it is the user's function
     .replace(/\b([A-Za-z])\s*\(/g, (m, l) => (fns.has(l) ? m : `${l}*(`));
