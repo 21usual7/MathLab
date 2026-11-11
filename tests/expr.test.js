@@ -20,6 +20,22 @@ test('kinds', () => {
   assert.equal(kind('y = sin x'), 'error');
 });
 
+test('school notation of points', () => {
+  const val = s => analyze(s).nodes.map(n => compile(n)({}));
+  assert.deepEqual(val('(1;2)'), [1, 2]);
+  assert.deepEqual(val('(1; 2; 3)'), [1, 2, 3]);
+  assert.deepEqual(val('(1,5; -2)'), [1.5, -2]);
+  assert.deepEqual(val('(1.5, 2)'), [1.5, 2]);
+  const a = analyze('A(1; 2)');
+  assert.equal(a.kind, 'point2');
+  assert.equal(a.label, 'A');
+  assert.equal(a.tex, 'A(1;\\ 2)');
+  assert.equal(analyze('B = (0, -1)').label, 'B');
+  // An upper-case parameter stays a parameter
+  assert.equal(analyze('A = (1 + 2)').kind, 'param');
+  assert.equal(analyze('(cos(t); sin(t))').kind, 'curve2');
+});
+
 test('implicit multiplication', () => {
   assert.equal(normalize('2xsin(x)'), '2x*sin(x)');
   assert.equal(normalize('a(x + 1)'), 'a*(x + 1)');

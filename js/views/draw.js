@@ -20,7 +20,11 @@ export function drawScene2D(plot, scene) {
     else if (k === 'vline') plot.vline(item.fn(scope), color, width);
     else if (k === 'surface') plot.contour(fxy(item, scope), item.color);
     else if (k === 'curve2' || k === 'curve3') plot.param(ft(item.fns[0], scope), ft(item.fns[1], scope), ...scene.range(item, scope, ...T_RANGE), color, width);
-    else if (k === 'point2' || k === 'point3') plot.dot(item.fns[0](scope), item.fns[1](scope), item.color, 6);
+    else if (k === 'point2' || k === 'point3') {
+      const x = item.fns[0](scope), y = item.fns[1](scope);
+      plot.dot(x, y, item.color, 6);
+      if (item.info.label) plot.tex(`${item.id}-label`, item.info.label, x, y, item.color, { dx: 9, dy: -13 });
+    }
   }
   for (const c of scene.custom) if (c.visible && c.draw2d) c.draw2d(plot, scene, scene.scope());
 }

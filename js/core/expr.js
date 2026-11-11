@@ -192,6 +192,13 @@ function analyzeBody(text, fns) {
     return { kind: 'function', name, node, params: paramsOf(syms), tex: `${symTex(name)}(x) = ${tex(node)}` };
   }
 
+  // School notation: (1; 2), A(1; 2), A = (1; 2). With ";" a comma between digits is a decimal comma: (1,5; 2)
+  const semi = text.includes(';');
+  if (semi) text = text.replace(/(\d),(\d)/g, '$1.$2').replace(/;/g, ',');
+  let label = null;
+  const named = text.match(/^\s*([A-Z])\s*=?\s*(\(.*\))\s*$/);
+  if (named && splitTuple(normalize(named[2], fns))) { label = named[1]; text = named[2]; }
+
   const s = normalize(text, fns);
   if (!s) return { kind: 'empty' };
 
@@ -209,7 +216,9 @@ function analyzeBody(text, fns) {
     if (['x', 'y', 'z'].some(v => syms.has(v))) throw new Error('A curve uses t as its parameter: (cos(t), sin(t))');
     const curve = syms.has('t');
     const kind = (curve ? 'curve' : 'point') + nodes.length;
-    return { kind, nodes, params: paramsOf(syms), tex: `\\left(${nodes.map(tex).join(',\\ ')}\\right)` };
+    const inner = nodes.map(tex).join(semi ? ';\\ ' : ',\\ ');
+    const coords = label && !/\\frac/.test(inner) ? `(${inner})` : `\\left(${inner}\\right)`;
+    return { kind, nodes, label, params: paramsOf(syms), tex: label ? `${label}${coords}` : coords };
   }
 
   const node = parseNode(rhs, fns);
