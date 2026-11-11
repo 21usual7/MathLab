@@ -129,12 +129,14 @@ const paramsOf = syms => [...syms].filter(s => !VARIABLES.has(s));
 function parseDomain(cond, v, fns) {
   const parts = normalize(cond, fns).split(/(<=|>=|<|>)/).map(p => p.trim());
   const lessThan = op => op === '<' || op === '<=';
-  let lo = null, hi = null;
-  const bound = (side, node) => { if (side === 'lo') lo = node; else hi = node; };
+  let lo = null, hi = null, loStrict = false, hiStrict = false;
+  const bound = (side, node, op) => {
+    if (side === 'lo') { lo = node; loStrict = !op.includes('='); } else { hi = node; hiStrict = !op.includes('='); }
+  };
   const read = (a, op, b) => {
     // a op b where one side is the variable
-    if (a === v && b !== v) bound(lessThan(op) ? 'hi' : 'lo', parseNode(b, fns));
-    else if (b === v && a !== v) bound(lessThan(op) ? 'lo' : 'hi', parseNode(a, fns));
+    if (a === v && b !== v) bound(lessThan(op) ? 'hi' : 'lo', parseNode(b, fns), op);
+    else if (b === v && a !== v) bound(lessThan(op) ? 'lo' : 'hi', parseNode(a, fns), op);
     else throw new Error(`Write the range as {0 <= ${v} <= 4}`);
   };
   if (parts.length === 5 && parts[2] === v) { read(parts[0], parts[1], v); read(v, parts[3], parts[4]); }
@@ -143,11 +145,11 @@ function parseDomain(cond, v, fns) {
   for (const n of [lo, hi]) {
     if (n && [...freeSymbols(n)].some(name => VARIABLES.has(name))) throw new Error('The ends of a range must be numbers');
   }
-  return { lo, hi };
+  return { lo, hi, loStrict, hiStrict };
 }
 
 const domainTex = (d, v) => {
-  const L = d.lo ? `${tex(d.lo)} \\le ` : '', H = d.hi ? ` \\le ${tex(d.hi)}` : '';
+  const L = d.lo ? `${tex(d.lo)} ${d.loStrict ? '<' : '\\le'} ` : '', H = d.hi ? ` ${d.hiStrict ? '<' : '\\le'} ${tex(d.hi)}` : '';
   return `\\quad \\left\\{${L}${v}${H}\\right\\}`;
 };
 
@@ -273,6 +275,7 @@ export function symTex(name) {
   if (name === 'pi') return '\\pi';
   if (name === 'tau') return '\\tau';
   if (name === 'phi') return '\\varphi';
+  if (name === 'epsilon') return '\\varepsilon';
   if (GREEK.includes(name)) return '\\' + name;
   const sub = name.match(/^([A-Za-z]+)_?(\d+)$/) || name.match(/^([A-Za-z]+)_(\w+)$/);
   if (sub) return `${symTex(sub[1])}_{${sub[2]}}`;

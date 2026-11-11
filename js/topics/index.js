@@ -29,8 +29,12 @@ export const CATALOG = [
       ru: 'Экспонента на каждом шаге умножает на одно и то же число, логарифм считает шаги. Это одна кривая, увиденная в зеркале.',
     } },
 
-  { id: 'limit', track: 'limits', status: 'planned', prereqs: ['graph'],
-    title: { en: 'What a limit really is', ru: 'Что такое предел на самом деле' } },
+  { id: 'limit', track: 'limits', status: 'ready', minutes: 12, prereqs: ['graph'], next: ['derivative', 'e', 'area'],
+    title: { en: 'What a limit really is', ru: 'Что такое предел на самом деле' },
+    summary: {
+      en: 'A hole in a graph, values closing in from both sides, the ε–δ corridor — and limits that do not exist.',
+      ru: 'Дырка в графике, значения, подбирающиеся с двух сторон, коридор «эпсилон–дельта» — и пределы, которых нет.',
+    } },
   { id: 'e', track: 'limits', status: 'planned', prereqs: ['limit', 'exp-log'],
     title: { en: 'Where the number e comes from', ru: 'Откуда берётся число e' } },
 
@@ -68,6 +72,7 @@ const MODULES = {
   graph: () => import('./graph.js'),
   transform: () => import('./transform.js'),
   'exp-log': () => import('./exp-log.js'),
+  limit: () => import('./limit.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
 };

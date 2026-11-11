@@ -141,22 +141,44 @@ export class Plot2D {
     ctx.setLineDash([]);
   }
 
-  // y = f(x). A jump taller than the view is a break (tan x at π/2), not a steep line.
+  // y = f(x). A jump is a break, not a steep line: tan x at π/2, but also sign x or floor x, whose steps
+  // are small. A big gap between two pixels is halved again and again: a steep but continuous curve
+  // closes the gap, a jump keeps it. A curve that leaves the gap while halving oscillates, it is not a jump.
   curve(f, color, width = 3, from = -Infinity, to = Infinity) {
     const ctx = this.ctx, h = this.h;
     const clamp = py => Math.max(-h, Math.min(2 * h, py));
     const p0 = Math.max(0, Math.floor(this.sx(from))), p1 = Math.min(this.w, Math.ceil(this.sx(to)));
+    const jump = (xa, ya, xb, yb) => {
+      for (let k = 0; k < 14; k++) {
+        const xm = (xa + xb) / 2, ym = this.sy(f(this.toX(xm)));
+        if (!isFinite(ym)) return true;
+        // Outside the gap: the curve swings faster than the pixels (sin 1/x near 0) — draw it solid
+        if (ym < Math.min(ya, yb) - 2 || ym > Math.max(ya, yb) + 2) return false;
+        if (Math.abs(ym - ya) > Math.abs(yb - ym)) { xb = xm; yb = ym; } else { xa = xm; ya = ym; }
+      }
+      return Math.abs(yb - ya) > 8;
+    };
     ctx.beginPath();
     let prev = null;
     for (let px = p0; px <= p1; px += 1) {
       const y = f(this.toX(px));
       if (!isFinite(y)) { prev = null; continue; }
       const py = this.sy(y);
-      if (prev === null || Math.abs(py - prev) > h) ctx.moveTo(px, clamp(py));
+      const gap = prev === null ? 0 : Math.abs(py - prev);
+      if (prev === null || gap > h || (gap > 12 && jump(px - 1, prev, px, py))) ctx.moveTo(px, clamp(py));
       else ctx.lineTo(px, clamp(py));
       prev = py;
     }
     this.stroke(color, width);
+  }
+
+  // Filled rectangle [x0, x1] × [y0, y1] (±Infinity reaches the edge of the view)
+  rect(x0, y0, x1, y1, color) {
+    const c = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+    const a = c(this.sx(x0), -1, this.w + 1), b = c(this.sx(x1), -1, this.w + 1);
+    const top = c(this.sy(y1), -1, this.h + 1), bottom = c(this.sy(y0), -1, this.h + 1);
+    this.ctx.fillStyle = color;
+    this.ctx.fillRect(Math.min(a, b), Math.min(top, bottom), Math.abs(b - a), Math.abs(bottom - top));
   }
 
   // (fx(t), fy(t)) for t in [t0, t1]; long ranges get more samples

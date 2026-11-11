@@ -64,6 +64,8 @@ test('ranges', () => {
   const c = analyze('y = 1/x {x > 0}');
   assert.equal(c.domain.hi, null);
   assert.equal(compile(c.domain.lo)({}), 0);
+  assert.ok(c.tex.endsWith('\\left\\{0 < x\\right\\}'));
+  assert.ok(a.tex.includes('0 \\le x \\le 4'));
   const d = analyze('y = x {x ≤ 2}');
   assert.equal(compile(d.domain.hi)({}), 2);
   assert.equal(kind('y = x {0 < y < 1}'), 'error');
