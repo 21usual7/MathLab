@@ -368,6 +368,36 @@ button { font: inherit; color: inherit; }
 .empty { max-width: 640px; margin: 80px auto; padding: 0 24px; }
 .empty h1 { font-size: 40px; margin-bottom: 12px; }
 
+/* ---------- On-screen math keyboard ---------- */
+
+.kp-toggle { flex: none; border: 1px solid var(--line); background: var(--bg); color: var(--muted); border-radius: 8px; width: 34px; height: 32px; font-size: 18px; line-height: 1; cursor: pointer; padding: 0; }
+.kp-toggle:hover { color: var(--text); border-color: var(--faint); }
+.kp-toggle[aria-pressed="true"] { color: var(--yellow); border-color: var(--yellow); }
+.task-form .kp-toggle { height: 42px; width: 42px; }
+
+.keypad { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; background: rgba(16, 21, 29, 0.97); backdrop-filter: blur(10px); border-top: 1px solid var(--line); padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); }
+.keypad[hidden] { display: none; }
+.kp-inner { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+.kp-keys { display: grid; grid-template-columns: repeat(4, 1fr) 10px repeat(4, 1fr); gap: 6px; }
+.kp-keys .kp-key:nth-child(8n + 5) { grid-column: 6; }
+.kp-key { height: 44px; border: 1px solid var(--line); border-radius: 9px; background: var(--raised); color: var(--text); font: 500 16px var(--sans); cursor: pointer; padding: 0 2px; white-space: nowrap; overflow: hidden; touch-action: manipulation; }
+.kp-key:hover { border-color: var(--faint); }
+.kp-key:active { background: var(--line); }
+.kp-key.kp-var { font: italic 400 19px var(--serif); color: var(--blue); }
+.kp-key.kp-del { color: var(--red); }
+.kp-key.kp-small { font-size: 13px; }
+@media (max-width: 430px) { .kp-key.kp-small { font-size: 10.5px; letter-spacing: -0.02em; } .kp-keys { gap: 5px; } }
+.kp-bar { display: flex; align-items: center; gap: 6px; }
+.kp-tab { border: 1px solid var(--line); background: none; color: var(--muted); border-radius: 999px; padding: 6px 14px; font: 500 13px var(--sans); cursor: pointer; }
+.kp-tab.active { background: var(--raised); color: var(--text); }
+.kp-enter { height: 38px; min-width: 96px; border: 0; border-radius: 9px; background: var(--blue); color: #08222b; font: 600 18px var(--sans); cursor: pointer; }
+.kp-close { height: 38px; width: 38px; border: 1px solid var(--line); border-radius: 9px; background: none; color: var(--muted); cursor: pointer; }
+/* While it is open the page makes room for it */
+body.keypad-open { padding-bottom: var(--kb, 0px); }
+@media (min-width: 901px) {
+  body.keypad-open .lab, body.keypad-open .topic { height: calc(100dvh - var(--header) - var(--kb, 0px)); }
+}
+
 /* ---------- Phones and narrow windows ---------- */
 
 @media (max-width: 430px) {

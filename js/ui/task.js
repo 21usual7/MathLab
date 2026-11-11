@@ -12,6 +12,7 @@ import { analyze, compile } from '../core/expr.js';
 import { same, diagnose, explainDiff } from '../core/check.js';
 import { t } from '../core/i18n.js';
 import { renderMath, renderTex } from './tex.js';
+import { keypadButton, prepareInput } from './keypad.js';
 
 export function taskHTML(task) {
   return `
@@ -85,6 +86,8 @@ export function bindTask(el, task, index, ctx) {
 
   if (task.kind === 'formula') {
     const form = box.querySelector('form'), input = form.querySelector('input');
+    prepareInput(input);
+    input.after(keypadButton(input));
     form.addEventListener('submit', e => { e.preventDefault(); checkFormula(input); });
     showBtn.addEventListener('click', () => {
       input.value = task.answer.replace(/^y\s*=\s*/, '');

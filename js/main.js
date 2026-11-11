@@ -5,6 +5,7 @@ import { mountHome } from './pages/home.js';
 import { mountLab } from './pages/lab.js';
 import { mountTopic } from './pages/topic.js';
 import { getLang, setLang } from './core/i18n.js';
+import { closeKeypad } from './ui/keypad.js';
 
 const app = document.getElementById('app');
 let cleanup = null;
@@ -13,6 +14,7 @@ let seq = 0;
 async function route() {
   const my = ++seq;
   if (cleanup) { cleanup(); cleanup = null; }
+  closeKeypad();
   const [path, query] = location.hash.slice(1).split('?');
   const [page, id, step] = path.split('/');
   document.body.dataset.page = page || 'home';

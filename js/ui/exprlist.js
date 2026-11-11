@@ -5,6 +5,7 @@ import { renderTex } from './tex.js';
 import { paramControl } from './params.js';
 import { fmt } from '../core/numeric.js';
 import { derivative } from '../core/expr.js';
+import { keypadButton, prepareInput } from './keypad.js';
 
 // Text of the derivative of a function row: y = f'(x) for the user's f, the formula itself otherwise
 function derivativeText(item) {
@@ -32,11 +33,14 @@ export class ExprList {
     this.rows = [];
 
     const form = this.el.querySelector('form'), input = form.querySelector('input');
+    prepareInput(input);
+    form.appendChild(keypadButton(input));
     form.addEventListener('submit', e => {
       e.preventDefault();
       if (!input.value.trim()) return;
       this.add(input.value);
       input.value = '';
+      input.scrollIntoView({ block: 'nearest' }); // the new row pushed it down; keep typing visible
     });
 
     this.off = scene.on(() => this.rows.forEach(r => r.update()));
@@ -93,6 +97,7 @@ export class ExprList {
     this.rowsEl.appendChild(row);
     const [swatch, body, deriv, del] = row.children;
     const [formula, edit, error] = body.children;
+    prepareInput(edit);
     let control = null, shownTex = null;
 
     const render = () => {
