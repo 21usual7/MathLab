@@ -16,7 +16,7 @@ export function drawScene2D(plot, scene) {
   for (const item of scene.items) {
     if (!item.visible || item.only === '3d') continue;
     const k = item.info.kind, color = item.dim ? faint(item.color) : item.color, width = item.dim ? 2 : 3;
-    if (k === 'function') plot.curve(fx(item, scope), color, width, ...scene.range(item, scope, -Infinity, Infinity));
+    if (k === 'function') plot.curve(fx(item, scope), color, width, ...scene.range(item, scope, -Infinity, Infinity), item.dash ? [9, 7] : []);
     else if (k === 'vline') plot.vline(item.fn(scope), color, width);
     else if (k === 'surface') plot.contour(fxy(item, scope), item.color);
     else if (k === 'curve2' || k === 'curve3') plot.param(ft(item.fns[0], scope), ft(item.fns[1], scope), ...scene.range(item, scope, ...T_RANGE), color, width);

@@ -144,7 +144,7 @@ export class Plot2D {
   // y = f(x). A jump is a break, not a steep line: tan x at π/2, but also sign x or floor x, whose steps
   // are small. A big gap between two pixels is halved again and again: a steep but continuous curve
   // closes the gap, a jump keeps it. A curve that leaves the gap while halving oscillates, it is not a jump.
-  curve(f, color, width = 3, from = -Infinity, to = Infinity) {
+  curve(f, color, width = 3, from = -Infinity, to = Infinity, dash = []) {
     const ctx = this.ctx, h = this.h;
     const clamp = py => Math.max(-h, Math.min(2 * h, py));
     const p0 = Math.max(0, Math.floor(this.sx(from))), p1 = Math.min(this.w, Math.ceil(this.sx(to)));
@@ -168,6 +168,19 @@ export class Plot2D {
       if (prev === null || gap > h || (gap > 12 && jump(px - 1, prev, px, py))) ctx.moveTo(px, clamp(py));
       else ctx.lineTo(px, clamp(py));
       prev = py;
+    }
+    this.stroke(color, width, dash);
+  }
+
+  // Broken line through [[x, y], ...]
+  polyline(pts, color, width = 2.5) {
+    this.ctx.beginPath();
+    let pen = false;
+    for (const [x, y] of pts) {
+      if (!isFinite(x) || !isFinite(y)) { pen = false; continue; }
+      if (pen) this.ctx.lineTo(this.sx(x), this.sy(y));
+      else this.ctx.moveTo(this.sx(x), this.sy(y));
+      pen = true;
     }
     this.stroke(color, width);
   }

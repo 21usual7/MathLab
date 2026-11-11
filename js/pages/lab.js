@@ -55,7 +55,8 @@ export function mountLab(root, query) {
   const state = (query.get('s') && decodeLab(query.get('s'))) || DEFAULT;
   const scene = new Scene();
   for (const text of state.items) scene.add(String(text));
-  scene.custom.push(explorer());
+  const reader = explorer();
+  scene.custom.push(reader);
   for (const [name, r] of Object.entries(state.params || {})) {
     const p = scene.ensureParam(name);
     Object.assign(p, { min: r.min ?? p.min, max: r.max ?? p.max });
@@ -83,6 +84,7 @@ export function mountLab(root, query) {
             <button data-mode="2d">2D</button><button data-mode="3d">3D</button><button data-mode="split">2D + 3D</button>
           </div>
           <div class="spacer"></div>
+          <button class="ghost" data-act="tangent" aria-pressed="false" title="Point at a curve: its tangent and slope">Tangent</button>
           <button class="ghost" data-act="reset">Reset view</button>
           <button class="ghost" data-act="share">Share link</button>
         </div>
@@ -121,6 +123,11 @@ export function mountLab(root, query) {
 
   root.querySelectorAll('[data-ex]').forEach(b => b.addEventListener('click', () => list.add(b.dataset.ex)));
   $('[data-act=reset]').addEventListener('click', () => stage.reset());
+  $('[data-act=tangent]').addEventListener('click', e => {
+    reader.tangent = !reader.tangent;
+    e.currentTarget.setAttribute('aria-pressed', reader.tangent);
+    scene.changed();
+  });
   $('[data-act=share]').addEventListener('click', async e => {
     const params = {};
     for (const [name, p] of scene.params) params[name] = { min: p.min, max: p.max };

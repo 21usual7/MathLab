@@ -82,6 +82,7 @@ export class Scene {
       only: opts.only || null, // '2d' or '3d': drawn in that view only
       dim: opts.dim || false, // drawn thin and faint: the "before" picture next to the "after"
       legend: opts.legend ?? true, // listed under the stage of a topic
+      dash: opts.dash || false, // dashed: a curve drawn on top of another one that it equals
     };
     this.items.push(item);
     this.setText(item, text);

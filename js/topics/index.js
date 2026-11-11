@@ -35,8 +35,12 @@ export const CATALOG = [
       en: 'A hole in a graph, values closing in from both sides, the ε–δ corridor — and limits that do not exist.',
       ru: 'Дырка в графике, значения, подбирающиеся с двух сторон, коридор «эпсилон–дельта» — и пределы, которых нет.',
     } },
-  { id: 'e', track: 'limits', status: 'planned', prereqs: ['limit', 'exp-log'],
-    title: { en: 'Where the number e comes from', ru: 'Откуда берётся число e' } },
+  { id: 'e', track: 'limits', status: 'ready', minutes: 10, prereqs: ['limit', 'exp-log'], next: ['derivative', 'taylor'],
+    title: { en: 'Where the number e comes from', ru: 'Откуда берётся число e' },
+    summary: {
+      en: 'A bank paying interest more and more often hits a ceiling of 2.718… — and the exponent with that base is its own slope.',
+      ru: 'Банк, начисляющий проценты всё чаще, упирается в потолок 2.718… — а экспонента с таким основанием сама себе наклон.',
+    } },
 
   { id: 'derivative', track: 'derivatives', status: 'ready', minutes: 10, prereqs: ['graph', 'limit'], next: ['chain', 'optimization', 'surfaces'],
     title: { en: 'The derivative: a slope you can see', ru: 'Производная: наклон, который видно' },
@@ -73,6 +77,7 @@ const MODULES = {
   transform: () => import('./transform.js'),
   'exp-log': () => import('./exp-log.js'),
   limit: () => import('./limit.js'),
+  e: () => import('./e.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
 };

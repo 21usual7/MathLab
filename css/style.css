@@ -80,6 +80,7 @@ button { font: inherit; color: inherit; }
   font-size: 14px;
 }
 .ghost:hover { border-color: var(--faint); color: var(--text); }
+.ghost[aria-pressed="true"] { border-color: var(--yellow); color: var(--yellow); }
 
 /* ---------- Header ---------- */
 
@@ -361,5 +362,9 @@ button { font: inherit; color: inherit; }
 @media (max-width: 520px) {
   .tracks { grid-template-columns: 1fr; }
   .stage-bar .ghost[data-act="reset"] { display: none; }
+  .stage-bar { gap: 6px; padding: 8px 10px; }
+  .stage-bar button { white-space: nowrap; }
+  .stage-bar .seg button { padding: 5px 9px; font-size: 12px; }
+  .stage-bar .ghost { padding: 5px 10px; font-size: 13px; }
   .site-nav a { padding: 6px 8px; }
 }

@@ -2,9 +2,10 @@
 // coordinates and dashed guides to the axes — the graph read as "input → output". It also marks the
 // curve's notable points: zeros, peaks and valleys, crossings with the other curves, the y-intercept.
 // Hover a hollow point to read it. On phones a tap does the same.
+// With `tangent` on, the tangent line at the point is drawn too, and its slope is shown.
 // It is a custom scene object: scene.custom.push(explorer()).
 
-import { findRoots, extrema } from '../core/numeric.js';
+import { findRoots, extrema, slope } from '../core/numeric.js';
 import { THEME } from '../core/palette.js';
 
 const SNAP = 18;   // px: how close the pointer must be to a curve
@@ -21,7 +22,7 @@ function show(v, unit, extra = 0) {
   return String(Object.is(r, -0) ? 0 : r);
 }
 
-export function explorer({ ids = null, notable = true, guides = true, always = true } = {}) {
+export function explorer({ ids = null, notable = true, guides = true, always = true, tangent = false } = {}) {
   let cacheKey = '', cache = [];
 
   // Notable points of one function on the visible part of its range
@@ -52,6 +53,7 @@ export function explorer({ ids = null, notable = true, guides = true, always = t
 
   return {
     id: 'explore',
+    tangent, // can be switched later: explorer.tangent = true
     always, // stays through topic steps unless a topic wants to show it only in some of them
     visible: true,
     draw2d(p, scene, s) {
@@ -105,9 +107,15 @@ export function explorer({ ids = null, notable = true, guides = true, always = t
         p.line(x, 0, x, y, color + '99', { width: 1.2, dash: [3, 4] });
         p.line(0, y, x, y, color + '99', { width: 1.2, dash: [3, 4] });
       }
+      let k = NaN;
+      if (this.tangent) {
+        k = slope(v => { s.x = v; return item.fn(s); }, x);
+        if (isFinite(k)) p.line(x, y, x + 1, y + k, 'rgba(255,255,255,0.75)', { width: 1.6, extend: true });
+      }
       p.dot(x, y, color, 6);
       const extra = target ? 1 : 0;
-      const coords = `\\left(${show(x, p.view.unit, extra)},\\ ${show(y, p.view.unit, extra)}\\right)`;
+      let coords = `\\left(${show(x, p.view.unit, extra)},\\ ${show(y, p.view.unit, extra)}\\right)`;
+      if (isFinite(k)) coords += `\\quad \\text{slope } ${show(k, p.view.unit, 1)}`;
       const right = p.sx(x) > p.w - 170;
       p.tex('explore', name ? `\\text{${name}}\\ ${coords}` : coords, x, y, color,
         { dx: right ? -12 : 12, dy: p.sy(y) < 40 ? 18 : -16, align: right ? 'right' : 'left' });
