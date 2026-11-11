@@ -93,7 +93,7 @@ export default {
             p.dot(v, y, COLORS.purple, 6);
             p.dot(v, -y, COLORS.purple, 6);
           }
-          p.handle(v, p.yr[0] + 40 / p.view.unit, COLORS.red, x => { sc.play('v', false); sc.setParam('v', clamp(x, -3, 3)); });
+          p.handle(v, p.yr[0] + 40 / p.u, COLORS.red, x => { sc.play('v', false); sc.setParam('v', clamp(x, -3, 3)); });
         },
         legend: s => {
           const v = r2(s.v), n = Math.abs(v) < 2 ? 2 : Math.abs(v) === 2 ? 1 : 0;

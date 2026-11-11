@@ -1,4 +1,4 @@
-// Router: #  ·  #algebra / #geometry (the map, scrolled to that subject)  ·  #lab?s=...  ·  #topic/<id>
+// Router: #  ·  #algebra / #geometry (the map, scrolled to that subject)  ·  #lab?s=...  ·  #topic/<id>[/<step>]
 // Every page returns a cleanup function (stops animations, frees WebGL) that runs before the next one.
 
 import { mountHome } from './pages/home.js';
@@ -14,14 +14,14 @@ async function route() {
   const my = ++seq;
   if (cleanup) { cleanup(); cleanup = null; }
   const [path, query] = location.hash.slice(1).split('?');
-  const [page, id] = path.split('/');
+  const [page, id, step] = path.split('/');
   document.body.dataset.page = page || 'home';
   document.querySelectorAll('[data-nav]').forEach(a => a.classList.toggle('active', a.dataset.nav === (page || 'home')));
   window.scrollTo(0, 0);
 
   let c;
   if (page === 'lab') c = mountLab(app, new URLSearchParams(query || ''));
-  else if (page === 'topic') c = await mountTopic(app, id);
+  else if (page === 'topic') c = await mountTopic(app, id, (parseInt(step, 10) || 1) - 1);
   else {
     c = mountHome(app);
     const subject = document.getElementById(page);

@@ -30,7 +30,7 @@ export default {
           p.line(a, fa, b, fa, COLORS.grey, { width: 1.5, dash: [5, 5] });
           p.line(b, fa, b, fb, COLORS.grey, { width: 1.5, dash: [5, 5] });
           p.dot(b, fb, COLORS.red, 5);
-          if (s.h * p.view.unit > 40) {
+          if (s.h * p.u > 40) {
             p.tex('dx', '\\Delta x = h', (a + b) / 2, fa, COLORS.grey, { dy: fb > fa ? 16 : -16, dx: 0, align: 'center' });
             p.tex('dy', '\\Delta y', b, (fa + fb) / 2, COLORS.grey, { dx: 8, dy: 0 });
           }

@@ -114,8 +114,8 @@ export function explorer({ ids = null, notable = true, guides = true, always = t
       }
       p.dot(x, y, color, 6);
       const extra = target ? 1 : 0;
-      let coords = `\\left(${show(x, p.view.unit, extra)},\\ ${show(y, p.view.unit, extra)}\\right)`;
-      if (isFinite(k)) coords += `\\quad \\text{slope } ${show(k, p.view.unit, 1)}`;
+      let coords = `\\left(${show(x, p.u, extra)},\\ ${show(y, p.u, extra)}\\right)`;
+      if (isFinite(k)) coords += `\\quad \\text{slope } ${show(k, p.u, 1)}`;
       const right = p.sx(x) > p.w - 170;
       p.tex('explore', name ? `\\text{${name}}\\ ${coords}` : coords, x, y, color,
         { dx: right ? -12 : 12, dy: p.sy(y) < 40 ? 18 : -16, align: right ? 'right' : 'left' });

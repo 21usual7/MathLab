@@ -1,4 +1,6 @@
 // 2D view on a canvas. Equal units on both axes, so slopes and shapes are true.
+// view.unit is pixels per unit for a view about 760 px high; a taller or lower view scales it (this.u),
+// so a topic's window shows about the same part of the plane on a laptop and on a big monitor.
 // Immediate mode: onDraw(plot) is called on every render and draws with the primitives below.
 // Interaction: drag to pan, wheel / pinch to zoom, drag handles (points that topics make movable).
 // `pointer` is where the mouse hovers (or where a finger tapped): objects may read the graph there.
@@ -56,7 +58,9 @@ export class Plot2D {
     const ctx = this.ctx;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.w = w; this.h = h;
-    const u = this.view.unit;
+    this.k = Math.max(0.7, Math.min(1.6, h / 760));
+    this.u = this.view.unit * this.k;
+    const u = this.u;
     this.xr = [this.view.cx - w / 2 / u, this.view.cx + w / 2 / u];
     this.yr = [this.view.cy - h / 2 / u, this.view.cy + h / 2 / u];
 
@@ -86,14 +90,14 @@ export class Plot2D {
     if (ox >= 0 && ox <= this.w) ctx.fillText(this.axisNames.y, ox + 8, 18);
   }
 
-  sx(x) { return (x - this.xr[0]) * this.view.unit; }
-  sy(y) { return this.h - (y - this.yr[0]) * this.view.unit; }
-  toX(px) { return this.xr[0] + px / this.view.unit; }
-  toY(py) { return this.yr[0] + (this.h - py) / this.view.unit; }
+  sx(x) { return (x - this.xr[0]) * this.u; }
+  sy(y) { return this.h - (y - this.yr[0]) * this.u; }
+  toX(px) { return this.xr[0] + px / this.u; }
+  toY(py) { return this.yr[0] + (this.h - py) / this.u; }
 
   drawGrid() {
     const ctx = this.ctx, { w, h } = this;
-    const step = niceStep(90 / this.view.unit), minor = step / 5;
+    const step = niceStep(90 / this.u), minor = step / 5;
 
     const lines = (s, style) => {
       ctx.strokeStyle = style;
@@ -394,8 +398,9 @@ export class Plot2D {
   zoomAt(factor, px, py) {
     const x0 = this.toX(px), y0 = this.toY(py);
     this.view.unit = Math.min(1e5, Math.max(1, this.view.unit * factor));
-    this.view.cx = x0 - (px - this.w / 2) / this.view.unit;
-    this.view.cy = y0 + (py - this.h / 2) / this.view.unit;
+    this.u = this.view.unit * this.k;
+    this.view.cx = x0 - (px - this.w / 2) / this.u;
+    this.view.cy = y0 + (py - this.h / 2) / this.u;
     this.request();
   }
 
@@ -444,8 +449,8 @@ export class Plot2D {
       } else if (drag && drag.handle) {
         drag.handle.onDrag(this.toX(px), this.toY(py));
       } else if (drag) {
-        this.view.cx = drag.cx - (px - drag.px) / this.view.unit;
-        this.view.cy = drag.cy + (py - drag.py) / this.view.unit;
+        this.view.cx = drag.cx - (px - drag.px) / this.u;
+        this.view.cy = drag.cy + (py - drag.py) / this.u;
         this.request();
       }
     });
