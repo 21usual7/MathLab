@@ -22,6 +22,9 @@ export default {
     scene.add('y = x', { id: 'diag', color: 'grey', dim: true, visible: false });
     scene.add('y = log(x, 2)', { id: 'log', color: 'yellow', visible: false });
     scene.add('y = x^2', { id: 'sq', color: 'purple', visible: false });
+    // For the tasks: the goal curves are not named under the scene — the formula is the answer
+    scene.add('y = 3^x', { id: 'goalE', color: 'blue', visible: false, legend: false });
+    scene.add('y = log(x, 3)', { id: 'goalL', color: 'yellow', visible: false, legend: false });
     scene.ensureParam('a', 2, { min: 0.2, max: 3 });
     scene.ensureParam('p', 1.5, { min: -2.5, max: 2.5 });
 
@@ -82,6 +85,25 @@ export default {
           });
         },
         legend: () => '\\begin{array}{c|cccc} x & 1 & 2 & 4 & 8 \\\\ \\hline \\log_2 x & 0 & 1 & 2 & 3 \\end{array}',
+      },
+      {
+        id: 'goalEdots',
+        draw2d(p) { [[-1, 1 / 3], [0, 1], [1, 3], [2, 9]].forEach(([x, y]) => p.dot(x, y, WHITE, 5)); },
+      },
+      {
+        id: 'goalLdots',
+        draw2d(p) { [[1 / 3, -1], [1, 0], [3, 1], [9, 2]].forEach(([x, y]) => p.dot(x, y, WHITE, 5)); },
+      },
+      {
+        // The base is the height at x = 1: the student drags it until the curve goes through the ring
+        id: 'baseHandle',
+        draw2d(p, sc, s) {
+          p.ring(-2, 4, WHITE, 8);
+          p.tex('target', '(-2,\\ 4)', -2, 4, WHITE, { dx: 14, dy: -14 });
+          p.line(1, 0, 1, s.a, COLORS.blue + '88', { width: 1.2, dash: [3, 4] });
+          p.tex('aname', '\\blue{a}', 1, s.a, COLORS.blue, { dx: 14, dy: 0 });
+          p.handle(1, s.a, COLORS.blue, (_, y) => { sc.play('a', false); sc.setParam('a', clamp(Math.round(y * 20) / 20, 0.2, 3)); });
+        },
       },
       explorer(),
     );
@@ -187,6 +209,100 @@ export default {
         ru: 'В Lab сравните $y = 2^x$ и $y = x^3$, найдите точки пересечения, попробуйте $y = \\log(x, 10)$. Одно основание особенное — оно встречается всюду в природе и в анализе: $e \\approx 2.718$. Откуда оно берётся — следующая история.',
       },
       state: { show: ['exp', 'diag', 'log', 'mirror'], params: { p: 2 }, window: { cx: 1.5, cy: 1.2, unit: 62 }, controls: ['p'] },
+    },
+    {
+      title: { en: 'Read the exponent', ru: 'Прочитайте экспоненту' },
+      text: {
+        en: 'The blue curve is an exponent; the white dots are at $x = -1,\\ 0,\\ 1,\\ 2$. Write its formula.',
+        ru: 'Синяя кривая — экспонента; белые точки стоят при $x = -1,\\ 0,\\ 1,\\ 2$. Напишите её формулу.',
+      },
+      task: {
+        kind: 'formula',
+        answer: 'y = 3^x',
+        range: [-3, 3],
+        back: 0,
+        right: {
+          en: 'From $1$ to $3$, from $3$ to $9$: every step right multiplies by $3$. So $y = 3^x$.',
+          ru: 'От $1$ к $3$, от $3$ к $9$: каждый шаг вправо умножает на $3$. Значит, $y = 3^x$.',
+        },
+        mistakes: [
+          { formula: 'y = 3x', text: {
+            en: 'A line adds the same amount per step: $0,\\ 3,\\ 6$. Here the heights are $1,\\ 3,\\ 9$ — multiplied by $3$ each step.',
+            ru: 'Прямая за шаг прибавляет одно и то же: $0,\\ 3,\\ 6$. А здесь высоты $1,\\ 3,\\ 9$ — каждый шаг умножает на $3$.' } },
+          { formula: 'y = x^3', text: {
+            en: 'This is a power: at $x = 0$ it gives $0$, but the curve goes through $(0,\\ 1)$. In an exponent $x$ is the <b>exponent</b>, not the base.',
+            ru: 'Это степень: при $x = 0$ она даёт $0$, а кривая проходит через $(0,\\ 1)$. В экспоненте $x$ стоит <b>в показателе</b>, а не в основании.' } },
+          { formula: 'y = 2^x', text: {
+            en: 'At $x = 1$ the curve is at $3$, not $2$. The height at $x = 1$ is the base itself: $a^1 = a$.',
+            ru: 'При $x = 1$ кривая на высоте $3$, а не $2$. Высота при $x = 1$ — это и есть основание: $a^1 = a$.' } },
+          { formula: 'y = 4^x', text: {
+            en: 'At $x = 1$ the curve is at $3$, not $4$. The height at $x = 1$ is the base itself: $a^1 = a$.',
+            ru: 'При $x = 1$ кривая на высоте $3$, а не $4$. Высота при $x = 1$ — это и есть основание: $a^1 = a$.' } },
+        ],
+      },
+      state: { show: ['goalE', 'goalEdots'], window: { cx: 0.5, cy: 4, unit: 46 }, controls: [] },
+    },
+    {
+      title: { en: 'Through the point', ru: 'Через точку' },
+      text: {
+        en: 'Choose the base $a$ so that $\\blue{y = a^x}$ goes through the point $(-2,\\ 4)$. Drag the blue point at $x = 1$: its height is $a$.',
+        ru: 'Подберите основание $a$ так, чтобы $\\blue{y = a^x}$ прошла через точку $(-2,\\ 4)$. Тяните синюю точку при $x = 1$: её высота и есть $a$.',
+      },
+      task: {
+        kind: 'drag',
+        target: { a: 0.5 },
+        tol: 0.03,
+        back: 2,
+        right: {
+          en: '$a^{-2} = \\frac{1}{a^2} = 4$, so $a^2 = \\frac14$ and $a = \\frac12$. The curve decays: going left it doubles, two steps left from $1$ give $4$.',
+          ru: '$a^{-2} = \\frac{1}{a^2} = 4$, значит $a^2 = \\frac14$ и $a = \\frac12$. Кривая убывает: влево она удваивается, и два шага влево от $1$ дают $4$.',
+        },
+        mistakes: [
+          { params: { a: 2 }, text: {
+            en: '$2^{-2} = \\frac14$, not $4$: a negative exponent divides. To be high on the <b>left</b>, the curve has to decay — the base must be less than $1$.',
+            ru: '$2^{-2} = \\frac14$, а не $4$: отрицательный показатель делит. Чтобы быть высоко <b>слева</b>, кривая должна убывать — основание меньше $1$.' } },
+          { params: { a: 0.25 }, text: {
+            en: '$\\left(\\frac14\\right)^{-2} = 16$: too high. Two steps left multiply by $\\frac1a$ twice, and $4 \\cdot 4 = 16$. We need $\\frac1a \\cdot \\frac1a = 4$.',
+            ru: '$\\left(\\frac14\\right)^{-2} = 16$ — слишком высоко. Два шага влево дважды умножают на $\\frac1a$, а $4 \\cdot 4 = 16$. Нужно $\\frac1a \\cdot \\frac1a = 4$.' } },
+        ],
+        hints: {
+          a: a => (a > 1
+            ? { en: 'With $a > 1$ the curve grows, and on the left it hugs the axis. The point $(-2,\\ 4)$ is high on the left: the base must be less than $1$.', ru: 'При $a > 1$ кривая растёт, а слева прижимается к оси. Точка $(-2,\\ 4)$ высоко слева: основание должно быть меньше $1$.' }
+            : a ** -2 > 4
+              ? { en: `At $x = -2$ the curve is at $${fmt(r2(a ** -2))}$ — above the point. Move $a$ up, closer to $1$.`, ru: `При $x = -2$ кривая на высоте $${fmt(r2(a ** -2))}$ — выше точки. Поднимите $a$ ближе к $1$.` }
+              : { en: `At $x = -2$ the curve is at $${fmt(r2(a ** -2))}$ — below the point. Move $a$ down.`, ru: `При $x = -2$ кривая на высоте $${fmt(r2(a ** -2))}$ — ниже точки. Опустите $a$.` }),
+        },
+      },
+      state: { show: ['expa', 'baseHandle'], params: { a: 2 }, window: { cx: 0, cy: 2.5, unit: 60 }, controls: [] },
+    },
+    {
+      title: { en: 'Which logarithm?', ru: 'Какой логарифм?' },
+      text: {
+        en: 'The yellow curve is a logarithm; the white dots are at $x = \\frac13,\\ 1,\\ 3,\\ 9$. Write its formula: $\\log(x, a)$ is $\\log_a x$.',
+        ru: 'Жёлтая кривая — логарифм; белые точки стоят при $x = \\frac13,\\ 1,\\ 3,\\ 9$. Напишите её формулу: $\\log(x, a)$ — это $\\log_a x$.',
+      },
+      task: {
+        kind: 'formula',
+        answer: 'y = log(x, 3)',
+        range: [0.2, 10],
+        back: 4,
+        right: {
+          en: 'Multiplying $x$ by $3$ adds $1$: $1 \\to 3 \\to 9$ gives $0 \\to 1 \\to 2$. That is $y = \\log_3 x$ — the mirror image of $3^x$.',
+          ru: 'Умножение $x$ на $3$ прибавляет $1$: $1 \\to 3 \\to 9$ даёт $0 \\to 1 \\to 2$. Это $y = \\log_3 x$ — отражение $3^x$.',
+        },
+        mistakes: [
+          { formula: 'y = log(x, 2)', text: {
+            en: 'With base $2$ the curve would reach $1$ at $x = 2$. Here it reaches $1$ at $x = 3$: the base is the $x$ where the logarithm equals $1$.',
+            ru: 'При основании $2$ кривая поднялась бы до $1$ при $x = 2$. А здесь она на высоте $1$ при $x = 3$: основание — это тот $x$, где логарифм равен $1$.' } },
+          { formula: 'y = 3^x', text: {
+            en: 'This is the exponent itself. The logarithm is its mirror image in $y = x$: the points $(1,\\ 3)$ and $(3,\\ 1)$ swap places.',
+            ru: 'Это сама экспонента. Логарифм — её отражение в прямой $y = x$: точки $(1,\\ 3)$ и $(3,\\ 1)$ меняются местами.' } },
+          { formula: 'y = log(3, x)', text: {
+            en: 'The order is swapped: $\\log(x, a)$ — first the number, then the base. You wrote $\\log_x 3$.',
+            ru: 'Перепутан порядок: $\\log(x, a)$ — сначала число, потом основание. У вас получилось $\\log_x 3$.' } },
+        ],
+      },
+      state: { show: ['goalL', 'goalLdots'], window: { cx: 4, cy: 0.5, unit: 55 }, controls: [] },
     },
   ],
 };
