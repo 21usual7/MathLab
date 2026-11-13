@@ -19,6 +19,7 @@ export const TRACKS = [
   { id: 'solids', subject: 'geometry', title: { en: 'Solids and volumes', ru: 'Тела и объёмы' } },
   { id: 'vecs', subject: 'linalg', title: { en: 'Vectors', ru: 'Векторы' } },
   { id: 'maps', subject: 'linalg', title: { en: 'Linear maps', ru: 'Линейные преобразования' } },
+  { id: 'space3', subject: 'linalg', title: { en: 'Three dimensions', ru: 'Три измерения' } },
 ];
 
 export const CATALOG = [
@@ -132,13 +133,13 @@ export const CATALOG = [
       en: 'Two moves in a row are one move with its own matrix. Why the columns of BA are B applied to the columns of A, why BA ≠ AB, and why determinants multiply.',
       ru: 'Два движения подряд — одно движение со своей матрицей. Почему столбцы BA — это B от столбцов A, почему BA ≠ AB и почему определители перемножаются.',
     } },
-  { id: 'inverse', track: 'maps', status: 'ready', minutes: 12, prereqs: ['compose', 'det'],
+  { id: 'inverse', track: 'maps', status: 'ready', minutes: 12, prereqs: ['compose', 'det'], next: ['matrix3', 'planes3'],
     title: { en: 'Inverse matrix and systems of equations', ru: 'Обратная матрица и системы уравнений' },
     summary: {
       en: 'A system asks which arrow a matrix moves onto b. Count steps on the slanted grid, cross two lines, or play the move backwards — and why det = 0 means no answer or infinitely many.',
       ru: 'Система спрашивает, какую стрелку матрица переносит в b. Сосчитать шаги по косой сетке, пересечь две прямые или отмотать движение назад — и почему при det = 0 решений нет или их бесконечно много.',
     } },
-  { id: 'det', track: 'maps', status: 'ready', minutes: 10, prereqs: ['matrix'], next: ['eigen'],
+  { id: 'det', track: 'maps', status: 'ready', minutes: 10, prereqs: ['matrix'], next: ['eigen', 'det3'],
     title: { en: 'Determinant: how areas change', ru: 'Определитель: во сколько раз меняется площадь' },
     summary: {
       en: 'A matrix multiplies every area by the same number. Why it is ad − bc, why it is zero when the plane collapses and negative when it turns over.',
@@ -149,6 +150,13 @@ export const CATALOG = [
     summary: {
       en: 'A matrix turns almost every arrow — but some lines stay, only stretched: M·v = λ·v. A rotation has none, a shear one; repeated, a matrix turns everything towards the biggest λ.',
       ru: 'Матрица поворачивает почти каждую стрелку — но некоторые прямые остаются, только растягиваются: M·v = λ·v. У поворота таких нет, у сдвига одна; повторённая, матрица разворачивает всё к самому большому λ.',
+    } },
+
+  { id: 'matrix3', track: 'space3', status: 'ready', minutes: 10, prereqs: ['matrix'], next: ['det3', 'planes3'],
+    title: { en: 'A 3×3 matrix moves space', ru: 'Матрица 3×3 двигает пространство' },
+    summary: {
+      en: 'One dimension up: three arrows î, ĵ, k̂ decide everything, the cube becomes a slanted box — and when k̂′ falls into the plane of the other two, all of space is squashed flat.',
+      ru: 'На одно измерение выше: всё решают три стрелки î, ĵ, k̂, куб становится косым ящиком — а когда k̂′ падает в плоскость двух других, всё пространство сплющивается.',
     } },
 ];
 
@@ -168,6 +176,7 @@ const MODULES = {
   eigen: () => import('./eigen.js'),
   compose: () => import('./compose.js'),
   inverse: () => import('./inverse.js'),
+  matrix3: () => import('./matrix3.js'),
   'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),

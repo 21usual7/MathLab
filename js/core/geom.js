@@ -102,3 +102,52 @@ export const POLYGON = {
   en: ['', '', '', 'triangle', 'quadrilateral', 'pentagon', 'hexagon'],
   ru: ['', '', '', 'треугольник', 'четырёхугольник', 'пятиугольник', 'шестиугольник'],
 };
+
+// ---- Linear algebra in space ----
+
+// 3×3 matrix given by its columns a, b, c: M·v = v₁a + v₂b + v₃c; det = (a × b) · c, the signed volume
+// of the box on a, b, c
+export const apply = (a, b, c, v) => add(add(mul(a, v[0]), mul(b, v[1])), mul(c, v[2]));
+export const det3 = (a, b, c) => dot(cross(a, b), c);
+
+// The box [-R, R]² × [-Z, Z] of the 3D view, as a polyhedron: a whole plane is drawn as its section
+export function box(R, Z) {
+  const V = {
+    a: [-R, -R, -Z], b: [R, -R, -Z], c: [R, R, -Z], d: [-R, R, -Z],
+    e: [-R, -R, Z], f: [R, -R, Z], g: [R, R, Z], h: [-R, R, Z],
+  };
+  return polyhedron(V, [['a', 'b', 'c', 'd'], ['e', 'f', 'g', 'h'], ['a', 'b', 'f', 'e'], ['b', 'c', 'g', 'f'], ['c', 'd', 'h', 'g'], ['d', 'a', 'e', 'h']]);
+}
+
+// The part of the line p + s·u inside the box [-R, R]² × [-Z, Z]: [from, to], or null if it misses the box
+export function clipLine(p, u, R, Z) {
+  let lo = -Infinity, hi = Infinity;
+  const lim = [R, R, Z];
+  for (let i = 0; i < 3; i++) {
+    if (Math.abs(u[i]) < EPS) { if (Math.abs(p[i]) > lim[i]) return null; continue; }
+    const s1 = (-lim[i] - p[i]) / u[i], s2 = (lim[i] - p[i]) / u[i];
+    lo = Math.max(lo, Math.min(s1, s2));
+    hi = Math.min(hi, Math.max(s1, s2));
+  }
+  return lo < hi ? [add(p, mul(u, lo)), add(p, mul(u, hi))] : null;
+}
+
+// Common line of the planes n₁·X = d₁ and n₂·X = d₂: { p, u }, or null if they are parallel
+export function meet2(n1, d1, n2, d2) {
+  const u = cross(n1, n2), uu = dot(u, u);
+  if (uu < 1e-9) return null;
+  // The point of the line closest to the origin
+  const p = mul(add(mul(cross(n2, u), d1), mul(cross(u, n1), d2)), 1 / uu);
+  return { p, u };
+}
+
+// Common point of three planes (Cramer's rule), or null if there is no single one
+export function meet3(n1, d1, n2, d2, n3, d3) {
+  const D = det3(n1, n2, n3);
+  if (Math.abs(D) < 1e-9) return null;
+  // The rows are n₁, n₂, n₃; the solution is det with a column replaced by d, divided by D
+  const r = [n1, n2, n3], d = [d1, d2, d3];
+  const col = k => [0, 1, 2].map(i => r[i][k]);
+  const C = [col(0), col(1), col(2)];
+  return [0, 1, 2].map(k => det3(...C.map((c, j) => (j === k ? d : c))) / D);
+}

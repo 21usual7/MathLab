@@ -269,6 +269,61 @@ export class Plot3D {
     o.group.position.set(axis === 'x' ? value : 0, axis === 'y' ? value : 0, 0);
   }
 
+  // An arrow from a to b: a tube and a cone at the end; with `name` a label at the tip
+  arrow(key, a, b, color, { radius = 0.04, name = null } = {}) {
+    const o = this.entry(key, () => ({ group: new THREE.Group() }));
+    this.disposeObj(o.group);
+    o.group.clear();
+    const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A), L = d.length();
+    if (![...a, ...b].every(isFinite) || L < 1e-6) return;
+    const head = Math.min(0.3, L * 0.45), mat = new THREE.MeshStandardMaterial({ color, emissive: new THREE.Color(color).multiplyScalar(0.35), roughness: 0.4 });
+    const dir = d.clone().normalize(), neck = B.clone().sub(dir.clone().multiplyScalar(head));
+    if (L - head > 1e-3) o.group.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.LineCurve3(A, neck), 1, radius, 8, false), mat));
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(radius * 2.6, head, 16), mat);
+    cone.position.copy(neck.clone().add(dir.clone().multiplyScalar(head / 2)));
+    cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+    o.group.add(cone);
+    if (name) {
+      const l = this.label('', [b[0] + dir.x * 0.3, b[1] + dir.y * 0.3, b[2] + dir.z * 0.3 + 0.12], 'vertex-label');
+      l.element.innerHTML = name;
+      l.element.style.color = color;
+      o.group.add(l);
+    }
+  }
+
+  // The whole plane n·X = d, cut by the box of the view (pts: its section of the box, from geom.js)
+  sheet(key, pts, color, { opacity = 0.22 } = {}) {
+    const o = this.entry(key, () => ({ group: new THREE.Group() }));
+    this.disposeObj(o.group);
+    o.group.clear();
+    if (pts.length < 3) return;
+    const pos = [];
+    for (let k = 1; k + 1 < pts.length; k++) pos.push(...pts[0], ...pts[k], ...pts[k + 1]);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    o.group.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity, side: THREE.DoubleSide, depthWrite: false })));
+    const rim = new THREE.BufferGeometry().setFromPoints([...pts, pts[0]].map(p => new THREE.Vector3(...p)));
+    o.group.add(new THREE.Line(rim, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.7 })));
+  }
+
+  // Many thin straight lines at once (a grid of space): segs = [[a, b], ...]
+  lines(key, segs, color, opacity = 0.3) {
+    const o = this.entry(key, () => {
+      const line = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false }));
+      const group = new THREE.Group();
+      group.add(line);
+      return { group, line };
+    });
+    const pos = new Float32Array(segs.length * 6);
+    segs.forEach(([a, b], i) => pos.set([...a, ...b], i * 6));
+    // A new buffer every time: the number of lines may change, and the old one must leave the GPU
+    o.line.geometry.dispose();
+    o.line.geometry = new THREE.BufferGeometry();
+    o.line.geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    o.line.material.color.set(color);
+    o.line.material.opacity = opacity;
+  }
+
   // ---------- Solid geometry ----------
 
   // Segment that is solid where seen and dashed where hidden. With `poly` its visibility follows the faces

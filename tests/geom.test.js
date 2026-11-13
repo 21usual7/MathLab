@@ -53,3 +53,25 @@ test('visibility', () => {
   assert.deepEqual(f, [false, true, false, false, false, false]);
   assert.equal(plane3([0, 0, 0], [1, 1, 1], [2, 2, 2]), null);
 });
+
+test('linear algebra in space', async () => {
+  const { apply, det3, box, clipLine, meet2, meet3 } = await import('../js/core/geom.js');
+  // Columns: M·(1; 1; 1) is the sum of the columns
+  assert.deepEqual(apply([1, 0, 1], [1, 1, 0], [0, 0, 2], [1, 1, 1]), [2, 1, 3]);
+  // det is the signed volume: a stretch multiplies, a swap of columns flips the sign, a flat box has 0
+  assert.equal(det3([2, 0, 0], [0, 3, 0], [0, 0, 0.5]), 3);
+  assert.equal(det3([0, 1, 0], [1, 0, 0], [0, 0, 1]), -1);
+  assert.equal(det3([1, 0, 0.5], [0, 1, 0.5], [1, 1, 1]), 0);
+  // A plane through the middle of the box cuts it in a square; a slanted one in a hexagon
+  assert.equal(section(box(4, 4), { n: [0, 0, 1], d: 1 }).length, 4);
+  assert.equal(section(box(4, 4), { n: [1, 1, 1], d: 0 }).length, 6);
+  // A line clipped by the box
+  assert.deepEqual(clipLine([0, 0, 0], [1, 1, 0], 4, 4), [[-4, -4, 0], [4, 4, 0]]);
+  assert.equal(clipLine([0, 0, 9], [1, 0, 0], 4, 4), null);
+  // Two planes meet along a line, three in a point; parallel normals give nothing
+  const m = meet2([1, 1, 1], 3, [1, -1, 1], 1);
+  assert.deepEqual(m.p, [1, 1, 1]);
+  assert.equal(dot(m.u, [1, 1, 1]), 0);
+  assert.deepEqual(meet3([1, 1, 1], 3, [1, -1, 1], 1, [2, 1, -1], 2).map(v => Math.round(v * 1e9) / 1e9), [1, 1, 1]);
+  assert.equal(meet3([1, 1, 1], 3, [1, -1, 1], 1, [2, 0, 2], 2), null);
+});
