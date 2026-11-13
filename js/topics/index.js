@@ -132,8 +132,12 @@ export const CATALOG = [
       en: 'A matrix multiplies every area by the same number. Why it is ad − bc, why it is zero when the plane collapses and negative when it turns over.',
       ru: 'Матрица умножает любую площадь на одно и то же число. Почему оно равно ad − bc, почему ноль, когда плоскость схлопнулась, и минус, когда перевернулась.',
     } },
-  { id: 'eigen', track: 'maps', status: 'planned', prereqs: ['matrix'],
-    title: { en: 'Eigenvectors: arrows that keep their line', ru: 'Собственные векторы: стрелки, которые не сходят со своей прямой' } },
+  { id: 'eigen', track: 'maps', status: 'ready', minutes: 12, prereqs: ['matrix'],
+    title: { en: 'Eigenvectors: arrows that keep their line', ru: 'Собственные векторы: стрелки, которые не сходят со своей прямой' },
+    summary: {
+      en: 'A matrix turns almost every arrow — but some lines stay, only stretched: M·v = λ·v. A rotation has none, a shear one; repeated, a matrix turns everything towards the biggest λ.',
+      ru: 'Матрица поворачивает почти каждую стрелку — но некоторые прямые остаются, только растягиваются: M·v = λ·v. У поворота таких нет, у сдвига одна; повторённая, матрица разворачивает всё к самому большому λ.',
+    } },
 ];
 
 export const topicMeta = id => CATALOG.find(x => x.id === id);
@@ -149,6 +153,7 @@ const MODULES = {
   matrix: () => import('./matrix.js'),
   det: () => import('./det.js'),
   dot: () => import('./dot.js'),
+  eigen: () => import('./eigen.js'),
   'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
