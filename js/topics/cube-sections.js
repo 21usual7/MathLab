@@ -54,6 +54,8 @@ export default {
     scene.ensureParam('r', 0.5, { min: 0, max: 1 });
     scene.ensureParam('s', 2.5, { min: -4.4, max: 4.4 });
     scene.ensureParam('k', 0, { min: 0, max: 3 });
+    scene.ensureParam('u', 0.2, { min: 0, max: 1 }); // N on CC₁ in the first task
+    scene.ensureParam('m', 0.3, { min: 0, max: 1 }); // M on AA₁ in the second task
 
     const M = lerp(V.A, V.A1, 0.5), N = lerp(V.C, V.C1, 0.5);
 
@@ -120,6 +122,43 @@ export default {
         legend: () => `\\green{AC = 3\\sqrt{2} \\approx ${dist(V.A, V.C).toFixed(2)}},\\quad \\red{CC_1 = 3}`,
       },
       threePoints('free', [['A', 'A1'], ['B', 'C'], ['C1', 'D1']]),
+      {
+        // Task: the plane through M (AM = ⅓ AA₁), B and D₁; the student puts N on CC₁
+        id: 'findN',
+        draw3d(p, sc, s) {
+          const M1 = lerp(V.A, V.A1, 1 / 3), N1 = lerp(V.C, V.C1, s.u);
+          p.point('findN:B', V.B, COLORS.red);
+          p.point('findN:D1', V.D1, COLORS.red);
+          p.point('findN:M', M1, COLORS.red, 'M');
+          p.segment('findN:MB', M1, V.B, COLORS.green, { poly: CUBE, radius: 0.036 });
+          p.segment('findN:MD1', M1, V.D1, COLORS.green, { poly: CUBE, radius: 0.036 });
+          p.segment('findN:BN', V.B, N1, COLORS.teal, { poly: CUBE, radius: 0.03 });
+          p.segment('findN:ND1', N1, V.D1, COLORS.teal, { poly: CUBE, radius: 0.03 });
+          p.handle('findN:N', V.C, V.C1, s.u, '#ffffff', u => sc.setParam('u', u), 'N');
+        },
+      },
+      {
+        // Task: M slides along AA₁, the section through M, B and D₁ follows it
+        id: 'slideM',
+        draw3d(p, sc, s) {
+          const M1 = lerp(V.A, V.A1, s.m);
+          p.polygon('slideM:sec', section(CUBE, plane3(M1, V.B, V.D1)), SEC, { opacity: 0.32, poly: CUBE });
+          p.point('slideM:B', V.B, COLORS.red);
+          p.point('slideM:D1', V.D1, COLORS.red);
+          p.handle('slideM:M', V.A, V.A1, s.m, '#ffffff', m => sc.setParam('m', m), 'M');
+        },
+      },
+      {
+        // Task: the plane perpendicular to AC₁ is moved by its point on the diagonal (x + y + z = s)
+        id: 'acrossT',
+        draw3d(p, sc, s) {
+          const sec = across(s.s);
+          p.segment('acrossT:diag', V.A, V.C1, COLORS.purple, { poly: CUBE, radius: 0.02 });
+          p.polygon('acrossT:plane', patch(sec, 2.8), SEC, { opacity: 0.05, outline: false });
+          p.polygon('acrossT:sec', sec, SEC, { opacity: 0.32, poly: CUBE });
+          p.handle('acrossT:O', V.A, V.C1, (s.s + 4.5) / 9, '#ffffff', t => sc.setParam('s', -4.5 + 9 * t));
+        },
+      },
     );
   },
 
@@ -231,6 +270,95 @@ export default {
         ru: 'Три точки на трёх рёбрах, которые не пересекаются: $P$ на $AA_1$, $Q$ на $BC$, $R$ на $C_1D_1$. Двигайте их и найдите треугольник, четырёхугольник, пятиугольник и шестиугольник. Для каждого проверьте правила: какие стороны лежат на параллельных гранях — и параллельны ли они?',
       },
       state: { show: ['cube', 'free'], params: { p: 0.5, q: 0.5, r: 0.5 }, camera: CAMERA, controls: ['p', 'q', 'r'] },
+    },
+    {
+      title: { en: 'Where is N?', ru: 'Где точка N?' },
+      text: {
+        en: 'The plane goes through $B$, $D_1$ and the point $M$ on $AA_1$ with $AM = \\frac13 AA_1$. Rule 1 already gave the sides $\\green{MB}$ and $\\green{MD_1}$. The plane also cuts the edge $CC_1$ — drag $N$ along it to the right place. Turn the cube to see better.',
+        ru: 'Плоскость проходит через $B$, $D_1$ и точку $M$ на $AA_1$, где $AM = \\frac13 AA_1$. Правило 1 уже дало стороны $\\green{MB}$ и $\\green{MD_1}$. Плоскость пересекает и ребро $CC_1$ — перетащите $N$ по нему в нужное место. Поверните куб, чтобы лучше видеть.',
+      },
+      task: {
+        kind: 'drag',
+        target: { u: 2 / 3 },
+        tol: 0.05,
+        back: 2,
+        right: {
+          en: 'Rule 2: the faces $ADD_1A_1$ and $BCC_1B_1$ are parallel, so $BN \\parallel MD_1$. From $M$ to $D_1$ the height grows by $\\frac23$ of an edge — so from $B$ to $N$ as well: $CN = \\frac23 CC_1$. Note $AM + CN = $ one edge.',
+          ru: 'Правило 2: грани $ADD_1A_1$ и $BCC_1B_1$ параллельны, значит $BN \\parallel MD_1$. От $M$ до $D_1$ высота растёт на $\\frac23$ ребра — значит, и от $B$ до $N$ тоже: $CN = \\frac23 CC_1$. Заметьте: $AM + CN$ — ровно одно ребро.',
+        },
+        mistakes: [
+          { params: { u: 1 / 3 }, text: {
+            en: '$N$ at the same height as $M$ looks natural, but then $BN$ is not parallel to $MD_1$: $BN$ rises by $\\frac13$, $MD_1$ by $\\frac23$ of an edge. Parallel faces are cut along parallel lines.',
+            ru: '$N$ на одной высоте с $M$ — кажется естественным, но тогда $BN$ не параллельна $MD_1$: $BN$ поднимается на $\\frac13$ ребра, а $MD_1$ — на $\\frac23$. Параллельные грани режутся по параллельным прямым.' } },
+          { params: { u: 1 }, text: {
+            en: 'At $C_1$ the line $BC_1$ is a diagonal of the face — it rises by a whole edge, and $MD_1$ only by $\\frac23$. They are not parallel.',
+            ru: 'В $C_1$ прямая $BC_1$ — диагональ грани: она поднимается на целое ребро, а $MD_1$ — только на $\\frac23$. Они не параллельны.' } },
+        ],
+        hints: {
+          u: u => ({
+            en: `Rule 2: $BN$ must be parallel to $MD_1$. $MD_1$ rises by $\\frac23$ of an edge, and your $BN$ rises ${u < 2 / 3 ? 'less' : 'more'}.`,
+            ru: `Правило 2: $BN$ должна быть параллельна $MD_1$. $MD_1$ поднимается на $\\frac23$ ребра, а ваша $BN$ — ${u < 2 / 3 ? 'меньше' : 'больше'}.`,
+          }),
+        },
+      },
+      state: { show: ['cube', 'findN'], params: { u: 0.15 }, camera: [7.5, -6, 4.5], controls: [] },
+    },
+    {
+      title: { en: 'Make a rectangle', ru: 'Получите прямоугольник' },
+      text: {
+        en: 'The plane goes through $B$, $D_1$ and a point $M$ on the edge $AA_1$. Drag $M$ so that the section becomes a rectangle.',
+        ru: 'Плоскость проходит через $B$, $D_1$ и точку $M$ на ребре $AA_1$. Перетащите $M$ так, чтобы сечение стало прямоугольником.',
+      },
+      task: {
+        kind: 'drag',
+        target: [{ m: 0 }, { m: 1 }],
+        tol: 0.04,
+        back: 5,
+        right: {
+          en: 'With $M = A$ the plane contains the edge $AB$ and the section is $ABC_1D_1$; with $M = A_1$ it is $A_1BCD_1$. In both the sides are an edge and a face diagonal, and the edge is perpendicular to the face — the angles are right.',
+          ru: 'При $M = A$ плоскость содержит ребро $AB$, и сечение — $ABC_1D_1$; при $M = A_1$ — $A_1BCD_1$. В обоих стороны — ребро и диагональ грани, а ребро перпендикулярно грани: углы прямые.',
+        },
+        mistakes: [
+          { params: { m: 0.5 }, text: {
+            en: 'In the middle all four sides are equal — it is the rhombus from step 3, but its angles are not right: the diagonals $BD_1$ and $MN$ are different.',
+            ru: 'Посередине все четыре стороны равны — это ромб из шага 3, но углы у него не прямые: диагонали $BD_1$ и $MN$ разные.' } },
+        ],
+        hints: {
+          m: { en: 'Now the section is a parallelogram with slanted angles. A right angle appears when a side of the section is an edge of the cube: try the ends of $AA_1$.', ru: 'Сейчас сечение — параллелограмм с косыми углами. Прямой угол появится, когда сторона сечения — ребро куба: попробуйте концы $AA_1$.' },
+        },
+      },
+      state: { show: ['cube', 'slideM'], params: { m: 0.3 }, camera: [7.5, -6, 4.5], controls: [] },
+    },
+    {
+      title: { en: 'A regular hexagon', ru: 'Правильный шестиугольник' },
+      text: {
+        en: 'The plane is perpendicular to the diagonal $\\purple{AC_1}$. Drag its point along the diagonal so that the section becomes a <b>regular</b> hexagon — all sides equal.',
+        ru: 'Плоскость перпендикулярна диагонали $\\purple{AC_1}$. Тяните её точку вдоль диагонали так, чтобы сечение стало <b>правильным</b> шестиугольником — со всеми сторонами равными.',
+      },
+      task: {
+        kind: 'drag',
+        target: { s: 0 },
+        tol: 0.15,
+        back: 3,
+        right: {
+          en: 'Through the middle of the diagonal the plane cuts six edges at their midpoints; every side is half a face diagonal, $\\frac{3\\sqrt2}{2}$.',
+          ru: 'Через середину диагонали плоскость режет шесть рёбер в их серединах; каждая сторона — половина диагонали грани, $\\frac{3\\sqrt2}{2}$.',
+        },
+        mistakes: [
+          { params: { s: 1.5 }, text: {
+            en: 'Here the plane goes through three vertices $B_1$, $D_1$, $C$: the section is a triangle. A hexagon is between the two such triangles.',
+            ru: 'Здесь плоскость проходит через три вершины $B_1$, $D_1$, $C$: сечение — треугольник. Шестиугольник — между двумя такими треугольниками.' } },
+          { params: { s: -1.5 }, text: {
+            en: 'Here the plane goes through three vertices $B$, $D$, $A_1$: the section is a triangle. A hexagon is between the two such triangles.',
+            ru: 'Здесь плоскость проходит через три вершины $B$, $D$, $A_1$: сечение — треугольник. Шестиугольник — между двумя такими треугольниками.' } },
+        ],
+        hints: {
+          s: s => (Math.abs(s) < 1.5
+            ? { en: 'A hexagon, but long and short sides alternate. Where would the plane cut all six edges in the same way?', ru: 'Шестиугольник, но длинные и короткие стороны чередуются. Где плоскость разрежет все шесть рёбер одинаково?' }
+            : { en: 'This is a triangle. Move the point towards the middle of the cube.', ru: 'Это треугольник. Двигайте точку к середине куба.' }),
+        },
+      },
+      state: { show: ['cube', 'acrossT'], params: { s: 2.6 }, camera: [8, 3.2, 6.2], controls: [] },
     },
   ],
 };

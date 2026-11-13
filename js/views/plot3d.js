@@ -59,6 +59,8 @@ export class Plot3D {
 
     if (axes) this.buildAxes();
     this.objs = new Map();
+    this.handles = [];
+    this.bindHandles();
     this.needBuild = true;
     this.dirty = true;
 
@@ -99,6 +101,7 @@ export class Plot3D {
   build() {
     this.needBuild = false;
     this.seen = new Set();
+    this.handles = [];
     this.onDraw(this);
     for (const [key, o] of this.objs) {
       if (!this.seen.has(key)) { this.disposeObj(o.group); this.scene.remove(o.group); this.objs.delete(key); }
@@ -345,6 +348,58 @@ export class Plot3D {
     o.l.element.innerHTML = name;
     o.l.element.style.color = color;
     o.l.position.set(p[0], p[1], p[2] + 0.28);
+  }
+
+  // A point the user drags along the segment a–b (an edge, a diagonal); onDrag(t) gets its new place, 0 at a, 1 at b
+  handle(key, a, b, t, color, onDrag, name = null) {
+    const p = [0, 1, 2].map(i => a[i] + (b[i] - a[i]) * t);
+    this.point(key, p, color, name, 0.12);
+    this.handles.push({ key, a, b, p, onDrag });
+  }
+
+  // Dragging handles. The pointer is taken before the camera controls see it (capture on the parent), so the
+  // view does not turn while a point is dragged. The new place is the point of the segment's line closest to
+  // the ray under the pointer: exact at any angle of view.
+  bindHandles() {
+    const canvas = this.renderer.domElement, ray = new THREE.Raycaster();
+    const at = e => {
+      const r = canvas.getBoundingClientRect();
+      return { x: (e.clientX - r.left) / r.width * 2 - 1, y: 1 - (e.clientY - r.top) / r.height * 2, r };
+    };
+    const near = e => {
+      const { x, y, r } = at(e);
+      let best = null, bestD = 20;
+      for (const h of this.handles) {
+        const v = new THREE.Vector3(...h.p).project(this.camera);
+        const d = Math.hypot((v.x - x) * r.width / 2, (v.y - y) * r.height / 2);
+        if (d < bestD) { bestD = d; best = h; }
+      }
+      return best;
+    };
+    let drag = null;
+    this.el.addEventListener('pointerdown', e => {
+      const h = near(e);
+      if (!h) return;
+      e.stopPropagation();
+      e.preventDefault();
+      drag = h.key;
+      this.el.setPointerCapture(e.pointerId);
+    }, true);
+    this.el.addEventListener('pointermove', e => {
+      if (!drag) { canvas.style.cursor = near(e) ? 'grab' : ''; return; }
+      const h = this.handles.find(q => q.key === drag);
+      if (!h) return;
+      const { x, y } = at(e);
+      ray.setFromCamera(new THREE.Vector2(x, y), this.camera);
+      const P = new THREE.Vector3(...h.a), u = new THREE.Vector3(...h.b).sub(P), d = ray.ray.direction;
+      const w = P.clone().sub(ray.ray.origin);
+      const A = u.dot(u), B = u.dot(d), C = d.dot(d), D = u.dot(w), E = d.dot(w), den = A * C - B * B;
+      if (den < 1e-9) return; // the segment points straight at the eye
+      h.onDrag(Math.max(0, Math.min(1, (B * E - C * D) / den)));
+    });
+    const up = () => { drag = null; };
+    this.el.addEventListener('pointerup', up);
+    this.el.addEventListener('pointercancel', up);
   }
 
   // ---------- Camera ----------
