@@ -445,17 +445,19 @@ body.keypad-open { padding-bottom: var(--kb, 0px); }
   .stage-bar button { white-space: nowrap; }
   .stage-bar .seg button { padding: 5px 9px; font-size: 12px; }
   .stage-bar .ghost { padding: 5px 10px; font-size: 13px; }
-  .site-nav { gap: 0; }
+  /* If the sections still do not fit, they scroll sideways and never push the language switch off the screen */
+  .site-nav { gap: 0; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .site-nav::-webkit-scrollbar { display: none; }
   .site-nav a { padding: 6px 6px; font-size: 13px; }
   .site-header { gap: 10px; }
-  /* Four sections do not fit next to the name: the ∂ mark is enough */
+  /* Five sections do not fit next to the name: the ∂ mark and short names are enough */
   .brand-name { display: none; }
   .nav-full { display: none; }
   .nav-short { display: inline; }
   .lang button { padding: 4px 8px; }
 }
 
-/* The narrowest phones: four sections and the language switch in one row */
+/* The narrowest phones: five sections and the language switch in one row */
 @media (max-width: 400px) {
   .site-header { gap: 8px; }
   .site-nav a { padding: 6px 4px; font-size: 12px; }

@@ -60,6 +60,8 @@ export class Plot2D {
     this.w = w; this.h = h;
     this.k = Math.max(0.7, Math.min(1.6, h / 760));
     this.u = this.view.unit * this.k;
+    // view.fit = [width, height]: a picture (a clock face) that must be seen whole shrinks in a narrow view
+    if (this.view.fit) this.u = Math.min(this.u, w / this.view.fit[0], h / this.view.fit[1]);
     const u = this.u;
     this.xr = [this.view.cx - w / 2 / u, this.view.cx + w / 2 / u];
     this.yr = [this.view.cy - h / 2 / u, this.view.cy + h / 2 / u];
@@ -72,12 +74,13 @@ export class Plot2D {
     this.pen = null; // an object may ask for a pen this frame: then dragging draws a line instead of moving the view
     for (const l of this.labels.values()) l.used = false;
 
-    this.drawGrid();
+    // A picture that is not a graph (a clock face of remainders) asks for no grid: view.grid = false
+    if (this.view.grid !== false) this.drawGrid();
     // Objects may rename the axes for this frame (a slice of a surface is drawn over x or y, height is z)
     this.axisNames = { x: 'x', y: 'y' };
     this.onDraw(this);
     this.canvas.classList.toggle('pen', !!this.pen);
-    this.drawAxisNames();
+    if (this.view.grid !== false) this.drawAxisNames();
 
     for (const l of this.labels.values()) l.el.style.display = l.used ? '' : 'none';
   }
@@ -366,6 +369,18 @@ export class Plot2D {
     }
   }
 
+  // Plain text on the canvas, centred at (x, y): letters of an alphabet, many at once (cheaper than KaTeX labels)
+  text(str, x, y, color, { size = 15, weight = 500 } = {}) {
+    if (!isFinite(x) || !isFinite(y)) return;
+    const ctx = this.ctx;
+    ctx.font = `${weight} ${size}px Inter, system-ui, sans-serif`;
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(str, this.sx(x), this.sy(y));
+    ctx.textBaseline = 'alphabetic';
+  }
+
   // Formula label (KaTeX) near a point, in HTML over the canvas
   tex(key, tex, x, y, color, { dx = 10, dy = -10, align = 'left' } = {}) {
     if (!isFinite(x) || !isFinite(y)) return;
@@ -399,6 +414,8 @@ export class Plot2D {
   setView(v, ms = 900) {
     if (this.stopTween) this.stopTween();
     const from = { ...this.view }, to = { ...this.view, ...v };
+    if ('grid' in v) this.view.grid = v.grid; // the grid and the fitted size change at once
+    if ('fit' in v) this.view.fit = v.fit;
     // Zoom is interpolated in log space so it feels uniform
     this.stopTween = tween(ms, k => {
       this.view.cx = lerp(from.cx, to.cx, k);
@@ -410,6 +427,8 @@ export class Plot2D {
 
   zoomAt(factor, px, py) {
     const x0 = this.toX(px), y0 = this.toY(py);
+    // The student zooms: the fitted size becomes the starting point, and the fit no longer holds the zoom back
+    if (this.view.fit) { this.view.unit = this.u / this.k; this.view.fit = null; }
     this.view.unit = Math.min(1e5, Math.max(1, this.view.unit * factor));
     this.u = this.view.unit * this.k;
     this.view.cx = x0 - (px - this.w / 2) / this.u;

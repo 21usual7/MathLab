@@ -6,6 +6,7 @@ export const SUBJECTS = [
   { id: 'algebra', title: { en: 'Algebra and calculus', ru: 'Алгебра и начала анализа' } },
   { id: 'geometry', title: { en: 'Geometry', ru: 'Геометрия' } },
   { id: 'linalg', title: { en: 'Linear algebra', ru: 'Линейная алгебра' } },
+  { id: 'crypto', title: { en: 'Cryptography', ru: 'Криптография' } },
 ];
 
 export const TRACKS = [
@@ -20,6 +21,8 @@ export const TRACKS = [
   { id: 'vecs', subject: 'linalg', title: { en: 'Vectors', ru: 'Векторы' } },
   { id: 'maps', subject: 'linalg', title: { en: 'Linear maps', ru: 'Линейные преобразования' } },
   { id: 'space3', subject: 'linalg', title: { en: 'Three dimensions', ru: 'Три измерения' } },
+  { id: 'remainders', subject: 'crypto', title: { en: 'Remainders and ciphers', ru: 'Остатки и шифры' } },
+  { id: 'publickey', subject: 'crypto', title: { en: 'Public keys', ru: 'Открытый ключ' } },
 ];
 
 export const CATALOG = [
@@ -176,6 +179,13 @@ export const CATALOG = [
       en: 'Squashed space lands on a plane or a line — the rank. What lands at zero is the kernel; lost plus left is always 3. And why a system with det = 0 has a whole line of solutions or none.',
       ru: 'Сплющенное пространство ложится на плоскость или прямую — это ранг. То, что попадает в ноль, — ядро; потеряно плюс осталось всегда 3. И почему у системы с det = 0 целая прямая решений или ни одного.',
     } },
+
+  { id: 'mod', track: 'remainders', status: 'ready', minutes: 12, next: ['caesar', 'dh'],
+    title: { en: 'Remainders: arithmetic on a clock face', ru: 'Остатки: арифметика на циферблате' },
+    summary: {
+      en: 'Adding is walking around a clock, multiplying is jumping. Why jumps of 5 draw a star through all 12 marks and jumps of 4 only a triangle, how to divide without fractions, and why powers come back to 1.',
+      ru: 'Сложение — шаги по кругу, умножение — прыжки. Почему прыжки по 5 рисуют звезду через все 12 отметок, а по 4 — только треугольник, как делить без дробей и почему степени возвращаются к 1.',
+    } },
 ];
 
 export const topicMeta = id => CATALOG.find(x => x.id === id);
@@ -198,6 +208,7 @@ const MODULES = {
   det3: () => import('./det3.js'),
   planes3: () => import('./planes3.js'),
   rank: () => import('./rank.js'),
+  mod: () => import('./mod.js'),
   'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
