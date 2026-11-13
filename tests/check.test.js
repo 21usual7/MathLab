@@ -22,6 +22,8 @@ test('diagnose', () => {
   assert.deepEqual(diagnose(x => -((x - 1) ** 2), x => (x - 1) ** 2), { type: 'vscale', k: -1 });
   assert.deepEqual(diagnose(x => 2 * Math.sin(x), Math.sin), { type: 'vscale', k: 2 });
   assert.deepEqual(diagnose(x => Math.sin(x / 2), x => Math.sin(2 * x)), { type: 'hscale', b: 0.25 });
+  // A factor that is not a round number is found too: 2eˣ against 3eˣ
+  assert.ok(Math.abs(diagnose(x => 2 * Math.exp(x), x => 3 * Math.exp(x), [-2, 2]).k - 2 / 3) < 1e-9);
   assert.deepEqual(diagnose(x => Math.sqrt(-x), root), { type: 'hscale', b: -1 });
   assert.equal(diagnose(x => Math.sqrt(x) - 3, a).type, 'other');
   assert.ok(explainDiff({ type: 'hshift', d: 2 }).ru.includes('правее'));

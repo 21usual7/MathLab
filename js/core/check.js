@@ -28,7 +28,8 @@ export function same(f, g, range = DEFAULT_RANGE) {
 export function diagnose(fs, fa, range = DEFAULT_RANGE) {
   if (same(fs, fa, range)) return { type: 'same' };
   const xs = samples(range).filter(x => isFinite(fa(x)) && isFinite(fs(x)));
-  const nice = v => Math.round(v * 4) / 4; // answers in tasks are round numbers
+  // Answers in tasks are usually round numbers: snap to quarters what is a quarter up to rounding, keep the rest
+  const nice = v => Math.abs(v - Math.round(v * 4) / 4) < 1e-6 ? Math.round(v * 4) / 4 : v;
 
   if (xs.length > 5) {
     const d = nice(fs(xs[0]) - fa(xs[0]));

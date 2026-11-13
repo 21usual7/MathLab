@@ -24,6 +24,9 @@ export default {
     scene.add("y = f'(x)", { id: 'dE', color: 'yellow', dash: true, visible: false });
     scene.add('y = x', { id: 'diag', color: 'grey', dim: true, visible: false });
     scene.add('y = ln(x)', { id: 'ln', color: 'green', visible: false });
+    // For the tasks: the goal curves are not named under the scene — the formula is the answer
+    scene.add('y = e^x', { id: 'Eg', color: 'grey', dim: true, visible: false, legend: false });
+    scene.add('y = 3e^x', { id: 'goal3', color: 'blue', visible: false, legend: false });
     scene.ensureParam('n', 1, { min: 1, max: 365, step: 1 });
     scene.ensureParam('a', 2, { min: 1.5, max: 3.5, step: 0.001 });
     scene.ensureParam('p', 0.6, { min: -2, max: 1.5 });
@@ -82,6 +85,46 @@ export default {
         },
         legend: s => {
           const v = fmt(r2(Math.E ** s.p));
+          const [height, sl] = t({ en: ['height', 'slope'], ru: ['высота', 'наклон'] });
+          return `x = ${fmt(r2(s.p))}:\\quad \\text{${height}} = ${v} = \\text{${sl}}`;
+        },
+      },
+      {
+        // Payments four times a year, for two years: the staircase whose corners the student describes by a formula
+        id: 'quarters',
+        draw2d(p) {
+          const pts = [[0, 1]];
+          let v = 1;
+          for (let k = 1; k <= 8; k++) {
+            pts.push([k / 4, v]);
+            v *= 1.25;
+            pts.push([k / 4, v]);
+          }
+          p.polyline(pts, COLORS.yellow, 2.5);
+          for (let k = 0; k <= 8; k++) p.dot(k / 4, 1.25 ** k, COLORS.yellow, 4.5);
+          p.vline(1, 'rgba(255,255,255,0.2)', 1, [4, 4]);
+          p.vline(2, 'rgba(255,255,255,0.2)', 1, [4, 4]);
+        },
+      },
+      {
+        // The tangent to e^x without numbers, and the height read off on the y axis
+        id: 'tangentT',
+        draw2d(p, sc, s) {
+          const { h } = tangentAt(p, Math.E, s.p, COLORS.blue);
+          p.line(p.xr[0], h, s.p, h, COLORS.blue + '66', { width: 1.2, dash: [3, 4] });
+          p.handle(s.p, h, COLORS.blue, x => { sc.play('p', false); sc.setParam('p', clamp(x, -2, 1.5)); });
+        },
+      },
+      {
+        // The same check on the goal curve of the last task: slope and height agree there too
+        id: 'tangent3',
+        draw2d(p, sc, s) {
+          const h = 3 * Math.E ** s.p;
+          p.line(s.p, h, s.p + 1, 2 * h, 'rgba(255,255,255,0.75)', { width: 1.8, extend: true });
+          p.handle(s.p, h, COLORS.blue, x => { sc.play('p', false); sc.setParam('p', clamp(x, -2, 1.5)); });
+        },
+        legend: s => {
+          const v = fmt(r2(3 * Math.E ** s.p));
           const [height, sl] = t({ en: ['height', 'slope'], ru: ['высота', 'наклон'] });
           return `x = ${fmt(r2(s.p))}:\\quad \\text{${height}} = ${v} = \\text{${sl}}`;
         },
@@ -188,6 +231,93 @@ export default {
         ru: 'В Lab нажмите <b>Tangent</b> и наводите указатель на $y = e^x$, $y = 2^x$, $y = 3^x$: сравнивайте наклон с высотой. Попробуйте $y = (1 + 1/n)^{n x}$ со слайдером $n$ и $y = e^{-x}$ — убывание, как у остывающего чая.',
       },
       state: { show: ['E', 'dE', 'tangentE'], params: { p: 1 }, window: { cx: 0, cy: 2, unit: 90 }, controls: ['p'] },
+    },
+    {
+      title: { en: 'Four times a year', ru: 'Четыре раза в год' },
+      text: {
+        en: 'The bank pays $100\\,\\%$ a year in four parts: $25\\,\\%$ every quarter. The staircase shows the money over two years; the dots are the moments right after each payment. Write a formula $y = \\ldots$ of time $x$ (in years) whose graph goes through all the dots.',
+        ru: 'Банк платит $100\\,\\%$ годовых четырьмя частями: по $25\\,\\%$ каждый квартал. Лесенка — деньги за два года; точки — моменты сразу после начисления. Напишите формулу $y = \\ldots$ от времени $x$ (в годах), график которой проходит через все точки.',
+      },
+      task: {
+        kind: 'formula',
+        answer: 'y = 1.25^(4x)',
+        range: [0, 2],
+        back: 1,
+        right: {
+          en: 'Every quarter the money is multiplied by $1 + \\frac14 = 1.25$, and in $x$ years there are $4x$ quarters: $y = 1.25^{4x} = \\left(1 + \\frac14\\right)^{4x}$. With $n$ payments it is $\\left(1 + \\frac1n\\right)^{nx}$, and as $n$ grows it turns into $e^x$.',
+          ru: 'Каждый квартал деньги умножаются на $1 + \\frac14 = 1.25$, а за $x$ лет проходит $4x$ кварталов: $y = 1.25^{4x} = \\left(1 + \\frac14\\right)^{4x}$. При $n$ начислениях это $\\left(1 + \\frac1n\\right)^{nx}$, а с ростом $n$ — $e^x$.',
+        },
+        mistakes: [
+          { formula: 'y = 1.25^x', text: {
+            en: 'Here the money is multiplied by $1.25$ once a year, but the bank pays four times a year: in $x$ years there are $4x$ payments.',
+            ru: 'Так деньги умножаются на $1.25$ раз в год, а банк платит четыре раза в год: за $x$ лет — $4x$ начислений.' } },
+          { formula: 'y = 2^x', text: {
+            en: 'This is one payment a year, $n = 1$. With four payments the interest itself earns interest, and the money grows faster.',
+            ru: 'Это одно начисление в год, $n = 1$. При четырёх начислениях проценты сами приносят проценты, и деньги растут быстрее.' } },
+          { formula: 'y = e^x', text: {
+            en: '$e^x$ is the limit, continuous growth. With four payments the dots lie slightly lower: after a year $1.25^4 \\approx 2.44$, not $2.72$.',
+            ru: '$e^x$ — это предел, непрерывный рост. При четырёх начислениях точки лежат чуть ниже: через год $1.25^4 \\approx 2.44$, а не $2.72$.' } },
+          { formula: 'y = (1 + x/4)^4', text: {
+            en: 'Here there are always exactly four payments, whatever $x$ is. But payments come every quarter: in $x$ years there are $4x$ of them, and the number of payments is the power.',
+            ru: 'Здесь при любом $x$ ровно четыре начисления. А начисления идут каждый квартал: за $x$ лет их $4x$, и число начислений стоит в показателе.' } },
+          { formula: 'y = 1 + x', text: {
+            en: 'This is simple interest: $100\\,\\%$ of the first ruble every year. But the bank adds interest to the sum, and the next $25\\,\\%$ are counted from the bigger amount.',
+            ru: 'Это простые проценты: каждый год $100\\,\\%$ от первого рубля. Но банк прибавляет проценты к сумме, и следующие $25\\,\\%$ считаются уже от большей суммы.' } },
+        ],
+      },
+      state: { show: ['quarters'], window: { cx: 1, cy: 3, unit: 75 }, controls: [] },
+    },
+    {
+      title: { en: 'Find a slope of 3', ru: 'Найдите наклон 3' },
+      text: {
+        en: 'On the graph of $\\blue{e^x}$ put the point where the slope of the tangent is $3$. There are no numbers this time — but you know a property of $e^x$ that makes this easy.',
+        ru: 'На графике $\\blue{e^x}$ поставьте точку туда, где наклон касательной равен $3$. Чисел на этот раз нет — но вы знаете свойство $e^x$, которое делает задачу простой.',
+      },
+      task: {
+        kind: 'drag',
+        target: { p: Math.log(3) },
+        tol: 0.06,
+        back: 3,
+        right: {
+          en: 'The slope of $e^x$ is its height, so we need the height $3$: $e^x = 3$, $x = \\ln 3 \\approx 1.1$.',
+          ru: 'Наклон $e^x$ равен высоте, значит нужна высота $3$: $e^x = 3$, $x = \\ln 3 \\approx 1.1$.',
+        },
+        hints: {
+          p: p => (Math.E ** p < 3
+            ? { en: 'The tangent here is flatter than $3$. Remember: for $e^x$ the slope is the height. How high is the point?', ru: 'Касательная здесь положе, чем $3$. Вспомните: у $e^x$ наклон равен высоте. На какой высоте точка?' }
+            : { en: 'The tangent here is steeper than $3$. For $e^x$ the slope is the height — and the point is higher than $3$.', ru: 'Касательная здесь круче, чем $3$. У $e^x$ наклон равен высоте — а точка выше $3$.' }),
+        },
+      },
+      state: { show: ['E', 'tangentT'], params: { p: 0 }, window: { cx: 0.5, cy: 2, unit: 90 }, controls: [] },
+    },
+    {
+      title: { en: 'Another function that is its own derivative', ru: 'Ещё одна «сама себе производная»' },
+      text: {
+        en: 'The blue curve has the same property as $e^x$: at every point its slope equals its height — drag the point and check. It goes through $(0,\\ 3)$. Write its formula. (The grey curve is $e^x$.)',
+        ru: 'У синей кривой то же свойство, что у $e^x$: в каждой точке наклон равен высоте — потяните точку и проверьте. Она проходит через $(0,\\ 3)$. Напишите её формулу. (Серая кривая — $e^x$.)',
+      },
+      task: {
+        kind: 'formula',
+        answer: 'y = 3e^x',
+        range: [-2, 2],
+        back: 3,
+        right: {
+          en: '$y = 3e^x$: every height is three times bigger, and so is every slope — they stay equal. These are the $Ce^x$ from step 4, the only functions that are their own derivative.',
+          ru: '$y = 3e^x$: все высоты втрое больше, и все наклоны тоже — они по-прежнему равны. Это те самые $Ce^x$ из шага 4 — единственные функции, равные своей производной.',
+        },
+        mistakes: [
+          { formula: 'y = e^x + 2', text: {
+            en: 'It does go through $(0,\\ 3)$, but its slopes are those of $e^x$ — at $x = 0$ the slope is $1$, the height $3$. Lifting the graph changes heights, not slopes.',
+            ru: 'Через $(0,\\ 3)$ она проходит, но наклоны у неё как у $e^x$: при $x = 0$ наклон $1$, а высота $3$. Подъём графика меняет высоты, но не наклоны.' } },
+          { formula: 'y = e^x + 3', text: {
+            en: 'At $x = 0$ this gives $1 + 3 = 4$, not $3$. And lifting the graph changes heights but not slopes, so they would no longer be equal.',
+            ru: 'При $x = 0$ это $1 + 3 = 4$, а не $3$. К тому же подъём графика меняет высоты, но не наклоны, и они перестанут быть равны.' } },
+          { formula: 'y = e^(3x)', text: {
+            en: 'At $x = 0$ this is $1$, not $3$. And its slope is three times its height: it is $e^x$ squeezed, not stretched upward.',
+            ru: 'При $x = 0$ это $1$, а не $3$. И наклон у неё втрое больше высоты: это $e^x$, сжатая к оси, а не растянутая вверх.' } },
+        ],
+      },
+      state: { show: ['Eg', 'goal3', 'tangent3'], params: { p: 0 }, window: { cx: 0, cy: 3, unit: 60 }, controls: [] },
     },
   ],
 };
