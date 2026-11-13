@@ -164,6 +164,12 @@ export const CATALOG = [
       en: 'A 3×3 matrix multiplies every volume by one number — the volume of the box on its columns. Base times height, zero when space goes flat, minus when a right hand turns into a left one.',
       ru: 'Матрица 3×3 умножает любой объём на одно число — объём ящика на её столбцах. Основание на высоту, ноль, когда пространство стало плоским, и минус, когда правая рука стала левой.',
     } },
+  { id: 'planes3', track: 'space3', status: 'ready', minutes: 12, prereqs: ['det3', 'inverse'], next: ['rank'],
+    title: { en: 'Three equations — three planes', ru: 'Три уравнения — три плоскости' },
+    summary: {
+      en: 'Each equation is a plane, two meet along a line, the third cuts it at the solution. And why with det = 0 the planes form a prism (no solutions) or a book (infinitely many).',
+      ru: 'Каждое уравнение — плоскость, две пересекаются по прямой, третья режет её в точке-решении. И почему при det = 0 плоскости образуют призму (решений нет) или книжку (их бесконечно много).',
+    } },
 ];
 
 export const topicMeta = id => CATALOG.find(x => x.id === id);
@@ -184,6 +190,7 @@ const MODULES = {
   inverse: () => import('./inverse.js'),
   matrix3: () => import('./matrix3.js'),
   det3: () => import('./det3.js'),
+  planes3: () => import('./planes3.js'),
   'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
