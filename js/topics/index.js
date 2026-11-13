@@ -186,6 +186,12 @@ export const CATALOG = [
       en: 'Adding is walking around a clock, multiplying is jumping. Why jumps of 5 draw a star through all 12 marks and jumps of 4 only a triangle, how to divide without fractions, and why powers come back to 1.',
       ru: 'Сложение — шаги по кругу, умножение — прыжки. Почему прыжки по 5 рисуют звезду через все 12 отметок, а по 4 — только треугольник, как делить без дробей и почему степени возвращаются к 1.',
     } },
+  { id: 'caesar', track: 'remainders', status: 'ready', minutes: 10, prereqs: ['mod'], next: ['dh'],
+    title: { en: 'Caesar cipher and letter frequencies', ru: 'Шифр Цезаря и частоты букв' },
+    summary: {
+      en: 'Encrypting is adding a key on a clock of letters. Why there are too few keys, how letter frequencies give the key away at a glance — and what a real cipher must do better.',
+      ru: 'Зашифровать — прибавить ключ на часах из букв. Почему ключей слишком мало, как частоты букв выдают ключ с первого взгляда — и что настоящий шифр должен делать лучше.',
+    } },
 ];
 
 export const topicMeta = id => CATALOG.find(x => x.id === id);
@@ -209,6 +215,7 @@ const MODULES = {
   planes3: () => import('./planes3.js'),
   rank: () => import('./rank.js'),
   mod: () => import('./mod.js'),
+  caesar: () => import('./caesar.js'),
   'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
