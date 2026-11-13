@@ -132,8 +132,12 @@ export const CATALOG = [
       en: 'Two moves in a row are one move with its own matrix. Why the columns of BA are B applied to the columns of A, why BA ≠ AB, and why determinants multiply.',
       ru: 'Два движения подряд — одно движение со своей матрицей. Почему столбцы BA — это B от столбцов A, почему BA ≠ AB и почему определители перемножаются.',
     } },
-  { id: 'inverse', track: 'maps', status: 'planned', prereqs: ['compose', 'det'],
-    title: { en: 'Inverse matrix and systems of equations', ru: 'Обратная матрица и системы уравнений' } },
+  { id: 'inverse', track: 'maps', status: 'ready', minutes: 12, prereqs: ['compose', 'det'],
+    title: { en: 'Inverse matrix and systems of equations', ru: 'Обратная матрица и системы уравнений' },
+    summary: {
+      en: 'A system asks which arrow a matrix moves onto b. Count steps on the slanted grid, cross two lines, or play the move backwards — and why det = 0 means no answer or infinitely many.',
+      ru: 'Система спрашивает, какую стрелку матрица переносит в b. Сосчитать шаги по косой сетке, пересечь две прямые или отмотать движение назад — и почему при det = 0 решений нет или их бесконечно много.',
+    } },
   { id: 'det', track: 'maps', status: 'ready', minutes: 10, prereqs: ['matrix'], next: ['eigen'],
     title: { en: 'Determinant: how areas change', ru: 'Определитель: во сколько раз меняется площадь' },
     summary: {
@@ -163,6 +167,7 @@ const MODULES = {
   dot: () => import('./dot.js'),
   eigen: () => import('./eigen.js'),
   compose: () => import('./compose.js'),
+  inverse: () => import('./inverse.js'),
   'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
