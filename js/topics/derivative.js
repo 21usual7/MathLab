@@ -15,10 +15,16 @@ export default {
   setup(scene) {
     const f = scene.add('y = x^3/4 - x', { id: 'f', color: 'blue' });
     const df = scene.add('y = 3x^2/4 - 1', { id: 'df', color: 'yellow', visible: false });
+    const g = scene.add('y = x^2', { id: 'g', color: 'blue', visible: false }); // for the last task
     scene.ensureParam('a', -2.2, { min: -3, max: 3 });
     scene.ensureParam('h', 1.5, { min: 0.001, max: 2, step: 0.001 });
     const F = (s, x) => { s.x = x; return f.fn(s); };
     const D = (s, x) => { s.x = x; return df.fn(s); };
+    const G = (s, x) => { s.x = x; return g.fn(s); };
+    const tangent = (p, s) => {
+      const fa = F(s, s.a);
+      p.line(s.a, fa, s.a + 1, fa + D(s, s.a), COLORS.green, { width: 2.5, extend: true });
+    };
 
     scene.custom.push(
       {
@@ -39,10 +45,7 @@ export default {
       },
       {
         id: 'tangent',
-        draw2d(p, sc, s) {
-          const fa = F(s, s.a);
-          p.line(s.a, fa, s.a + 1, fa + D(s, s.a), COLORS.green, { width: 2.5, extend: true });
-        },
+        draw2d(p, sc, s) { tangent(p, s); },
         legend: s => `\\green{f'(a)} = ${fmt(D(s, s.a))}`,
       },
       {
@@ -72,6 +75,29 @@ export default {
           if (f.visible) p.tex('fname', '\\blue{f}', 2.75, F(s, 2.75), COLORS.blue, { dx: -14, dy: -4, align: 'right' });
           if (df.visible || sc.get('trace').visible) p.tex('dfname', "\\yellow{f'}", 2.3, D(s, 2.3), COLORS.yellow, { dx: 12, dy: 0 });
         },
+      },
+      // The same tangent without its number: in a task the slope has to be read off the grid
+      { id: 'tangentT', draw2d(p, sc, s) { tangent(p, s); } },
+      {
+        // Only f' is on the scene: the point is dragged along the x axis, f'(a) is marked above or below it
+        id: 'axisPoint',
+        draw2d(p, sc, s) {
+          p.line(s.a, 0, s.a, D(s, s.a), COLORS.grey, { width: 1.2, dash: [3, 5] });
+          p.dot(s.a, D(s, s.a), COLORS.yellow, 6);
+          p.tex('a', 'a', s.a, 0, WHITE, { dx: 0, dy: D(s, s.a) > 0 ? 14 : -14, align: 'center' });
+          p.handle(s.a, 0, WHITE, x => { sc.play('a', false); sc.setParam('a', clamp(x, -3, 3)); });
+        },
+      },
+      {
+        // The parabola of the last task with its tangent and the slope as a number
+        id: 'gPoint',
+        draw2d(p, sc, s) {
+          const ga = G(s, s.a);
+          p.line(s.a, ga, s.a + 1, ga + 2 * s.a, COLORS.green, { width: 2.5, extend: true });
+          p.tex('gname', '\\blue{g}', 1.9, G(s, 1.9), COLORS.blue, { dx: 12, dy: 0 });
+          p.handle(s.a, ga, WHITE, x => { sc.play('a', false); sc.setParam('a', clamp(x, -3, 3)); });
+        },
+        legend: s => `\\green{g'(a)} = ${fmt(2 * s.a)}`,
       },
       {
         // The point the student drags; drawn last, on top
@@ -171,6 +197,99 @@ export default {
         ru: 'Всё живое: тяните точку, меняйте $h$, нажимайте ▶. Потом откройте сцену в Lab, замените $f$ своей функцией — $\\sin x$, $e^x$, $\\frac{1}{x}$ — и посмотрите, где она растёт и где убывает.',
       },
       state: { show: ['f', 'df', 'secant', 'tangent', 'names', 'point'], params: { h: 0.8 }, window: { cx: 0, cy: 0, unit: 72 }, controls: ['a', 'h'] },
+    },
+    {
+      title: { en: 'Find a slope of 2', ru: 'Найдите наклон 2' },
+      text: {
+        en: 'The tangent is back, but without its number. Put the point where the slope of the tangent is exactly $2$: one step to the right — two steps up. Use the grid. Then press Check.',
+        ru: 'Касательная снова здесь, но без числа. Поставьте точку туда, где наклон касательной ровно $2$: шаг вправо — два вверх. Сверяйтесь с сеткой. Потом нажмите Check.',
+      },
+      task: {
+        kind: 'drag',
+        target: [{ a: 2 }, { a: -2 }],
+        back: 1,
+        right: {
+          en: 'At $a = 2$ the tangent rises by two for each step right: $f\'(2) = \\frac{3 \\cdot 4}{4} - 1 = 2$. The same slope is at $a = -2$ — the curve is symmetric.',
+          ru: 'При $a = 2$ касательная поднимается на два за каждый шаг вправо: $f\'(2) = \\frac{3 \\cdot 4}{4} - 1 = 2$. Такой же наклон и при $a = -2$ — кривая симметрична.',
+        },
+        mistakes: [
+          { params: { a: Math.SQRT2 }, text: {
+            en: 'Here the tangent goes two steps right for one step up — the slope is $\\frac12$, not $2$. A slope is the rise for <b>one</b> step to the right.',
+            ru: 'Здесь касательная проходит два шага вправо на один вверх — наклон $\\frac12$, а не $2$. Наклон — это подъём на <b>один</b> шаг вправо.' } },
+          { params: { a: -Math.SQRT2 }, text: {
+            en: 'Here the tangent goes two steps right for one step up — the slope is $\\frac12$, not $2$. A slope is the rise for <b>one</b> step to the right.',
+            ru: 'Здесь касательная проходит два шага вправо на один вверх — наклон $\\frac12$, а не $2$. Наклон — это подъём на <b>один</b> шаг вправо.' } },
+        ],
+        hints: {
+          a: a => {
+            const k = 3 * a * a / 4 - 1;
+            if (k < 0) return { en: 'Here the road goes down: the slope is negative, and we need $+2$.', ru: 'Здесь дорога спускается: наклон отрицательный, а нужен $+2$.' };
+            return k < 2
+              ? { en: 'Here the tangent is flatter than needed: one step right gives less than two up. Look where the curve is steeper.', ru: 'Здесь касательная положе, чем нужно: на шаг вправо — меньше двух вверх. Ищите, где кривая круче.' }
+              : { en: 'Here the tangent is steeper than needed: one step right gives more than two up.', ru: 'Здесь касательная круче, чем нужно: на шаг вправо — больше двух вверх.' };
+          },
+        },
+      },
+      state: { show: ['f', 'tangentT', 'names', 'point'], params: { a: 0.5 }, window: { cx: 0, cy: 0, unit: 72 }, controls: [] },
+    },
+    {
+      title: { en: 'Only the derivative is left', ru: 'Осталась только производная' },
+      text: {
+        en: 'Now $\\blue{f}$ is hidden — only its derivative $\\yellow{f\'}$ is on the scene. Where does $\\blue{f}$ have the bottom of its valley? Move the point $a$ along the axis there.',
+        ru: 'Теперь $\\blue{f}$ спрятана — на сцене только её производная $\\yellow{f\'}$. Где у $\\blue{f}$ дно впадины? Передвиньте точку $a$ по оси туда.',
+      },
+      task: {
+        kind: 'drag',
+        target: { a: X_EXT },
+        back: 5,
+        right: {
+          en: 'At $a \\approx 1.15$ the yellow curve crosses the axis going up: before it $f\' < 0$ and $f$ goes down, after it $f\' > 0$ and $f$ climbs. Down, then up — the bottom of the valley.',
+          ru: 'При $a \\approx 1{,}15$ жёлтая кривая пересекает ось снизу вверх: до неё $f\' < 0$ и $f$ спускается, после — $f\' > 0$ и $f$ поднимается. Спуск, потом подъём — дно впадины.',
+        },
+        mistakes: [
+          { params: { a: -X_EXT }, text: {
+            en: 'Here $f\' = 0$ too, but it is the top of the hill: to the left $f\' > 0$ (climbing), to the right $f\' < 0$ (going down). A valley is the other way round.',
+            ru: 'Здесь тоже $f\' = 0$, но это вершина холма: слева $f\' > 0$ (подъём), справа $f\' < 0$ (спуск). У впадины наоборот.' } },
+          { params: { a: 0 }, text: {
+            en: 'This is the lowest point of the <b>yellow</b> curve: here $f$ goes down most steeply — but it still goes down. The bottom of $f$ is where $f\'$ becomes zero.',
+            ru: 'Это самая низкая точка <b>жёлтой</b> кривой: здесь $f$ спускается круче всего — но всё ещё спускается. Дно $f$ там, где $f\'$ становится нулём.' } },
+        ],
+        hints: {
+          a: a => (3 * a * a / 4 - 1 < 0
+            ? { en: 'Here $f\' < 0$, so $f$ is still going down. The bottom is further right, where the going down ends.', ru: 'Здесь $f\' < 0$, значит $f$ ещё спускается. Дно дальше справа — там, где спуск заканчивается.' }
+            : { en: 'Here $f\' > 0$: $f$ is climbing. Find the place where the going down turns into climbing.', ru: 'Здесь $f\' > 0$: $f$ поднимается. Найдите место, где спуск сменяется подъёмом.' }),
+        },
+      },
+      state: { show: ['df', 'names', 'axisPoint'], params: { a: -2.5 }, window: { cx: 0, cy: 0, unit: 72 }, controls: [] },
+    },
+    {
+      title: { en: 'Write the derivative', ru: 'Запишите производную' },
+      text: {
+        en: 'A new function: $\\blue{g(x) = x^2}$. Drag the point and watch the slope $\\green{g\'(a)}$ among the formulas: what is it at $a = 1$, at $a = 2$, at $a = -1$? Write the formula of $g\'(x)$.',
+        ru: 'Новая функция: $\\blue{g(x) = x^2}$. Тяните точку и смотрите на наклон $\\green{g\'(a)}$ в формулах: чему он равен при $a = 1$, при $a = 2$, при $a = -1$? Запишите формулу $g\'(x)$.',
+      },
+      task: {
+        kind: 'formula',
+        answer: 'y = 2x',
+        range: [-3, 3],
+        back: 4,
+        right: {
+          en: 'The slope is always twice $a$: $g\'(x) = 2x$. It is negative on the left, where the parabola goes down, and zero at the bottom.',
+          ru: 'Наклон всегда вдвое больше $a$: $g\'(x) = 2x$. Слева, где парабола спускается, он отрицательный, а на дне — ноль.',
+        },
+        mistakes: [
+          { formula: 'y = x^2', text: {
+            en: 'This is $g$ itself. The derivative is a different function: its value at $x$ is the <b>slope</b> at $x$, not the height.',
+            ru: 'Это сама $g$. Производная — другая функция: её значение в $x$ — это <b>наклон</b> в точке $x$, а не высота.' } },
+          { formula: 'y = x', text: {
+            en: 'Check at $a = 1$: the slope $g\'(1)$ is $2$, and your formula gives $1$.',
+            ru: 'Проверьте при $a = 1$: наклон $g\'(1)$ равен $2$, а ваша формула даёт $1$.' } },
+          { formula: 'y = 2', text: {
+            en: 'The slope is not the same everywhere: at $a = -1$ it is $-2$, at $a = 2$ it is $4$. It depends on $x$.',
+            ru: 'Наклон не везде одинаковый: при $a = -1$ он равен $-2$, при $a = 2$ — $4$. Он зависит от $x$.' } },
+        ],
+      },
+      state: { show: ['g', 'gPoint'], params: { a: 1 }, window: { cx: 0, cy: 2, unit: 60 }, controls: [] },
     },
   ],
 };

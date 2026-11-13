@@ -4,6 +4,7 @@
 // Two kinds:
 //   drag    — move points on the scene so that parameters reach the target:
 //             { kind: 'drag', target: { h: 2, k: 1 }, tol, mistakes: [{ params: { h: -2, k: 1 }, text }], hints: { h: text } }
+//             target may be a list when several places are right; a hint may be a function of the parameter's value
 //   formula — read a graph and type its formula:
 //             { kind: 'formula', answer: 'y = sqrt(x - 3)', range: [lo, hi], mistakes: [{ formula: 'y = sqrt(x + 3)', text }] }
 // Both: right (shown when solved), back (index of the step to revisit after a mistake).
@@ -48,14 +49,21 @@ export function bindTask(el, task, index, ctx) {
 
   // ---- drag ----
   const near = (values, tol) => Object.entries(values).every(([name, v]) => Math.abs(scene.params.get(name).value - v) <= tol);
+  const targets = [].concat(task.target);
+  const dist = g => Object.entries(g).reduce((d, [name, v]) => d + Math.abs(scene.params.get(name).value - v), 0);
+  const nearest = () => targets.reduce((a, b) => dist(b) < dist(a) ? b : a);
   function checkDrag() {
     const tol = task.tol ?? 0.13;
-    if (near(task.target, tol)) { say(true, t(task.right) || ''); return after(true); }
+    if (targets.some(g => near(g, tol))) { say(true, t(task.right) || ''); return after(true); }
     const m = (task.mistakes || []).find(mm => mm.params && near(mm.params, tol));
     if (m) { say(false, t(m.text), m.back ?? task.back); return after(false); }
     // Which parameters are off, in the words of the task
-    const off = Object.keys(task.target).filter(name => Math.abs(scene.params.get(name).value - task.target[name]) > tol);
-    say(false, off.map(name => t((task.hints || {})[name]) || t({ en: `${name} is not right yet.`, ru: `${name} пока не то.` })).join(' '));
+    const goal = nearest(), hint = name => {
+      const h = (task.hints || {})[name];
+      return typeof h === 'function' ? h(scene.params.get(name).value) : h;
+    };
+    const off = Object.keys(goal).filter(name => Math.abs(scene.params.get(name).value - goal[name]) > tol);
+    say(false, off.map(name => t(hint(name)) || t({ en: `${name} is not right yet.`, ru: `${name} пока не то.` })).join(' '));
     after(false);
   }
 
@@ -99,7 +107,7 @@ export function bindTask(el, task, index, ctx) {
   } else {
     box.querySelector('.task-check').addEventListener('click', checkDrag);
     showBtn.addEventListener('click', () => {
-      scene.animateParams(task.target, 1200);
+      scene.animateParams(nearest(), 1200);
       feedback.innerHTML = `<span class="verdict">${t({ en: 'Here is the answer.', ru: 'Вот ответ.' })}</span> ${t(task.right) || ''}`;
       renderMath(feedback);
       showBtn.hidden = true;
