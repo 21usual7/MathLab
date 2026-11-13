@@ -5,6 +5,7 @@
 export const SUBJECTS = [
   { id: 'algebra', title: { en: 'Algebra and calculus', ru: 'Алгебра и начала анализа' } },
   { id: 'geometry', title: { en: 'Geometry', ru: 'Геометрия' } },
+  { id: 'linalg', title: { en: 'Linear algebra', ru: 'Линейная алгебра' } },
 ];
 
 export const TRACKS = [
@@ -16,6 +17,8 @@ export const TRACKS = [
   { id: 'space', subject: 'geometry', title: { en: 'Lines and planes in space', ru: 'Прямые и плоскости' } },
   { id: 'measure', subject: 'geometry', title: { en: 'Angles and distances', ru: 'Углы и расстояния' } },
   { id: 'solids', subject: 'geometry', title: { en: 'Solids and volumes', ru: 'Тела и объёмы' } },
+  { id: 'vecs', subject: 'linalg', title: { en: 'Vectors', ru: 'Векторы' } },
+  { id: 'maps', subject: 'linalg', title: { en: 'Linear maps', ru: 'Линейные преобразования' } },
 ];
 
 export const CATALOG = [
@@ -104,6 +107,21 @@ export const CATALOG = [
     title: { en: 'Prisms and pyramids', ru: 'Призмы и пирамиды' } },
   { id: 'volumes', track: 'solids', status: 'planned', prereqs: ['polyhedra'],
     title: { en: 'Why a pyramid is one third of a prism', ru: 'Почему пирамида — треть призмы' } },
+
+  { id: 'vectors', track: 'vecs', status: 'ready', minutes: 12, next: ['dot', 'matrix'],
+    title: { en: 'Vectors: arrows and numbers', ru: 'Векторы: стрелки и числа' },
+    summary: {
+      en: 'An arrow is a move; adding is walking, multiplying stretches. Two arrows make a slanted grid over the whole plane — unless they lie on one line.',
+      ru: 'Стрелка — это перемещение; сложение — прогулка, умножение — растяжение. Две стрелки дают косую сетку на всю плоскость — если только не лежат на одной прямой.',
+    } },
+  { id: 'dot', track: 'vecs', status: 'planned', prereqs: ['vectors'],
+    title: { en: 'Dot product: how much one arrow goes along another', ru: 'Скалярное произведение: насколько одна стрелка идёт вдоль другой' } },
+  { id: 'matrix', track: 'maps', status: 'planned', prereqs: ['vectors'],
+    title: { en: 'A matrix moves the whole plane', ru: 'Матрица двигает всю плоскость' } },
+  { id: 'det', track: 'maps', status: 'planned', prereqs: ['matrix'],
+    title: { en: 'Determinant: how areas change', ru: 'Определитель: во сколько раз меняется площадь' } },
+  { id: 'eigen', track: 'maps', status: 'planned', prereqs: ['matrix'],
+    title: { en: 'Eigenvectors: arrows that keep their line', ru: 'Собственные векторы: стрелки, которые не сходят со своей прямой' } },
 ];
 
 export const topicMeta = id => CATALOG.find(x => x.id === id);
@@ -115,6 +133,7 @@ const MODULES = {
   limit: () => import('./limit.js'),
   e: () => import('./e.js'),
   axioms: () => import('./axioms.js'),
+  vectors: () => import('./vectors.js'),
   'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),

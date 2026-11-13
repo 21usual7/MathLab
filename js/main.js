@@ -1,4 +1,4 @@
-// Router: #  ·  #algebra / #geometry (the map, scrolled to that subject)  ·  #lab?s=...  ·  #topic/<id>[/<step>]
+// Router: #  ·  #algebra / #geometry / #linalg (the map, scrolled to that subject)  ·  #lab?s=...  ·  #topic/<id>[/<step>]
 // Every page returns a cleanup function (stops animations, frees WebGL) that runs before the next one.
 
 import { mountHome } from './pages/home.js';

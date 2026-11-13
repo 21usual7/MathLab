@@ -68,7 +68,8 @@ export function bindTask(el, task, index, ctx) {
       return typeof h === 'function' ? h(scene.params.get(name).value) : h;
     };
     const off = Object.keys(goal).filter(name => Math.abs(scene.params.get(name).value - goal[name]) > tol);
-    say(false, off.map(name => t(hint(name)) || t({ en: `${name} is not right yet.`, ru: `${name} пока не то.` })).join(' '));
+    // Several parameters may share one hint: say it once
+    say(false, [...new Set(off.map(name => t(hint(name)) || t({ en: `${name} is not right yet.`, ru: `${name} пока не то.` })))].join(' '));
     after(false);
   }
 

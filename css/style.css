@@ -116,6 +116,8 @@ button { font: inherit; color: inherit; }
 .site-nav a { padding: 6px 12px; border-radius: 8px; color: var(--muted); font-size: 15px; }
 .site-nav a:hover { color: var(--text); text-decoration: none; }
 .site-nav a.active { color: var(--text); background: var(--raised); }
+.site-nav a { white-space: nowrap; }
+.nav-short { display: none; }
 .lang { margin-left: auto; display: flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; }
 .lang button { border: 0; background: none; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; padding: 4px 10px; border-radius: 999px; cursor: pointer; }
 .lang button.active { background: var(--raised); color: var(--text); }
@@ -443,6 +445,24 @@ body.keypad-open { padding-bottom: var(--kb, 0px); }
   .stage-bar button { white-space: nowrap; }
   .stage-bar .seg button { padding: 5px 9px; font-size: 12px; }
   .stage-bar .ghost { padding: 5px 10px; font-size: 13px; }
-  .site-nav a { padding: 6px 8px; font-size: 14px; }
+  .site-nav { gap: 0; }
+  .site-nav a { padding: 6px 6px; font-size: 13px; }
   .site-header { gap: 10px; }
+  /* Four sections do not fit next to the name: the ∂ mark is enough */
+  .brand-name { display: none; }
+  .nav-full { display: none; }
+  .nav-short { display: inline; }
+  .lang button { padding: 4px 8px; }
+}
+
+/* The narrowest phones: four sections and the language switch in one row */
+@media (max-width: 400px) {
+  .site-header { gap: 8px; }
+  .site-nav a { padding: 6px 4px; font-size: 12px; }
+  .lang button { padding: 3px 6px; }
+}
+@media (max-width: 340px) {
+  .site-header { gap: 4px; padding: 0 8px; }
+  .site-nav a { padding: 6px 3px; }
+  .lang button { padding: 3px 5px; }
 }
