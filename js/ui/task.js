@@ -7,6 +7,7 @@
 //             target may be a list when several places are right; a hint may be a function of the parameter's value
 //   formula — read a graph and type its formula:
 //             { kind: 'formula', answer: 'y = sqrt(x - 3)', range: [lo, hi], mistakes: [{ formula: 'y = sqrt(x + 3)', text }] }
+//             lhs: the letter in front of the input when the height is not called y (a slice of a surface: 'z')
 // Both: right (shown when solved), back (index of the step to revisit after a mistake).
 
 import { analyze, compile } from '../core/expr.js';
@@ -19,7 +20,7 @@ export function taskHTML(task) {
   return `
     <div class="task">
       ${task.kind === 'formula'
-        ? `<form class="task-form"><span class="task-y">y =</span><input spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Formula"><button class="btn primary" type="submit">Check</button></form>`
+        ? `<form class="task-form"><span class="task-y">${task.lhs || 'y'} =</span><input spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Formula"><button class="btn primary" type="submit">Check</button></form>`
         : '<button class="btn primary task-check" type="button">Check</button>'}
       <div class="task-feedback" aria-live="polite"></div>
       <button class="ghost task-show" type="button" hidden>Show the answer</button>
@@ -75,9 +76,9 @@ export function bindTask(el, task, index, ctx) {
     return x => { s.x = x; return fn(s); };
   };
   function checkFormula(input) {
-    const raw = input.value.trim().replace(/^y\s*=\s*/, '');
+    const raw = input.value.trim().replace(/^[yz]\s*=\s*/, '');
     if (!raw) return;
-    if (!student) student = scene.add('', { id: `student-${index}`, color: 'orange', legend: false });
+    if (!student) student = scene.add('', { id: `student-${index}`, color: 'orange', legend: false, only: '2d' }); // in 3D a graph y = … would lie on the floor
     scene.setText(student, `y = ${raw}`);
     student.visible = true;
     scene.changed();

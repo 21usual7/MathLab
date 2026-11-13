@@ -73,6 +73,20 @@ export default {
         },
         legend: (s, sc) => `\\green{\\frac{\\partial z}{\\partial x}(a,\\ c)} = ${fmt(slope(x => Z(sc, { ...s }, x, s.c), s.a))}`,
       },
+      {
+        // The same tangent without its number: in the task the student judges the slope by eye
+        id: 'partialT',
+        draw3d(p, sc, s) {
+          const z0 = Z(sc, s, s.a, s.c), k = slope(x => Z(sc, s, x, s.c), s.a);
+          p.tube('partialLine', [[s.a - 1.2, s.c, z0 - 1.2 * k], [s.a, s.c, z0], [s.a + 1.2, s.c, z0 + 1.2 * k]], COLORS.green, 0.045);
+          p.sphere('partialPoint', [s.a, s.c, z0], WHITE, 0.11);
+        },
+        draw2d(p, sc, s) {
+          const z0 = Z(sc, s, s.a, s.c), k = slope(x => Z(sc, s, x, s.c), s.a);
+          p.line(s.a, z0, s.a + 1, z0 + k, COLORS.green, { width: 2.5, extend: true });
+          p.handle(s.a, z0, WHITE, x => { sc.play('a', false); sc.setParam('a', clamp(x, -R, R)); });
+        },
+      },
     );
   },
 
@@ -145,6 +159,95 @@ export default {
         ru: 'Откройте сцену в Lab и постройте свои ландшафты: $z = \\sin(xy)$, $z = 3e^{-(x^2 + y^2)/4}$, $z = \\frac{x^3 - 3xy^2}{5}$ («обезьянье седло»). Добавьте кривую $(\\cos t, \\sin t)$ — в 3D она ляжет на пол под поверхностью.',
       },
       state: { view: 'split', show: ['waves', 'sliceY', 'partial'], params: { a: 1, c: 0.6 }, camera: [6.5, -7, 6], controls: ['a', 'c'] },
+    },
+    {
+      title: { en: 'The formula of a slice', ru: 'Формула разреза' },
+      text: {
+        en: 'The saddle $\\purple{z = \\frac{x^2 - y^2}{3}}$ is cut by the plane $\\yellow{y = 2}$. Write the formula of the slice — a function of $x$ alone: $z = \\ldots$',
+        ru: 'Седло $\\purple{z = \\frac{x^2 - y^2}{3}}$ разрезано плоскостью $\\yellow{y = 2}$. Напишите формулу разреза — функцию одного $x$: $z = \\ldots$',
+      },
+      task: {
+        kind: 'formula',
+        lhs: 'z',
+        answer: 'y = (x^2 - 4)/3',
+        range: [-3, 3],
+        back: 1,
+        right: {
+          en: 'Freezing $y = 2$ means putting $2$ in place of $y$: $z = \\frac{x^2 - 4}{3}$. A parabola opening up, lowered by $\\frac43$.',
+          ru: 'Заморозить $y = 2$ — значит подставить $2$ вместо $y$: $z = \\frac{x^2 - 4}{3}$. Парабола ветвями вверх, опущенная на $\\frac43$.',
+        },
+        mistakes: [
+          { formula: 'y = x^2/3', text: {
+            en: 'You dropped $y$, but freezing it does not make it zero: it becomes $2$. Put $2$ in place of $y$: $-\\frac{2^2}{3} = -\\frac43$.',
+            ru: 'Вы выбросили $y$, но заморозить — не значит обнулить: $y$ становится $2$. Подставьте $2$ вместо $y$: $-\\frac{2^2}{3} = -\\frac43$.' } },
+          { formula: 'y = (x^2 + 4)/3', text: {
+            en: 'The sign is lost: in the formula $y^2$ is <b>subtracted</b>. So the slice is $\\frac{x^2 - 4}{3}$ — lower than the cut at $y = 0$, not higher.',
+            ru: 'Потерялся знак: в формуле $y^2$ <b>вычитается</b>. Значит, разрез — $\\frac{x^2 - 4}{3}$: ниже разреза при $y = 0$, а не выше.' } },
+          { formula: 'y = (x^2 - 2)/3', text: {
+            en: 'In the formula $y$ is squared: $2^2 = 4$.',
+            ru: 'В формуле $y$ в квадрате: $2^2 = 4$.' } },
+          { formula: 'y = (4 - x^2)/3', text: {
+            en: 'This is the slice the other way: freezing $x = 2$ and walking along $y$. Here $y$ is frozen, and $x$ is the variable.',
+            ru: 'Это разрез в другую сторону: заморозили $x = 2$ и идём вдоль $y$. А здесь заморожен $y$, а меняется $x$.' } },
+        ],
+      },
+      state: { view: 'split', show: ['saddle', 'sliceY'], params: { c: 2 }, camera: [7, -6.5, 4.5], controls: [] },
+    },
+    {
+      title: { en: 'A flat spot on a wave', ru: 'Ровное место на волне' },
+      text: {
+        en: 'The waves $\\teal{z = 1.5 \\sin x \\cos y}$ are cut by the plane $\\yellow{y = 1}$. Drag the white point on the flat graph to where the partial derivative $\\frac{\\partial z}{\\partial x}$ is zero: the surface is level in the $x$ direction.',
+        ru: 'Волны $\\teal{z = 1.5 \\sin x \\cos y}$ разрезаны плоскостью $\\yellow{y = 1}$. Тяните белую точку на плоском графике туда, где частная производная $\\frac{\\partial z}{\\partial x}$ равна нулю: поверхность ровная в направлении $x$.',
+      },
+      task: {
+        kind: 'drag',
+        target: [{ a: Math.PI / 2 }, { a: -Math.PI / 2 }],
+        tol: 0.12,
+        back: 4,
+        right: {
+          en: 'At the crest of the slice the tangent is level: $\\frac{\\partial z}{\\partial x} = 1.5 \\cos x \\cos 1 = 0$ at $x = \\pm\\frac{\\pi}{2} \\approx \\pm 1.57$. One is a crest, the other a trough.',
+          ru: 'На гребне разреза касательная горизонтальна: $\\frac{\\partial z}{\\partial x} = 1.5 \\cos x \\cos 1 = 0$ при $x = \\pm\\frac{\\pi}{2} \\approx \\pm 1.57$. Одна точка — гребень, другая — впадина.',
+        },
+        mistakes: [
+          { params: { a: 0 }, text: {
+            en: 'Here the slice crosses zero height, but it is the steepest place: $z = 0$ is not $\\frac{\\partial z}{\\partial x} = 0$. We need a level tangent — the top or the bottom of the wave.',
+            ru: 'Здесь разрез пересекает нулевую высоту, но это самое крутое место: $z = 0$ — не то же, что $\\frac{\\partial z}{\\partial x} = 0$. Нужна горизонтальная касательная — верх или низ волны.' } },
+        ],
+        hints: {
+          a: a => (Math.cos(a) > 0
+            ? { en: 'Here the slice still rises: the tangent goes up. Move to where it stops rising.', ru: 'Здесь разрез ещё поднимается: касательная идёт вверх. Двигайтесь туда, где подъём заканчивается.' }
+            : { en: 'Here the slice goes down: the tangent points down. Move back to where the going down begins.', ru: 'Здесь разрез опускается: касательная смотрит вниз. Вернитесь туда, где начинается спуск.' }),
+        },
+      },
+      state: { view: 'split', show: ['waves', 'sliceY', 'partialT'], params: { c: 1, a: 0.4 }, camera: [6.5, -7, 6], controls: [] },
+    },
+    {
+      title: { en: 'Choose the slice', ru: 'Выберите разрез' },
+      text: {
+        en: 'Back to the saddle. Every slice $\\red{x = d}$ is a parabola opening down. Move $d$ so that the top of that parabola is at height $\\frac43$.',
+        ru: 'Снова седло. Каждый разрез $\\red{x = d}$ — парабола ветвями вниз. Подберите $d$ так, чтобы вершина этой параболы оказалась на высоте $\\frac43$.',
+      },
+      task: {
+        kind: 'drag',
+        target: [{ d: 2 }, { d: -2 }],
+        tol: 0.1,
+        back: 3,
+        right: {
+          en: 'With $x = d$ the slice is $z = \\frac{d^2}{3} - \\frac{y^2}{3}$, highest at $y = 0$: $\\frac{d^2}{3} = \\frac43$, so $d = \\pm 2$. The tops of all these slices lie on the parabola $z = \\frac{x^2}{3}$ — the slice $y = 0$.',
+          ru: 'При $x = d$ разрез — $z = \\frac{d^2}{3} - \\frac{y^2}{3}$, выше всего при $y = 0$: $\\frac{d^2}{3} = \\frac43$, значит $d = \\pm 2$. Вершины всех таких разрезов лежат на параболе $z = \\frac{x^2}{3}$ — разрезе $y = 0$.',
+        },
+        mistakes: [
+          { params: { d: 4 / 3 }, text: {
+            en: '$\\frac43$ is the height we want, not the place of the plane. The top of the slice $x = d$ is at height $\\frac{d^2}{3}$: here it is $\\frac{16}{27} \\approx 0.59$.',
+            ru: '$\\frac43$ — нужная высота, а не место плоскости. Вершина разреза $x = d$ на высоте $\\frac{d^2}{3}$: здесь это $\\frac{16}{27} \\approx 0.59$.' } },
+        ],
+        hints: {
+          d: d => (d * d / 3 < 4 / 3
+            ? { en: 'The top of the slice is lower than $\\frac43$: move the plane further from the middle.', ru: 'Вершина разреза ниже $\\frac43$: отодвиньте плоскость дальше от середины.' }
+            : { en: 'The top of the slice is higher than $\\frac43$: move the plane closer to the middle.', ru: 'Вершина разреза выше $\\frac43$: придвиньте плоскость ближе к середине.' }),
+        },
+      },
+      state: { view: 'split', show: ['saddle', 'sliceX'], params: { d: 0 }, camera: [7.5, 5.5, 4.5], controls: ['d'] },
     },
   ],
 };
