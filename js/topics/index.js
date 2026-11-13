@@ -198,6 +198,14 @@ export const CATALOG = [
       en: 'Powers on a clock of a prime are easy to compute and hopeless to undo. Two people swap g^a and g^b in public and both get g^(ab) — while the listener gets nothing.',
       ru: 'Степени на часах из простого числа легко вычислить и безнадёжно обратить. Двое обмениваются g^a и g^b у всех на виду и оба получают g^(ab) — а подслушивающий не получает ничего.',
     } },
+  { id: 'rsa', track: 'publickey', status: 'ready', minutes: 12, prereqs: ['dh'], next: ['ecc'],
+    title: { en: 'RSA: a lock anyone can close', ru: 'RSA: замок, который закроет любой' },
+    summary: {
+      en: 'Powers on a clock of n = p·q come back after (p − 1)(q − 1) steps. So a public e and a secret d with e·d ≡ 1 lock and unlock — and finding d means factoring n.',
+      ru: 'Степени на часах из n = p·q возвращаются через (p − 1)(q − 1) шагов. Поэтому открытое e и секретное d с e·d ≡ 1 запирают и отпирают — а найти d значит разложить n на множители.',
+    } },
+  { id: 'ecc', track: 'publickey', status: 'planned', prereqs: ['dh'],
+    title: { en: 'Elliptic curves: adding points', ru: 'Эллиптические кривые: сложение точек' } },
 ];
 
 export const topicMeta = id => CATALOG.find(x => x.id === id);
@@ -223,6 +231,7 @@ const MODULES = {
   mod: () => import('./mod.js'),
   caesar: () => import('./caesar.js'),
   dh: () => import('./dh.js'),
+  rsa: () => import('./rsa.js'),
   'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
