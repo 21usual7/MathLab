@@ -201,6 +201,16 @@ export class Plot2D {
   }
 
   // (fx(t), fy(t)) for t in [t0, t1]; long ranges get more samples
+  // A filled polygon [[x, y], ...] (a square carried by a matrix, a parallelogram)
+  fill(pts, color) {
+    if (!pts.every(([x, y]) => isFinite(x) && isFinite(y))) return;
+    this.ctx.beginPath();
+    pts.forEach(([x, y], i) => (i ? this.ctx.lineTo(this.sx(x), this.sy(y)) : this.ctx.moveTo(this.sx(x), this.sy(y))));
+    this.ctx.closePath();
+    this.ctx.fillStyle = color;
+    this.ctx.fill();
+  }
+
   param(fx, fy, t0, t1, color, width = 3, n = Math.min(6000, Math.max(800, Math.round(130 * (t1 - t0))))) {
     const ctx = this.ctx;
     ctx.beginPath();
@@ -230,7 +240,8 @@ export class Plot2D {
         xb = Math.min(xb, Math.max(xl, xh));
       }
     }
-    const ya = isFinite(k) ? y1 + k * (xa - x1) : y1, yb = isFinite(k) ? y1 + k * (xb - x1) : y2;
+    // A vertical line has no slope: extended, it runs from the bottom of the view to the top
+    const ya = isFinite(k) ? y1 + k * (xa - x1) : extend ? this.yr[0] : y1, yb = isFinite(k) ? y1 + k * (xb - x1) : extend ? this.yr[1] : y2;
     this.ctx.beginPath();
     this.ctx.moveTo(this.sx(xa), this.sy(ya));
     this.ctx.lineTo(this.sx(xb), this.sy(yb));
