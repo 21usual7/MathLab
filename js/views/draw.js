@@ -24,6 +24,10 @@ export function drawScene2D(plot, scene) {
       const x = item.fns[0](scope), y = item.fns[1](scope);
       plot.dot(x, y, item.color, 6);
       if (item.info.label) plot.tex(`${item.id}-label`, item.info.label, x, y, item.color, { dx: 9, dy: -13 });
+    } else if (k === 'vector2' || k === 'vector3') {
+      const x = item.fns[0](scope), y = item.fns[1](scope);
+      plot.arrow(0, 0, x, y, color, { width });
+      if (item.info.label) plot.tex(`${item.id}-label`, `\\vec ${item.info.label}`, x, y, item.color, { dx: 9, dy: -13 });
     }
   }
   for (const c of scene.custom) if (c.visible && c.draw2d) c.draw2d(plot, scene, scene.scope());
@@ -48,9 +52,11 @@ export function drawScene3D(plot, scene) {
       plot.tube(id, along(400, ...scene.range(item, scope, ...T_RANGE), t => [a(t), b(t), c ? c(t) : 0]), item.color);
     } else if (k === 'point2' || k === 'point3') {
       plot.sphere(id, [item.fns[0](scope), item.fns[1](scope), item.fns[2] ? item.fns[2](scope) : 0], item.color, 0.12);
+    } else if (k === 'vector2' || k === 'vector3') {
+      plot.arrow(id, [0, 0, 0], item.fns.map(f => f(scope)).concat(0).slice(0, 3), item.color, { name: item.info.label });
     }
   }
   for (const c of scene.custom) if (c.visible && c.draw3d) c.draw3d(plot, scene, scene.scope());
 }
 
-export const is3D = item => ['surface', 'curve3', 'point3'].includes(item.info.kind);
+export const is3D = item => ['surface', 'curve3', 'point3', 'vector3'].includes(item.info.kind);

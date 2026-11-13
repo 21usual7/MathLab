@@ -162,7 +162,8 @@ const domainTex = (d, v) => {
 };
 
 // Text → { kind, ... }. Kinds: function (y = f(x), or the user's own f(x) = …), surface (z = f(x, y)),
-// vline (x = c), curve2/curve3 ((f(t), g(t)[, h(t)])), point2/point3, param (a = 1.5), empty, error.
+// vline (x = c), curve2/curve3 ((f(t), g(t)[, h(t)])), point2/point3, vector2/vector3 ([1, 2]), param (a = 1.5),
+// empty, error.
 // fns: names of the user's functions, known in advance (see definedName). Never throws.
 export function analyze(text, fns = NONE) {
   try {
@@ -214,6 +215,18 @@ function analyzeBody(text, fns) {
   if (sides.length > 2) throw new Error('Too many "="');
   const lhs = sides.length === 2 ? sides[0].trim() : null;
   const rhs = sides[sides.length - 1].trim();
+
+  // A vector — an arrow from the origin: [1, 2], [a, 1, 2], v = [1, 2]
+  const vec = rhs.startsWith('[') && rhs.endsWith(']') && rhs.indexOf(']') === rhs.length - 1 ? splitTop(rhs.slice(1, -1), ',') : null;
+  if (vec) {
+    if (lhs !== null && (!/^[A-Za-z]$/.test(lhs) || VARIABLES.has(lhs) || CONSTANTS.has(lhs))) throw new Error('Name a vector with one letter: v = [1, 2]');
+    if (vec.length < 2 || vec.length > 3) throw new Error('A vector has 2 or 3 coordinates: [1, 2]');
+    const nodes = vec.map(p => parseNode(p, fns));
+    const syms = new Set(nodes.flatMap(n => [...freeSymbols(n)]));
+    if (['x', 'y', 'z', 't'].some(v => syms.has(v))) throw new Error('The coordinates of a vector are numbers or parameters');
+    const col = `\\begin{pmatrix} ${nodes.map(tex).join(' \\\\ ')} \\end{pmatrix}`;
+    return { kind: `vector${nodes.length}`, nodes, label: lhs, params: paramsOf(syms), tex: lhs ? `\\vec ${lhs} = ${col}` : col };
+  }
 
   const tuple = splitTuple(rhs);
   if (tuple) {

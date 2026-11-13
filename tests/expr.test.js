@@ -112,3 +112,16 @@ test('tex', () => {
   assert.equal(T('y = log(x, 2)'), 'y = \\log_{2} x');
   assert.equal(T('x = 2'), 'x = 2');
 });
+
+test('vectors', () => {
+  const a = analyze('[1, 2]');
+  assert.equal(a.kind, 'vector2');
+  assert.equal(a.tex, '\\begin{pmatrix} 1 \\\\ 2 \\end{pmatrix}');
+  const b = analyze('v = [a, 1, 2]');
+  assert.equal(b.kind, 'vector3');
+  assert.equal(b.label, 'v');
+  assert.deepEqual(b.params, ['a']);
+  assert.equal(analyze('[1, 2, 3, 4]').kind, 'error');
+  assert.equal(analyze('[x, 1]').kind, 'error');
+  assert.equal(analyze('x = [1, 2]').kind, 'error');
+});
