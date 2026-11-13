@@ -114,8 +114,12 @@ export const CATALOG = [
       en: 'An arrow is a move; adding is walking, multiplying stretches. Two arrows make a slanted grid over the whole plane — unless they lie on one line.',
       ru: 'Стрелка — это перемещение; сложение — прогулка, умножение — растяжение. Две стрелки дают косую сетку на всю плоскость — если только не лежат на одной прямой.',
     } },
-  { id: 'dot', track: 'vecs', status: 'planned', prereqs: ['vectors'],
-    title: { en: 'Dot product: how much one arrow goes along another', ru: 'Скалярное произведение: насколько одна стрелка идёт вдоль другой' } },
+  { id: 'dot', track: 'vecs', status: 'ready', minutes: 10, prereqs: ['vectors'], next: ['det'],
+    title: { en: 'Dot product: how much one arrow goes along another', ru: 'Скалярное произведение: насколько одна стрелка идёт вдоль другой' },
+    summary: {
+      en: 'The shadow of one arrow on another, times its length — or simply x·x + y·y. Zero means a right angle; the cosine of the angle comes for free.',
+      ru: 'Тень одной стрелки на другую, умноженная на её длину, — или просто x·x + y·y. Ноль — значит прямой угол, а косинус угла получается сам.',
+    } },
   { id: 'matrix', track: 'maps', status: 'ready', minutes: 12, prereqs: ['vectors'], next: ['det', 'eigen'],
     title: { en: 'A matrix moves the whole plane', ru: 'Матрица двигает всю плоскость' },
     summary: {
@@ -144,6 +148,7 @@ const MODULES = {
   vectors: () => import('./vectors.js'),
   matrix: () => import('./matrix.js'),
   det: () => import('./det.js'),
+  dot: () => import('./dot.js'),
   'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
