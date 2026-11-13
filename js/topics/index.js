@@ -170,6 +170,12 @@ export const CATALOG = [
       en: 'Each equation is a plane, two meet along a line, the third cuts it at the solution. And why with det = 0 the planes form a prism (no solutions) or a book (infinitely many).',
       ru: 'Каждое уравнение — плоскость, две пересекаются по прямой, третья режет её в точке-решении. И почему при det = 0 плоскости образуют призму (решений нет) или книжку (их бесконечно много).',
     } },
+  { id: 'rank', track: 'space3', status: 'ready', minutes: 10, prereqs: ['det3', 'planes3'],
+    title: { en: 'Rank and kernel: what a matrix loses', ru: 'Ранг и ядро: что матрица теряет' },
+    summary: {
+      en: 'Squashed space lands on a plane or a line — the rank. What lands at zero is the kernel; lost plus left is always 3. And why a system with det = 0 has a whole line of solutions or none.',
+      ru: 'Сплющенное пространство ложится на плоскость или прямую — это ранг. То, что попадает в ноль, — ядро; потеряно плюс осталось всегда 3. И почему у системы с det = 0 целая прямая решений или ни одного.',
+    } },
 ];
 
 export const topicMeta = id => CATALOG.find(x => x.id === id);
@@ -191,6 +197,7 @@ const MODULES = {
   matrix3: () => import('./matrix3.js'),
   det3: () => import('./det3.js'),
   planes3: () => import('./planes3.js'),
+  rank: () => import('./rank.js'),
   'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
