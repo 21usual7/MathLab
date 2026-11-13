@@ -15,7 +15,8 @@ export default {
   setup(scene) {
     const f = scene.add('y = x^3/4 - x', { id: 'f', color: 'blue' });
     const df = scene.add('y = 3x^2/4 - 1', { id: 'df', color: 'yellow', visible: false });
-    const g = scene.add('y = x^2', { id: 'g', color: 'blue', visible: false }); // for the last task
+    const g = scene.add('y = x^2', { id: 'g', color: 'blue', visible: false }); // for the task about g'
+    scene.add('y = x^2 - 1', { id: 'dk', color: 'yellow', visible: false }); // a derivative given in the last task
     scene.ensureParam('a', -2.2, { min: -3, max: 3 });
     scene.ensureParam('h', 1.5, { min: 0.001, max: 2, step: 0.001 });
     const F = (s, x) => { s.x = x; return f.fn(s); };
@@ -290,6 +291,61 @@ export default {
         ],
       },
       state: { show: ['g', 'gPoint'], params: { a: 1 }, window: { cx: 0, cy: 2, unit: 60 }, controls: [] },
+    },
+    {
+      title: { en: 'Draw the derivative', ru: 'Нарисуйте производную' },
+      text: {
+        en: 'Here is $\\blue{f}$ again. Draw the graph of $\\yellow{f\'}$ by hand, right over the picture — with the mouse or a finger, in one line from left to right. Exact heights do not matter; what matters is where $f\'$ is above and below the axis and where it turns.',
+        ru: 'Снова $\\blue{f}$. Нарисуйте от руки график $\\yellow{f\'}$ прямо поверх картинки — мышью или пальцем, одной линией слева направо. Точные высоты не важны; важно, где $f\'$ выше и ниже оси и где она поворачивает.',
+      },
+      task: {
+        kind: 'sketch',
+        answer: 'y = 3x^2/4 - 1',
+        range: [-2.8, 2.8],
+        noise: 0.3,
+        back: 5,
+        right: {
+          en: 'Where $f$ climbs (at the edges), $f\' > 0$; between the hill and the valley it goes down, $f\' < 0$; at the hill and the valley $f\' = 0$. And $f\'$ is lowest at $x = 0$, where $f$ goes down most steeply.',
+          ru: 'Где $f$ поднимается (по краям), $f\' > 0$; между холмом и впадиной она спускается — $f\' < 0$; на холме и во впадине $f\' = 0$. А ниже всего $f\'$ при $x = 0$ — там $f$ спускается круче всего.',
+        },
+        mistakes: [
+          { formula: 'y = x^3/4 - x', text: {
+            en: 'You drew $f$ itself. $f\'$ is a different graph: its height at $x$ is the <b>slope</b> of $f$ there. Where $f$ has its hill and valley, $f\'$ crosses the axis.',
+            ru: 'Вы нарисовали саму $f$. А $f\'$ — другой график: её высота в точке $x$ — это <b>наклон</b> $f$ там. Где у $f$ холм и впадина, там $f\'$ пересекает ось.' } },
+          { formula: 'y = 1 - 3x^2/4', text: {
+            en: 'Your graph is upside down. At the edges $f$ climbs, so its slope is positive: $f\'$ is above the axis there, not below.',
+            ru: 'Ваш график перевёрнут. По краям $f$ поднимается, значит её наклон положительный: $f\'$ там выше оси, а не ниже.' } },
+        ],
+      },
+      state: { show: ['f', 'names'], window: { cx: 0, cy: 1, unit: 60 }, controls: [] },
+    },
+    {
+      title: { en: 'Backwards: from the slope to the graph', ru: 'Наоборот: от наклона к графику' },
+      text: {
+        en: 'Now only the derivative is given: $\\yellow{f\'(x) = x^2 - 1}$. Draw <b>some</b> function $f$ with this derivative. Its height is up to you — a graph lifted up or down has the same slopes. What matters is where it climbs, where it falls and where it turns.',
+        ru: 'Теперь дана только производная: $\\yellow{f\'(x) = x^2 - 1}$. Нарисуйте <b>какую-нибудь</b> функцию $f$ с такой производной. Высота — на ваш выбор: поднятый или опущенный график имеет те же наклоны. Важно, где она растёт, где убывает и где поворачивает.',
+      },
+      task: {
+        kind: 'sketch',
+        answer: 'y = x^3/3 - x',
+        check: ['turns'],
+        range: [-2.5, 2.5],
+        tol: 0.35,
+        back: 5,
+        right: {
+          en: 'Left of $-1$ we have $f\' > 0$: $f$ climbs; at $-1$ it turns (a hill); between $-1$ and $1$ it goes down; at $1$ a valley; then it climbs again. For example $f = \\frac{x^3}{3} - x$ — or the same plus any number.',
+          ru: 'Левее $-1$ $f\' > 0$ — $f$ растёт; в $-1$ поворот (холм); между $-1$ и $1$ она убывает; в $1$ — впадина; дальше снова растёт. Например, $f = \\frac{x^3}{3} - x$ — или она же плюс любое число.',
+        },
+        mistakes: [
+          { formula: 'y = x^2 - 1', text: {
+            en: 'You copied $f\'$. But $f\'$ only tells the slope of $f$: where $f\'$ is above the axis, $f$ climbs; where below, $f$ goes down. Its zeros $\\pm 1$ are where $f$ turns.',
+            ru: 'Вы повторили $f\'$. Но $f\'$ говорит только о наклоне $f$: где $f\'$ выше оси, $f$ растёт; где ниже — убывает. Её нули $\\pm 1$ — места, где $f$ поворачивает.' } },
+          { formula: 'y = x - x^3/3', text: {
+            en: 'Up and down are swapped. At the edges $f\' > 0$, so there $f$ climbs; in the middle $f\' < 0$, so $f$ goes down.',
+            ru: 'Перепутаны подъём и спуск. По краям $f\' > 0$ — там $f$ растёт; посередине $f\' < 0$ — там $f$ убывает.' } },
+        ],
+      },
+      state: { show: ['dk'], window: { cx: 0, cy: 0.5, unit: 60 }, controls: [] },
     },
   ],
 };

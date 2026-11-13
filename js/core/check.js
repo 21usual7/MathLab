@@ -75,3 +75,103 @@ export function explainDiff(diag) {
     default: return { en: 'The graphs do not match. Compare them on the picture: where do they part?', ru: 'Графики не совпадают. Сравните их на картинке: где они расходятся?' };
   }
 }
+
+// ---------- A graph drawn by hand ----------
+// It cannot be compared number by number. We compare what the eye sees: where the graph turns (peaks and
+// valleys), where it crosses the x axis, whether it goes up or down. Wiggles smaller than `noise` are ignored.
+
+// ys are values at evenly spaced xs
+export function shape(xs, ys, noise = 0.25) {
+  const zeros = [], turns = [];
+  // Crossings of the axis: the sign must really change, not just touch zero
+  let sign = 0;
+  ys.forEach((y, i) => {
+    const s = y > noise / 2 ? 1 : y < -noise / 2 ? -1 : 0;
+    if (!s) return;
+    if (sign && s !== sign) {
+      let k = i;
+      while (k > 0 && Math.sign(ys[k - 1]) === s) k--;
+      const a = ys[k - 1], b = ys[k];
+      zeros.push(xs[k - 1] + (xs[k] - xs[k - 1]) * (a / (a - b)));
+    }
+    sign = s;
+  });
+  // Turns: the graph went up by more than noise and then down by more than noise (or the other way)
+  let dir = 0, ext = ys[0], extX = xs[0], lo = ys[0], loX = xs[0], hi = ys[0], hiX = xs[0], start = 0;
+  for (let i = 1; i < ys.length; i++) {
+    const x = xs[i], y = ys[i];
+    if (!dir) {
+      if (y > hi) { hi = y; hiX = x; }
+      if (y < lo) { lo = y; loX = x; }
+      if (hi - lo > noise) {
+        dir = start = hiX > loX ? 1 : -1;
+        [ext, extX] = dir > 0 ? [hi, hiX] : [lo, loX];
+      }
+    } else if (dir * (y - ext) > 0) {
+      ext = y; extX = x;
+    } else if (dir * (ext - y) > noise) {
+      turns.push({ x: extX, kind: dir > 0 ? 'max' : 'min' });
+      dir = -dir; ext = y; extX = x;
+    }
+  }
+  return { zeros, turns, start, sign };
+}
+
+// The first visible difference of the student's shape st from the right one goal (or { type: 'same' }).
+// what: which properties are checked ('turns', 'zeros'); tol: how far a turn or a zero may be off along x.
+export function compareShape(st, goal, { tol = 0.4, what = ['turns', 'zeros'] } = {}) {
+  const far = (a, b) => a.findIndex((x, i) => Math.abs(x - b[i]) > tol);
+  if (what.includes('turns')) {
+    if (st.turns.length !== goal.turns.length || st.start !== goal.start) return { type: 'turns', st, goal };
+    const i = far(st.turns.map(t => t.x), goal.turns.map(t => t.x));
+    if (i >= 0) return { type: 'turnPlace', got: st.turns[i], want: goal.turns[i] };
+  }
+  if (what.includes('zeros')) {
+    if (st.zeros.length !== goal.zeros.length) return { type: 'zeros', st, goal };
+    const i = far(st.zeros, goal.zeros);
+    if (i >= 0) return { type: 'zeroPlace', got: st.zeros[i], want: goal.zeros[i] };
+    if (!goal.zeros.length && st.sign !== goal.sign) return { type: 'sign', goal };
+  }
+  return { type: 'same' };
+}
+
+const r1 = v => String(Math.round(v * 10) / 10);
+
+// «goes up → goes down → goes up»
+function story(sh, lang) {
+  const word = { en: { 1: 'goes up', '-1': 'goes down', 0: 'is flat' }, ru: { 1: 'растёт', '-1': 'убывает', 0: 'ровная' } }[lang];
+  const parts = [word[sh.start]];
+  let d = sh.start;
+  sh.turns.forEach(() => { d = -d; parts.push(word[d]); });
+  return parts.join(' → ');
+}
+
+// The difference in words (en / ru)
+export function explainShape(diff) {
+  const turn = { en: { max: 'peak', min: 'valley' }, ru: { max: 'вершина', min: 'впадина' } };
+  switch (diff.type) {
+    case 'turns': return {
+      en: `The right graph ${story(diff.goal, 'en')}; yours ${story(diff.st, 'en')}.`,
+      ru: `Нужный график: ${story(diff.goal, 'ru')}. Ваш: ${story(diff.st, 'ru')}.`,
+    };
+    case 'turnPlace': return {
+      en: `The ${turn.en[diff.want.kind]} should be at x ≈ ${r1(diff.want.x)}, and yours is at x ≈ ${r1(diff.got.x)}.`,
+      ru: `${turn.ru[diff.want.kind][0].toUpperCase() + turn.ru[diff.want.kind].slice(1)} должна быть при x ≈ ${r1(diff.want.x)}, а у вас — при x ≈ ${r1(diff.got.x)}.`,
+    };
+    case 'zeros': {
+      const at = z => z.length ? ` (x ≈ ${z.map(r1).join('; ')})` : '';
+      return {
+        en: `The right graph crosses the x axis ${diff.goal.zeros.length} time(s)${at(diff.goal.zeros)}, yours ${diff.st.zeros.length}.`,
+        ru: `Число пересечений с осью x: нужно ${diff.goal.zeros.length}${at(diff.goal.zeros)}, у вас ${diff.st.zeros.length}.`,
+      };
+    }
+    case 'zeroPlace': return {
+      en: `The graph should cross the x axis at x ≈ ${r1(diff.want)}, and yours does at x ≈ ${r1(diff.got)}.`,
+      ru: `График должен пересекать ось x при x ≈ ${r1(diff.want)}, а ваш — при x ≈ ${r1(diff.got)}.`,
+    };
+    case 'sign': return diff.goal.sign > 0
+      ? { en: 'The right graph lies above the x axis everywhere here.', ru: 'Нужный график здесь везде выше оси x.' }
+      : { en: 'The right graph lies below the x axis everywhere here.', ru: 'Нужный график здесь везде ниже оси x.' };
+    default: return { en: '', ru: '' };
+  }
+}

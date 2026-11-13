@@ -1,17 +1,21 @@
 // A task inside a topic ("Try it yourself"): the student builds something on the live scene and the program
 // checks it and explains the mistake — without AI, by comparing with the answer and with known mistakes.
 //
-// Two kinds:
+// Three kinds:
 //   drag    — move points on the scene so that parameters reach the target:
 //             { kind: 'drag', target: { h: 2, k: 1 }, tol, mistakes: [{ params: { h: -2, k: 1 }, text }], hints: { h: text } }
 //             target may be a list when several places are right; a hint may be a function of the parameter's value
 //   formula — read a graph and type its formula:
 //             { kind: 'formula', answer: 'y = sqrt(x - 3)', range: [lo, hi], mistakes: [{ formula: 'y = sqrt(x + 3)', text }] }
 //             lhs: the letter in front of the input when the height is not called y (a slice of a surface: 'z')
-// Both: right (shown when solved), back (index of the step to revisit after a mistake).
+//   sketch  — draw a graph by hand (mouse or finger); compared by its shape — turns and zeros, not by numbers:
+//             { kind: 'sketch', answer: 'y = 3x^2/4 - 1', range: [lo, hi], check: ['turns', 'zeros'], tol, noise,
+//               mistakes: [{ formula: 'y = x^3/4 - x', text }] }
+// All: right (shown when solved), back (index of the step to revisit after a mistake).
 
 import { analyze, compile } from '../core/expr.js';
-import { same, diagnose, explainDiff } from '../core/check.js';
+import { same, diagnose, explainDiff, shape, compareShape, explainShape } from '../core/check.js';
+import { COLORS } from '../core/palette.js';
 import { t } from '../core/i18n.js';
 import { renderMath, renderTex } from './tex.js';
 import { keypadButton, prepareInput } from './keypad.js';
@@ -31,7 +35,7 @@ export function taskHTML(task) {
 export function bindTask(el, task, index, ctx) {
   const { scene } = ctx;
   const box = el.querySelector('.task'), feedback = box.querySelector('.task-feedback'), showBtn = box.querySelector('.task-show');
-  let attempts = 0, solved = false, student = null;
+  let attempts = 0, solved = false, student = null, answer = null;
 
   const say = (ok, html, back = task.back) => {
     box.classList.toggle('solved', ok);
@@ -93,6 +97,41 @@ export function bindTask(el, task, index, ctx) {
     after(false);
   }
 
+  // ---- sketch ----
+  // The line is a scene object of its own: while it is on the scene, dragging over the graph draws instead of panning
+  let stroke = [];
+  const pen = { id: `sketch-${index}`, visible: false, draw2d(p) {
+    p.pen = pts => { stroke = pts; scene.changed(); };
+    if (stroke.length > 1) p.polyline(stroke, COLORS.orange, 3);
+  } };
+  if (task.kind === 'sketch') scene.custom.push(pen);
+  function checkSketch() {
+    const [lo, hi] = task.range, span = hi - lo;
+    const pts = [...stroke].sort((a, b) => a[0] - b[0]);
+    const gap = pts.slice(1).reduce((g, q, i) => Math.max(g, q[0] - pts[i][0]), 0);
+    if (pts.length < 2 || pts[0][0] > lo + 0.05 * span || pts[pts.length - 1][0] < hi - 0.05 * span || gap > 0.15 * span) {
+      say(false, t({ en: `Draw one line across the whole picture, from x = ${lo} to x = ${hi}.`, ru: `Проведите одну линию через всю картинку — от x = ${lo} до x = ${hi}.` }));
+      return;
+    }
+    // The line as values at evenly spaced x, a little smoothed: the hand shakes
+    const xs = Array.from({ length: 121 }, (_, i) => lo + span * i / 120);
+    let k = 0;
+    const raw = xs.map(x => {
+      while (k < pts.length - 2 && pts[k + 1][0] < x) k++;
+      const [a, b] = [pts[k], pts[k + 1]];
+      return b[0] === a[0] ? a[1] : a[1] + (b[1] - a[1]) * Math.max(0, Math.min(1, (x - a[0]) / (b[0] - a[0])));
+    });
+    const ys = raw.map((_, i) => { const w = raw.slice(Math.max(0, i - 3), i + 4); return w.reduce((a, v) => a + v, 0) / w.length; });
+    const noise = task.noise ?? 0.25, opts = { tol: task.tol ?? 0.4, what: task.check || ['turns', 'zeros'] };
+    const of = text => { const f = fnOf(text); return shape(xs, xs.map(f), noise); };
+    const st = shape(xs, ys, noise), diff = compareShape(st, of(task.answer), opts);
+    if (diff.type === 'same') { say(true, t(task.right) || ''); return after(true); }
+    const m = (task.mistakes || []).find(mm => compareShape(st, of(mm.formula), opts).type === 'same');
+    if (m) { say(false, t(m.text), m.back ?? task.back); return after(false); }
+    say(false, `${t(explainShape(diff))} ${t({ en: 'Draw again: a new line replaces the old one.', ru: 'Нарисуйте ещё раз: новая линия заменит старую.' })}`);
+    after(false);
+  }
+
   if (task.kind === 'formula') {
     const form = box.querySelector('form'), input = form.querySelector('input');
     prepareInput(input);
@@ -103,6 +142,16 @@ export function bindTask(el, task, index, ctx) {
       checkFormula(input);
       feedback.innerHTML = `<span class="verdict">${t({ en: 'Answer:', ru: 'Ответ:' })}</span> <span class="task-answer"></span>`;
       renderTex(feedback.querySelector('.task-answer'), analyze(task.answer, scene.defs).tex);
+      showBtn.hidden = true;
+    });
+  } else if (task.kind === 'sketch') {
+    box.querySelector('.task-check').addEventListener('click', checkSketch);
+    showBtn.addEventListener('click', () => {
+      if (!answer) answer = scene.add(task.answer, { id: `answer-${index}`, color: 'green', legend: false, only: '2d' });
+      answer.visible = true;
+      scene.changed();
+      feedback.innerHTML = `<span class="verdict">${t({ en: 'Here is the answer — the green line.', ru: 'Вот ответ — зелёная линия.' })}</span> ${t(task.right) || ''}`;
+      renderMath(feedback);
       showBtn.hidden = true;
     });
   } else {
@@ -117,7 +166,11 @@ export function bindTask(el, task, index, ctx) {
 
   return {
     // The student's graph is shown again when the student comes back to this task
-    enter() { if (student && student.info.kind === 'function') student.visible = true; },
+    enter() {
+      if (student && student.info.kind === 'function') student.visible = true;
+      if (answer) answer.visible = true;
+      pen.visible = task.kind === 'sketch';
+    },
     get solved() { return solved; },
   };
 }

@@ -69,12 +69,14 @@ export class Plot2D {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     this.handles = [];
+    this.pen = null; // an object may ask for a pen this frame: then dragging draws a line instead of moving the view
     for (const l of this.labels.values()) l.used = false;
 
     this.drawGrid();
     // Objects may rename the axes for this frame (a slice of a surface is drawn over x or y, height is z)
     this.axisNames = { x: 'x', y: 'y' };
     this.onDraw(this);
+    this.canvas.classList.toggle('pen', !!this.pen);
     this.drawAxisNames();
 
     for (const l of this.labels.values()) l.el.style.display = l.used ? '' : 'none';
@@ -427,7 +429,10 @@ export class Plot2D {
         return;
       }
       const hd = nearHandle(px, py);
-      drag = hd ? { handle: hd } : { px, py, cx: this.view.cx, cy: this.view.cy };
+      drag = hd ? { handle: hd }
+        : this.pen ? { pen: this.pen, pts: [[this.toX(px), this.toY(py)]] }
+          : { px, py, cx: this.view.cx, cy: this.view.cy };
+      if (drag.pen) drag.pen(drag.pts);
       c.classList.add('dragging');
     });
     c.addEventListener('pointermove', e => {
@@ -448,6 +453,9 @@ export class Plot2D {
         pinch.d = d;
       } else if (drag && drag.handle) {
         drag.handle.onDrag(this.toX(px), this.toY(py));
+      } else if (drag && drag.pen) {
+        drag.pts.push([this.toX(px), this.toY(py)]);
+        drag.pen(drag.pts);
       } else if (drag) {
         this.view.cx = drag.cx - (px - drag.px) / this.u;
         this.view.cy = drag.cy + (py - drag.py) / this.u;
@@ -456,7 +464,7 @@ export class Plot2D {
     });
     const up = e => {
       // A tap (no movement) reads the graph at that place; on a phone this replaces hovering
-      if (e.type === 'pointerup' && tap && e.timeStamp - tap.time < 500 && !(drag && drag.handle)) {
+      if (e.type === 'pointerup' && tap && e.timeStamp - tap.time < 500 && !(drag && (drag.handle || drag.pen))) {
         this.pointer = { px: tap.px, py: tap.py };
         this.request();
       }
