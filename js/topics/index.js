@@ -78,8 +78,12 @@ export const CATALOG = [
   { id: 'gradient', track: 'multivar', status: 'planned', prereqs: ['surfaces'],
     title: { en: 'Gradient: the steepest way up', ru: 'Градиент: самый крутой подъём' } },
 
-  { id: 'axioms', track: 'space', status: 'planned',
-    title: { en: 'Points, lines and planes in space', ru: 'Точки, прямые и плоскости в пространстве' } },
+  { id: 'axioms', track: 'space', status: 'ready', minutes: 10, next: ['cube-sections', 'parallel'],
+    title: { en: 'Points, lines and planes in space', ru: 'Точки, прямые и плоскости в пространстве' },
+    summary: {
+      en: 'Three points fix a plane, two planes meet along a line, a line pierces a plane at its trace — and lines that neither meet nor are parallel.',
+      ru: 'Три точки задают плоскость, две плоскости пересекаются по прямой, прямая протыкает плоскость в следе — и прямые, которые не пересекаются и не параллельны.',
+    } },
   { id: 'cube-sections', track: 'space', status: 'ready', minutes: 10, prereqs: ['axioms'], next: ['parallel', 'angles'],
     title: { en: 'Sections of a cube', ru: 'Сечения куба' },
     summary: {
@@ -110,6 +114,7 @@ const MODULES = {
   'exp-log': () => import('./exp-log.js'),
   limit: () => import('./limit.js'),
   e: () => import('./e.js'),
+  axioms: () => import('./axioms.js'),
   'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
