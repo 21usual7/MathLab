@@ -192,6 +192,12 @@ export const CATALOG = [
       en: 'Encrypting is adding a key on a clock of letters. Why there are too few keys, how letter frequencies give the key away at a glance — and what a real cipher must do better.',
       ru: 'Зашифровать — прибавить ключ на часах из букв. Почему ключей слишком мало, как частоты букв выдают ключ с первого взгляда — и что настоящий шифр должен делать лучше.',
     } },
+  { id: 'dh', track: 'publickey', status: 'ready', minutes: 12, prereqs: ['mod'], next: ['rsa', 'ecc'],
+    title: { en: 'A shared secret in public: Diffie–Hellman', ru: 'Общий секрет у всех на виду: Диффи — Хеллман' },
+    summary: {
+      en: 'Powers on a clock of a prime are easy to compute and hopeless to undo. Two people swap g^a and g^b in public and both get g^(ab) — while the listener gets nothing.',
+      ru: 'Степени на часах из простого числа легко вычислить и безнадёжно обратить. Двое обмениваются g^a и g^b у всех на виду и оба получают g^(ab) — а подслушивающий не получает ничего.',
+    } },
 ];
 
 export const topicMeta = id => CATALOG.find(x => x.id === id);
@@ -216,6 +222,7 @@ const MODULES = {
   rank: () => import('./rank.js'),
   mod: () => import('./mod.js'),
   caesar: () => import('./caesar.js'),
+  dh: () => import('./dh.js'),
   'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
