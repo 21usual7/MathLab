@@ -27,6 +27,11 @@ export default {
     scene.add('y = sqrt(x)', { id: 'sqrt', color: 'teal', visible: false });
     scene.add('y = 1/x', { id: 'inv', color: 'orange', visible: false });
     scene.add('y = sqrt(x - 2)', { id: 'sqrt2', color: 'pink', visible: false });
+    // For the tasks: the goal line is not named under the scene — the formula is the answer
+    scene.add('y = 2x - 1', { id: 'goalLin', color: 'blue', visible: false, legend: false });
+    scene.add('y = sqrt(x + 3)', { id: 'root3', color: 'teal', visible: false });
+    scene.ensureParam('sx', 2, { min: -5, max: 5 });
+    scene.ensureParam('sy', 2, { min: -3, max: 5 });
     scene.ensureParam('a', 2.5, { min: -4, max: 4 });
     scene.ensureParam('n', 1, { min: 1, max: 16, step: 1 });
     scene.ensureParam('c', 1, { min: -3, max: 6 });
@@ -99,6 +104,32 @@ export default {
           const v = r2(s.v), n = Math.abs(v) < 2 ? 2 : Math.abs(v) === 2 ? 1 : 0;
           const [par, circ] = t({ en: ['parabola', 'circle'], ru: ['парабола', 'окружность'] });
           return `\\red{x = ${fmt(v)}}:\\ \\ \\blue{\\text{${par}: } 1},\\ \\ \\purple{\\text{${circ}: } ${n}}`;
+        },
+      },
+      {
+        // The machine without its arithmetic: in the task the output has to be read off the graph
+        id: 'machineT',
+        draw2d(p, sc, s) {
+          const a = s.a, fa = F(s, a);
+          p.arrow(a, 0, a, fa, COLORS.yellow + 'cc', { width: 2, dash: [5, 4] });
+          p.arrow(a, fa, 0, fa, COLORS.green + 'cc', { width: 2, dash: [5, 4] });
+          p.dot(a, fa, WHITE, 5);
+          p.tex('in', '\\yellow{a}', a, 0, COLORS.yellow, { dx: 0, dy: fa > 0 ? 20 : -20, align: 'center' });
+          p.handle(a, 0, COLORS.yellow, x => { sc.play('a', false); sc.setParam('a', clamp(Math.round(x * 10) / 10, -4, 4)); });
+        },
+      },
+      {
+        id: 'linDots',
+        draw2d(p) { [[0, -1], [1, 1], [2, 3]].forEach(([x, y]) => p.dot(x, y, WHITE, 5)); },
+      },
+      {
+        // The point the student drags to where the graph begins
+        id: 'startPt',
+        draw2d(p, sc, s) {
+          p.handle(s.sx, s.sy, WHITE, (x, y) => {
+            sc.setParam('sx', clamp(Math.round(x * 4) / 4, -5, 5));
+            sc.setParam('sy', clamp(Math.round(y * 4) / 4, -3, 5));
+          });
         },
       },
       explorer(),
@@ -204,6 +235,94 @@ export default {
         ru: 'Откройте сцену в Lab. Там можно написать свою машину, например $f(x) = x^3 - 3x$, и пользоваться ею: $y = f(x) + 1$, $y = f(2x)$. Наведите указатель на любую кривую — Lab покажет координаты, нули, вершины, впадины и точки пересечения кривых.',
       },
       state: { show: ['f', 'machine'], params: { a: 2.5 }, window: WINDOW, controls: ['a'] },
+    },
+    {
+      title: { en: 'Which input?', ru: 'Какой вход?' },
+      text: {
+        en: 'The machine is $\\blue{f(x) = \\frac{x^2}{2} - 1}$ again, but now it does not show its arithmetic. Put the input $\\yellow{a}$ where the machine gives the output $1$. Then press Check.',
+        ru: 'Снова машина $\\blue{f(x) = \\frac{x^2}{2} - 1}$, но теперь она не показывает арифметику. Поставьте вход $\\yellow{a}$ туда, где машина выдаёт выход $1$. Потом нажмите Check.',
+      },
+      task: {
+        kind: 'drag',
+        target: [{ a: 2 }, { a: -2 }],
+        tol: 0.1,
+        back: 3,
+        right: {
+          en: '$f(2) = \\frac{4}{2} - 1 = 1$. And $-2$ works too: $(-2)^2 = 4$ as well. The line $y = 1$ meets the graph twice.',
+          ru: '$f(2) = \\frac{4}{2} - 1 = 1$. И $-2$ тоже подходит: $(-2)^2$ — тоже $4$. Прямая $y = 1$ пересекает график дважды.',
+        },
+        mistakes: [
+          { params: { a: 1 }, text: {
+            en: 'This is the input $1$, and the machine gives $f(1) = -0.5$ for it. We need the <b>output</b> $1$: a height on the vertical axis. Look for the graph at height $1$ and read the input below it.',
+            ru: 'Это вход $1$, а машина выдаёт на нём $f(1) = -0.5$. Нам нужен <b>выход</b> $1$ — высота на вертикальной оси. Найдите график на высоте $1$ и прочитайте вход под ним.' } },
+          { params: { a: 0 }, text: {
+            en: 'At $0$ the machine gives $-1$, its lowest output. We need the output $1$ — two units higher.',
+            ru: 'На входе $0$ машина выдаёт $-1$, свой самый низкий выход. А нужен выход $1$ — на две единицы выше.' } },
+        ],
+        hints: {
+          a: a => (a * a / 2 - 1 < 1
+            ? { en: 'Here the output is lower than $1$: the green arrow ends below $1$. Move the input further from zero.', ru: 'Здесь выход меньше $1$: зелёная стрелка приходит ниже $1$. Отодвиньте вход дальше от нуля.' }
+            : { en: 'Here the output is higher than $1$. Move the input closer to zero.', ru: 'Здесь выход больше $1$. Придвиньте вход ближе к нулю.' }),
+        },
+      },
+      state: { show: ['f', 'machineT'], params: { a: -3.5 }, window: WINDOW, controls: [] },
+    },
+    {
+      title: { en: 'Build the machine', ru: 'Соберите машину' },
+      text: {
+        en: 'The blue line is the graph of some machine; the white dots are its answers for the inputs $0,\\ 1,\\ 2$. Write the formula of the machine: $y = \\ldots$',
+        ru: 'Синяя прямая — график какой-то машины; белые точки — её ответы на входах $0,\\ 1,\\ 2$. Напишите формулу машины: $y = \\ldots$',
+      },
+      task: {
+        kind: 'formula',
+        answer: 'y = 2x - 1',
+        back: 2,
+        right: {
+          en: 'The input $0$ gives $-1$, and each step right adds $2$: double the input and subtract one, $y = 2x - 1$.',
+          ru: 'Вход $0$ даёт $-1$, а каждый шаг вправо прибавляет $2$: удвоить вход и вычесть единицу, $y = 2x - 1$.',
+        },
+        mistakes: [
+          { formula: 'y = (x + 1)/2', text: {
+            en: 'Your machine answers the backward question: it turns the output into the input ($3 \\to 2$). Read the dots as «input $x$ — output $y$»: $0 \\to -1$, $1 \\to 1$, $2 \\to 3$.',
+            ru: 'Ваша машина отвечает на обратный вопрос: превращает выход во вход ($3 \\to 2$). Читайте точки как «вход $x$ — выход $y$»: $0 \\to -1$, $1 \\to 1$, $2 \\to 3$.' } },
+          { formula: 'y = x - 1', text: {
+            en: 'The start is right: $0 \\to -1$. But each step right the line rises by $2$, not by $1$: $1 \\to 1$, $2 \\to 3$.',
+            ru: 'Начало верное: $0 \\to -1$. Но за шаг вправо прямая поднимается на $2$, а не на $1$: $1 \\to 1$, $2 \\to 3$.' } },
+          { formula: 'y = 2x', text: {
+            en: 'The steepness is right, but at the input $0$ the line is at $-1$, not at $0$.',
+            ru: 'Крутизна верная, но на входе $0$ прямая на высоте $-1$, а не $0$.' } },
+        ],
+      },
+      state: { show: ['goalLin', 'linDots'], window: { cx: 1, cy: 1, unit: 60 }, controls: [] },
+    },
+    {
+      title: { en: 'Where does it begin?', ru: 'Где начинается?' },
+      text: {
+        en: 'The graph of $\\teal{y = \\sqrt{x + 3}}$ does not go on to the left forever: the machine refuses some inputs. Drag the white point to where the graph begins.',
+        ru: 'График $\\teal{y = \\sqrt{x + 3}}$ не тянется влево бесконечно: некоторые входы машина не берёт. Перетащите белую точку туда, где график начинается.',
+      },
+      task: {
+        kind: 'drag',
+        target: { sx: -3, sy: 0 },
+        back: 5,
+        right: {
+          en: 'Under the root we need $x + 3 \\ge 0$, so $x \\ge -3$. The first input is $-3$, and $\\sqrt{0} = 0$: the graph begins at $(-3,\\ 0)$.',
+          ru: 'Под корнем нужно $x + 3 \\ge 0$, то есть $x \\ge -3$. Первый вход — $-3$, а $\\sqrt{0} = 0$: график начинается в $(-3,\\ 0)$.',
+        },
+        mistakes: [
+          { params: { sx: 3, sy: 0 }, text: {
+            en: 'At $x = 3$ the machine works fine: $\\sqrt{6}$. It refuses where $x + 3$ is negative — to the left of $-3$.',
+            ru: 'При $x = 3$ машина работает спокойно: $\\sqrt{6}$. Она отказывается там, где $x + 3$ отрицательно, — левее $-3$.' } },
+          { params: { sx: 0, sy: 0 }, text: {
+            en: 'The root of $x$ alone begins at $0$. Here it is the root of $x + 3$, and $x + 3 = 0$ at $x = -3$.',
+            ru: 'Корень из одного $x$ начинается в $0$. А здесь корень из $x + 3$, и $x + 3 = 0$ при $x = -3$.' } },
+        ],
+        hints: {
+          sx: { en: 'The left–right position is off: the first input the machine accepts is where $x + 3 = 0$.', ru: 'Не то положение по горизонтали: первый вход, который машина берёт, — там, где $x + 3 = 0$.' },
+          sy: { en: 'The height is off: the point must be on the graph — what is $\\sqrt{0}$?', ru: 'Не та высота: точка должна лежать на графике — чему равен $\\sqrt{0}$?' },
+        },
+      },
+      state: { show: ['root3', 'startPt'], params: { sx: 2, sy: 3 }, window: { cx: 0, cy: 1, unit: 55 }, controls: [] },
     },
   ],
 };
