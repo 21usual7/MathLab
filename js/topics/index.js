@@ -158,6 +158,12 @@ export const CATALOG = [
       en: 'One dimension up: three arrows î, ĵ, k̂ decide everything, the cube becomes a slanted box — and when k̂′ falls into the plane of the other two, all of space is squashed flat.',
       ru: 'На одно измерение выше: всё решают три стрелки î, ĵ, k̂, куб становится косым ящиком — а когда k̂′ падает в плоскость двух других, всё пространство сплющивается.',
     } },
+  { id: 'det3', track: 'space3', status: 'ready', minutes: 10, prereqs: ['matrix3', 'det'], next: ['planes3', 'rank'],
+    title: { en: 'Determinant in space: how volumes change', ru: 'Определитель в пространстве: во сколько раз меняется объём' },
+    summary: {
+      en: 'A 3×3 matrix multiplies every volume by one number — the volume of the box on its columns. Base times height, zero when space goes flat, minus when a right hand turns into a left one.',
+      ru: 'Матрица 3×3 умножает любой объём на одно число — объём ящика на её столбцах. Основание на высоту, ноль, когда пространство стало плоским, и минус, когда правая рука стала левой.',
+    } },
 ];
 
 export const topicMeta = id => CATALOG.find(x => x.id === id);
@@ -177,6 +183,7 @@ const MODULES = {
   compose: () => import('./compose.js'),
   inverse: () => import('./inverse.js'),
   matrix3: () => import('./matrix3.js'),
+  det3: () => import('./det3.js'),
   'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
