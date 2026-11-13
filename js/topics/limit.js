@@ -12,6 +12,8 @@ const SINC = { cx: 0, cy: 0.4, unit: 80 };
 const g = x => (x * x - 1) / (x - 1);
 const sinc = x => Math.sin(x) / x;
 const sig = v => fmt(Number(v.toPrecision(5)));
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const snap = (v, step) => Math.round(v / step) * step;
 
 // Widest δ with |sin x / x − 1| < ε for 0 < |x| < δ (1 − sin x / x grows on (0, π))
 function deltaFor(eps) {
@@ -22,6 +24,7 @@ function deltaFor(eps) {
   }
   return lo;
 }
+const D_MAX = deltaFor(0.1); // the widest window for the corridor of the task
 
 export default {
   view: '2d',
@@ -37,6 +40,13 @@ export default {
     scene.ensureParam('n', 0, { min: 0, max: 3 });
     scene.ensureParam('epsilon', 0.3, { min: 0.02, max: 0.6, step: 0.005 });
     scene.ensureParam('X', 1, { min: 1, max: 1000, step: 1 });
+    // For the tasks
+    scene.add('y = (x^2 - x - 2)/(x - 2)', { id: 'h', color: 'blue', visible: false });
+    scene.add('y = (2x + 1)/(x - 1)', { id: 'rat', color: 'blue', visible: false });
+    scene.ensureParam('hx', -2, { min: -5, max: 5 });
+    scene.ensureParam('hy', -2, { min: -5, max: 5 });
+    scene.ensureParam('d', 2, { min: 0.05, max: 2.5, step: 0.01 });
+    scene.ensureParam('L', 0, { min: -4, max: 6, step: 0.05 });
 
     const hole = (id, x, y, color) => ({ id, draw2d(p) { p.ring(x, y, color, 5.5); } });
 
@@ -112,6 +122,47 @@ export default {
         legend: s => {
           const X = Math.round(s.X);
           return `x = ${X}:\\ \\ \\left(1 + \\frac{1}{${X}}\\right)^{${X}} = \\green{${((1 + 1 / X) ** X).toFixed(5)}}`;
+        },
+      },
+      {
+        // The hole the student drags to its place
+        id: 'dragHole',
+        draw2d(p, sc, s) {
+          p.ring(s.hx, s.hy, WHITE, 8);
+          p.handle(s.hx, s.hy, WHITE, (x, y) => {
+            sc.setParam('hx', clamp(snap(x, 0.25), -5, 5));
+            sc.setParam('hy', clamp(snap(y, 0.25), -5, 5));
+          });
+        },
+      },
+      {
+        // The corridor ε = 0.1 is given, the window δ is the student's; the graph turns red where it leaves the corridor
+        id: 'deltaTry',
+        draw2d(p, sc, s) {
+          const e = s.epsilon, d = s.d, out = x => Math.abs(sinc(x) - 1) >= e;
+          p.rect(-Infinity, 1 - e, Infinity, 1 + e, COLORS.yellow + '1f');
+          p.line(p.xr[0], 1 + e, p.xr[1], 1 + e, COLORS.yellow + '99', { width: 1, dash: [5, 4] });
+          p.line(p.xr[0], 1 - e, p.xr[1], 1 - e, COLORS.yellow + '99', { width: 1, dash: [5, 4] });
+          p.rect(-d, -Infinity, d, Infinity, COLORS.green + '1a');
+          p.vline(-d, COLORS.green + '99', 1, [5, 4]);
+          p.vline(d, COLORS.green + '99', 1, [5, 4]);
+          p.curve(x => out(x) ? NaN : sinc(x), COLORS.green, 5, -d, d);
+          p.curve(x => out(x) ? sinc(x) : NaN, COLORS.red, 5, -d, d);
+          p.ring(0, 1, COLORS.teal, 5.5);
+          p.tex('epsT', '\\yellow{1 + \\varepsilon}', p.xr[0], 1 + e, COLORS.yellow, { dx: 10, dy: -12 });
+          p.tex('deltaT', '\\green{\\delta}', d, 0, COLORS.green, { dx: 10, dy: 16 });
+          p.handle(d, 0, WHITE, x => sc.setParam('d', clamp(snap(x, 0.01), 0.05, 2.5)));
+        },
+        legend: s => `\\yellow{\\varepsilon = ${fmt(s.epsilon)}} \\qquad \\green{\\delta = ${fmt(Math.round(s.d * 100) / 100)}}`,
+      },
+      {
+        // A horizontal line the student moves to the height the graph approaches far away
+        id: 'level',
+        draw2d(p, sc, s) {
+          p.line(p.xr[0], s.L, p.xr[1], s.L, WHITE + 'aa', { width: 1.5, dash: [6, 5] });
+          const x = p.xr[1] - 50 / p.u;
+          p.tex('Lname', `y = ${fmt(Math.round(s.L * 100) / 100)}`, x, s.L, WHITE, { dx: -16, dy: 16, align: 'right' });
+          p.handle(x, s.L, WHITE, (_, y) => sc.setParam('L', clamp(snap(y, 0.05), -4, 6)));
         },
       },
       explorer(),
@@ -246,6 +297,96 @@ export default {
         ru: 'В Lab попробуйте $y = \\frac{x^2 - 4}{x - 2}$ (где дырка?), $y = \\frac{1 - \\cos x}{x^2}$ (какой у неё предел в $0$?), $y = x \\sin \\frac1x$ (волны зажаты — есть ли теперь предел?). И загляните в <a href="#topic/derivative">тему о производной</a>: $f\'(a)$ — это ровно предел $\\frac{\\Delta y}{\\Delta x}$ с дыркой при $h = 0$.',
       },
       state: { show: ['sinc', 'corridor'], params: { epsilon: 0.1 }, window: SINC, controls: ['epsilon'] },
+    },
+    {
+      title: { en: 'Find the hole', ru: 'Найдите дырку' },
+      text: {
+        en: 'The graph of $\\blue{h(x) = \\frac{x^2 - x - 2}{x - 2}}$ looks like a solid line: a hole is one point, too small to see. Drag the white ring to where the hole is. Then press Check.',
+        ru: 'График $\\blue{h(x) = \\frac{x^2 - x - 2}{x - 2}}$ выглядит сплошной прямой: дырка — одна точка, её не видно. Перетащите белое кольцо туда, где она. Потом нажмите Check.',
+      },
+      task: {
+        kind: 'drag',
+        target: { hx: 2, hy: 3 },
+        back: 0,
+        right: {
+          en: 'At $x = 2$ the denominator is zero: $h(2) = \\frac00$. Everywhere else $x^2 - x - 2 = (x - 2)(x + 1)$ cancels to $x + 1$, so the hole is at height $2 + 1 = 3$ — the limit.',
+          ru: 'При $x = 2$ знаменатель равен нулю: $h(2) = \\frac00$. Во всех остальных точках $x^2 - x - 2 = (x - 2)(x + 1)$ сокращается до $x + 1$, значит дырка на высоте $2 + 1 = 3$ — это и есть предел.',
+        },
+        mistakes: [
+          { params: { hx: 2, hy: 0 }, text: {
+            en: 'The place is right, $x = 2$. But the hole is not on the axis: it is a point missing <b>from the line</b>, at the height the neighbours approach.',
+            ru: 'Место верное, $x = 2$. Но дырка не на оси: это точка, выколотая <b>из прямой</b>, на той высоте, к которой подходят соседи.' } },
+          { params: { hx: -1, hy: 0 }, text: {
+            en: 'Here the numerator is zero, but the denominator is $-3$: $h(-1) = \\frac{0}{-3} = 0$. An ordinary point of the graph. A hole needs <b>both</b> to be zero.',
+            ru: 'Здесь ноль в числителе, а знаменатель равен $-3$: $h(-1) = \\frac{0}{-3} = 0$. Обычная точка графика. Для дырки нулями должны стать <b>оба</b>.' } },
+          { params: { hx: 0, hy: 1 }, text: {
+            en: 'This is $h(0) = \\frac{-2}{-2} = 1$ — an ordinary point. The hole is where the formula breaks: where the denominator is zero.',
+            ru: 'Это $h(0) = \\frac{-2}{-2} = 1$ — обычная точка. Дырка там, где формула ломается: где знаменатель равен нулю.' } },
+        ],
+        hints: {
+          hx: { en: 'The left–right position is off: at the hole the formula gives $\\frac00$ — where is the denominator zero?', ru: 'Не то положение по горизонтали: в дырке формула даёт $\\frac00$ — где знаменатель равен нулю?' },
+          hy: { en: 'The height is off: the hole sits on the line, at the height its neighbours approach. Factor the numerator and cancel.', ru: 'Не та высота: дырка лежит на прямой, на высоте, к которой подходят соседи. Разложите числитель на множители и сократите.' },
+        },
+      },
+      state: { show: ['h', 'dragHole'], params: { hx: -2, hy: -2 }, window: { cx: 1, cy: 1.5, unit: 60 }, controls: [] },
+    },
+    {
+      title: { en: 'Answer the challenge', ru: 'Ответьте на вызов' },
+      text: {
+        en: 'The corridor is given: $\\yellow{\\varepsilon = 0.1}$. Choose a window $\\green{\\delta}$ so that the whole graph of $\\teal{\\frac{\\sin x}{x}}$ inside it stays in the corridor. Drag the point on the axis; the part of the graph that leaves the corridor turns red.',
+        ru: 'Коридор задан: $\\yellow{\\varepsilon = 0.1}$. Подберите окно $\\green{\\delta}$ так, чтобы весь график $\\teal{\\frac{\\sin x}{x}}$ внутри него остался в коридоре. Тяните точку на оси; часть графика, вышедшая из коридора, краснеет.',
+      },
+      task: {
+        kind: 'drag',
+        // Any window up to the widest one fits: the target is the middle of that range
+        target: { d: (0.05 + D_MAX) / 2 },
+        tol: (D_MAX - 0.05) / 2,
+        back: 3,
+        right: {
+          en: `The graph stays in the corridor. Any $\\delta$ up to about $${fmt(Math.floor(D_MAX * 100) / 100)}$ works — a smaller window is an answer too. The definition only asks that <b>some</b> window exists.`,
+          ru: `График остаётся в коридоре. Подходит любое $\\delta$ примерно до $${fmt(Math.floor(D_MAX * 100) / 100)}$ — меньшее окно тоже ответ. Определение требует лишь, чтобы <b>какое-то</b> окно нашлось.`,
+        },
+        hints: {
+          d: d => ({
+            en: `The window is too wide: at $x = ${fmt(Math.round(d * 100) / 100)}$ the value is $${fmt(Math.round(sinc(d) * 1000) / 1000)}$, lower than $1 - \\varepsilon = 0.9$. Make $\\delta$ smaller until no red is left.`,
+            ru: `Окно слишком широкое: при $x = ${fmt(Math.round(d * 100) / 100)}$ значение $${fmt(Math.round(sinc(d) * 1000) / 1000)}$ — ниже $1 - \\varepsilon = 0.9$. Уменьшайте $\\delta$, пока не исчезнет красное.`,
+          }),
+        },
+      },
+      state: { show: ['sinc', 'deltaTry'], params: { epsilon: 0.1, d: 2 }, window: SINC, controls: [] },
+    },
+    {
+      title: { en: 'Where does it settle?', ru: 'Где установится?' },
+      text: {
+        en: 'Here is $\\blue{\\frac{2x + 1}{x - 1}}$. As $x$ grows without bound, its values settle at one height. Move the dashed line there.',
+        ru: 'Вот $\\blue{\\frac{2x + 1}{x - 1}}$. Когда $x$ неограниченно растёт, её значения устанавливаются на одной высоте. Передвиньте туда пунктирную прямую.',
+      },
+      task: {
+        kind: 'drag',
+        target: { L: 2 },
+        back: 6,
+        right: {
+          en: 'For huge $x$ the $+1$ and $-1$ hardly matter: $\\frac{2x + 1}{x - 1} \\approx \\frac{2x}{x} = 2$. At $x = 1000$ it is $\\frac{2001}{999} \\approx 2.003$. So $\\lim_{x \\to \\infty} \\frac{2x + 1}{x - 1} = 2$.',
+          ru: 'При огромных $x$ слагаемые $+1$ и $-1$ почти ничего не значат: $\\frac{2x + 1}{x - 1} \\approx \\frac{2x}{x} = 2$. При $x = 1000$ это $\\frac{2001}{999} \\approx 2.003$. Значит, $\\lim_{x \\to \\infty} \\frac{2x + 1}{x - 1} = 2$.',
+        },
+        mistakes: [
+          { params: { L: -1 }, text: {
+            en: 'This is the value at $x = 0$: $\\frac{1}{-1} = -1$. The limit at infinity is about huge $x$, not about zero.',
+            ru: 'Это значение при $x = 0$: $\\frac{1}{-1} = -1$. Предел на бесконечности — про огромные $x$, а не про ноль.' } },
+          { params: { L: 0 }, text: {
+            en: 'The values do not fade to $0$: the numerator and the denominator grow <b>together</b>, and the numerator is always about twice as big.',
+            ru: 'Значения не гаснут до $0$: числитель и знаменатель растут <b>вместе</b>, и числитель всё время примерно вдвое больше.' } },
+          { params: { L: 1 }, text: {
+            en: 'The free numbers $+1$ and $-1$ matter least of all when $x$ is huge. What is left is $\\frac{2x}{x}$.',
+            ru: 'Свободные числа $+1$ и $-1$ при огромных $x$ значат меньше всего. Остаётся $\\frac{2x}{x}$.' } },
+        ],
+        hints: {
+          L: L => (L > 2
+            ? { en: `Too high. Put in a big $x$: at $x = 100$ it is $\\frac{201}{99} \\approx 2.03$, and further right it is lower still.`, ru: `Слишком высоко. Подставьте большое $x$: при $x = 100$ это $\\frac{201}{99} \\approx 2.03$, а дальше ещё ниже.` }
+            : { en: `Too low. Put in a big $x$: at $x = 100$ it is $\\frac{201}{99} \\approx 2.03$.`, ru: `Слишком низко. Подставьте большое $x$: при $x = 100$ это $\\frac{201}{99} \\approx 2.03$.` }),
+        },
+      },
+      state: { show: ['rat', 'level'], params: { L: 0 }, window: { cx: 3, cy: 2, unit: 30 }, controls: [] },
     },
   ],
 };
