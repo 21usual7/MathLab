@@ -24,8 +24,9 @@ const EXAMPLES = [
 ];
 
 // The plane under the matrix with columns I, J, part t of the way from where it was:
-// the moved grid, the unit square, î′ and ĵ′; optionally a vector v and handles on î′, ĵ′
-function morph(p, sc, I0, J0, tt, { v = null, drag = false } = {}) {
+// the moved grid, the unit square, î′ and ĵ′; optionally a vector v and handles on î′, ĵ′.
+// Also used by the topic about the determinant (square: the colour of the square).
+export function morph(p, sc, I0, J0, tt, { v = null, drag = false, square = COLORS.yellow } = {}) {
   const I = [1 - tt + tt * I0[0], tt * I0[1]], J = [tt * J0[0], 1 - tt + tt * J0[1]];
   const at = (x, y) => [x * I[0] + y * J[0], x * I[1] + y * J[1]];
   for (let k = -14; k <= 14; k++) {
@@ -34,8 +35,8 @@ function morph(p, sc, I0, J0, tt, { v = null, drag = false } = {}) {
     p.line(...at(0, k), ...at(1, k), c, { width: k ? 1 : 1.6, extend: true });
   }
   const sq = [at(0, 0), at(1, 0), at(1, 1), at(0, 1)];
-  p.fill(sq, COLORS.yellow + '33');
-  p.polyline([...sq, sq[0]], COLORS.yellow + 'aa', 1.5);
+  p.fill(sq, square + '33');
+  p.polyline([...sq, sq[0]], square + 'aa', 1.5);
   if (v) {
     const [x, y] = v, a = at(x, 0), b = at(x, y);
     p.arrow(0, 0, ...a, COLORS.green + '88', { width: 2, dash: [5, 4] });

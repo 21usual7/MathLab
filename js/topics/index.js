@@ -122,8 +122,12 @@ export const CATALOG = [
       en: 'A linear map is fixed by where two arrows land. Written as columns, they are the matrix — and multiplying by it is just stepping along them.',
       ru: 'Линейное преобразование задаётся тем, куда попадают две стрелки. Записанные столбцами, они и есть матрица, а умножение на неё — шаги вдоль них.',
     } },
-  { id: 'det', track: 'maps', status: 'planned', prereqs: ['matrix'],
-    title: { en: 'Determinant: how areas change', ru: 'Определитель: во сколько раз меняется площадь' } },
+  { id: 'det', track: 'maps', status: 'ready', minutes: 10, prereqs: ['matrix'], next: ['eigen'],
+    title: { en: 'Determinant: how areas change', ru: 'Определитель: во сколько раз меняется площадь' },
+    summary: {
+      en: 'A matrix multiplies every area by the same number. Why it is ad − bc, why it is zero when the plane collapses and negative when it turns over.',
+      ru: 'Матрица умножает любую площадь на одно и то же число. Почему оно равно ad − bc, почему ноль, когда плоскость схлопнулась, и минус, когда перевернулась.',
+    } },
   { id: 'eigen', track: 'maps', status: 'planned', prereqs: ['matrix'],
     title: { en: 'Eigenvectors: arrows that keep their line', ru: 'Собственные векторы: стрелки, которые не сходят со своей прямой' } },
 ];
@@ -139,6 +143,7 @@ const MODULES = {
   axioms: () => import('./axioms.js'),
   vectors: () => import('./vectors.js'),
   matrix: () => import('./matrix.js'),
+  det: () => import('./det.js'),
   'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
