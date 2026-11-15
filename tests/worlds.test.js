@@ -90,3 +90,24 @@ test('JPEG: waves, quantization and the challenges', async () => {
   assert.ok(col(40, true));
   assert.ok(![5, 20, 40, 75].some(q => col(q, false)));
 });
+
+test('PageRank: the eigenvector, the surfer and the challenge', async () => {
+  const P = await import('../js/worlds/pagerank-math.js');
+  const { BASE } = await import('../js/worlds/pagerank.js');
+  const r = P.rank(8, BASE);
+  // A probability vector that the flow does not change: r = G r
+  assert.ok(Math.abs(r.reduce((a, b) => a + b) - 1) < 1e-9);
+  const r2 = P.step(r, 8, BASE);
+  assert.ok(r.every((v, i) => Math.abs(v - r2[i]) < 1e-12));
+  // The surfer's shares come close to it
+  const visits = new Array(8).fill(0);
+  let at = 0;
+  for (let k = 0; k < 200000; k++) { at = P.surf(at, 8, BASE); visits[at]++; }
+  assert.ok(visits.every((v, i) => Math.abs(v / 200000 - r[i]) < 0.01));
+  // «Into the top three»: Wiki + News work, Cats + Recipes do not
+  const place = (ins, outs = []) => P.places(P.rank(8, [...BASE, ...ins.map(i => [i, 7]), ...outs.map(j => [7, j])]))[7];
+  assert.equal(place([]), 8);
+  assert.ok(place([0, 1]) <= 3);
+  assert.ok(place([0, 2], [0]) <= 3);
+  assert.ok(place([5, 6]) > 3);
+});

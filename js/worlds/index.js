@@ -25,7 +25,12 @@ export const WORLDS = [
       ru: 'Каждый блок 8×8 фотографии — сумма 64 косинусных волн. Выбросьте волны, которых глаз не замечает, — и картинка весит в десять раз меньше. Попробуйте на своём фото: оно не покидает ваше устройство.',
     } },
   { id: 'gps', collection: 'inside', status: 'planned', title: { en: 'GPS: found by three spheres', ru: 'GPS: найден тремя сферами' } },
-  { id: 'pagerank', collection: 'inside', status: 'planned', title: { en: 'Search: importance as an eigenvector', ru: 'Поиск: важность как собственный вектор' } },
+  { id: 'pagerank', collection: 'inside', minutes: 10, kicker: { en: 'Linear algebra · eigenvectors · probability', ru: 'Линейная алгебра · собственные векторы · вероятность' },
+    title: { en: 'Search: importance as an eigenvector', ru: 'Поиск: важность как собственный вектор' },
+    summary: {
+      en: 'Why is one page above another in a search? A random surfer clicks links on a little internet you draw yourself — and the share of time on each page turns out to be an eigenvector. Get your own site into the top three.',
+      ru: 'Почему одна страница в поиске выше другой? Случайный сёрфер щёлкает ссылки маленького интернета, который вы рисуете сами, — и доля времени на каждой странице оказывается собственным вектором. Выведите свой сайт в тройку.',
+    } },
   { id: 'shazam', collection: 'inside', status: 'planned', title: { en: 'Shazam: a melody as a picture of frequencies', ru: 'Shazam: мелодия как картинка частот' } },
   { id: 'billiard', collection: 'sims', minutes: 15, kicker: { en: 'Geometry · reflections · chaos', ru: 'Геометрия · отражения · хаос' },
     title: { en: 'Billiards on strange tables', ru: 'Бильярд на странных столах' },
@@ -57,6 +62,7 @@ WORLDS.push(
 
 const MODULES = {
   jpeg: () => import('./jpeg.js'),
+  pagerank: () => import('./pagerank.js'),
   billiard: () => import('./billiard.js'),
   descent: () => import('./descent.js'),
   epidemic: () => import('./epidemic.js'),
