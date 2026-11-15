@@ -111,3 +111,17 @@ test('PageRank: the eigenvector, the surfer and the challenge', async () => {
   assert.ok(place([0, 2], [0]) <= 3);
   assert.ok(place([5, 6]) > 3);
 });
+
+test('billiards: the proof of the focal property holds for every point of the ellipse', () => {
+  const a = 4, b = 2.4, c = Math.sqrt(a * a - b * b), d = (A, B) => Math.hypot(A[0] - B[0], A[1] - B[1]);
+  for (let th = 0.05; th < 2 * Math.PI; th += 0.37) {
+    const P = [a * Math.cos(th), b * Math.sin(th)];
+    const T = [-a * Math.sin(th), b * Math.cos(th)].map((v, _, w) => v / Math.hypot(...w));
+    const nn = [P[0] / a ** 2, P[1] / b ** 2], n = nn.map(v => v / Math.hypot(...nn));
+    const F1 = [-c, 0], F2 = [c, 0], k = 2 * ((F2[0] - P[0]) * n[0] + (F2[1] - P[1]) * n[1]), F2m = [F2[0] - k * n[0], F2[1] - k * n[1]];
+    assert.ok(Math.abs(d(P, F1) + d(P, F2) - 2 * a) < 1e-9); // step 1
+    for (const s of [-3, -1, -0.2, 0.2, 1, 3]) { const Q = [P[0] + s * T[0], P[1] + s * T[1]]; assert.ok(d(Q, F1) + d(Q, F2) > 2 * a); } // step 2
+    assert.ok(Math.abs(d(F1, F2m) - 2 * a) < 1e-9); // step 3: F1, P, F2′ on one line
+    assert.ok(Math.abs(d(F1, P) + d(P, F2m) - d(F1, F2m)) < 1e-9);
+  }
+});

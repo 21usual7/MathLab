@@ -1,4 +1,5 @@
 // A world: on the left the panel — what this world is, the mode (free exploration or a challenge), its goal,
+// a «Why is it so?» block with the proof (mode.proof; the world's proof(open) may draw it on the stage),
 // live numbers and controls; on the right the world itself on the whole remaining area. The mode is kept in
 // the address (#world/<id>/<n>, 0 = free). Solved challenges are remembered in this browser.
 
@@ -19,6 +20,7 @@ const L = {
   next: { en: 'Next challenge →', ru: 'Следующее испытание →' },
   free2: { en: 'Back to free exploration', ru: 'К свободному исследованию' },
   worlds: { en: 'Worlds', ru: 'Миры' },
+  why: { en: 'Why is it so? The proof', ru: 'Почему это так? Доказательство' },
 };
 
 export async function mountWorld(root, id, startMode = 0) {
@@ -52,6 +54,7 @@ export async function mountWorld(root, id, startMode = 0) {
             <h2></h2>
             <div class="step-text"></div>
             <div class="goal" hidden><span class="goal-label">${t(L.goal)}</span><div class="goal-text"></div></div>
+            <details class="hint proof" hidden><summary></summary><div class="hint-body"></div></details>
             <div class="world-status" aria-live="polite" hidden></div>
             <p class="world-howto"></p>
           </section>
@@ -69,7 +72,7 @@ export async function mountWorld(root, id, startMode = 0) {
 
   const $ = s => root.querySelector(s);
   const info = $('.mode-info'), status = $('.world-status'), readoutEl = $('.readout'), controls = $('.controls');
-  const hud = $('.world-hud'), howto = $('.world-howto'), tabs = [...root.querySelectorAll('.mode-tab')];
+  const proof = $('.proof'), hud = $('.world-hud'), howto = $('.world-howto'), tabs = [...root.querySelectorAll('.mode-tab')];
   let current = -1;
 
   const markTabs = () => {
@@ -135,6 +138,11 @@ export async function mountWorld(root, id, startMode = 0) {
     const goal = info.querySelector('.goal');
     goal.hidden = !m.goal;
     goal.querySelector('.goal-text').innerHTML = t(m.goal) || '';
+    // «Why is it so?»: the proof of what the mode shows; the world may draw it on the stage while it is open
+    proof.open = false;
+    proof.hidden = !m.proof;
+    proof.querySelector('summary').textContent = t(L.why);
+    proof.querySelector('.hint-body').innerHTML = t(m.proof) || '';
     renderMath(info);
     status.className = 'world-status';
     status.hidden = true;
@@ -149,6 +157,7 @@ export async function mountWorld(root, id, startMode = 0) {
   }
 
   tabs.forEach(b => b.addEventListener('click', () => go(+b.dataset.m)));
+  proof.addEventListener('toggle', () => { if (inst.proof) inst.proof(proof.open); });
   go(startMode);
 
   return () => inst.dispose();

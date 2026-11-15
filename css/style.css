@@ -315,6 +315,10 @@ button { font: inherit; color: inherit; }
 .hint[open] summary::before { content: '−'; }
 .hint summary:hover { color: var(--text); }
 .hint-body { margin-top: 8px; color: var(--soft); font-size: 15px; line-height: 1.7; }
+.hint.proof { border-left-color: var(--teal); }
+.hint.proof summary { color: var(--teal); }
+.hint.proof ol { margin: 6px 0 0; padding-left: 20px; }
+.hint.proof li { margin: 0 0 8px; }
 
 /* ---------- Lab ---------- */
 
