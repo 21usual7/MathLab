@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { boundary, invariant, transition, trace, validInput, checkCounterexample, checkTransfer, TRANSFER, CHAPTERS, DURATION, chapterStart, frameAt, playbackStep } from '../js/worlds/algorithms/binary-search-model.js';
+import { boundary, invariant, transition, trace, validInput, checkCounterexample, checkTransfer, TRANSFER, CHAPTERS, DURATION, chapterStart, frameAt, playbackStep } from '../js/topics/algorithms/binary-search-model.js';
 
 function* sortedArrays(length, prefix = [], min = -1) {
   if (!length) { yield prefix; return; }

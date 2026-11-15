@@ -26,6 +26,13 @@ async function route() {
   const [path, query] = location.hash.slice(1).split('?');
   let [page, id, step] = path.split('/');
   if (SUBJECTS.some(sub => sub.id === page)) { id = page; page = 'topics'; history.replaceState(null, '', `#topics/${id}`); }
+  if (page === 'worlds' && id === 'algorithms') {
+    page = 'topics'; history.replaceState(null, '', '#topics/algorithms');
+  }
+  if (page === 'world' && id === 'binary-search') {
+    page = 'topic'; step = String(Math.max(0, Math.min(2, parseInt(step, 10) || 0)) + 1);
+    history.replaceState(null, '', `#topic/${id}/${step}`);
+  }
   document.body.dataset.page = page || 'home';
   const nav = { world: 'worlds', topic: 'topics' }[page] || page || 'home';
   document.querySelectorAll('[data-nav]').forEach(a => a.classList.toggle('active', a.dataset.nav === nav));

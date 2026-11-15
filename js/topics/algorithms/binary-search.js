@@ -3,18 +3,35 @@ import { L, el, button, input } from './ui.js';
 import { binarySearchStory } from './binary-search-story.js';
 import { TRANSFER, checkTransfer, checkCounterexample } from './binary-search-model.js';
 
-const modes = [
-  { id: 'free', title: L('Право отбросить половину', 'Permission to discard half'), text: L('Один поиск, один инвариант и одна сломанная строка. Останавливайте историю и проверяйте причину каждого шага.', 'One search, one invariant, and one broken line. Pause the story and inspect the reason for each step.') },
+const steps = [
+  { id: 'story', title: L('Право отбросить половину', 'Permission to discard half'), text: L('Один поиск, один инвариант и одна сломанная строка. Останавливайте историю и проверяйте причину каждого шага.', 'One search, one invariant, and one broken line. Pause the story and inspect the reason for each step.') },
   { id: 'transfer', title: L('Граница в новых данных', 'A boundary in new data'), text: L('Индексы начинаются с нуля. Найдите первую позицию a[i] ≥ x. Если таких значений нет, верните n — длину массива. Готового запуска здесь нет.', 'Indices start at zero. Find the first position a[i] ≥ x. If no value qualifies, return n, the array length. There is no worked trace here.'), goal: L('Решите три новых примера и объясните случай n.', 'Solve three new cases and explain the n case.'), after: L('Дубликаты требуют первой границы; отсутствие точного совпадения не означает отсутствие ответа; n — допустимая позиция границы.', 'Duplicates require the first boundary; no exact match does not mean no answer; n is a valid boundary position.') },
   { id: 'counterexample', title: L('Ваш контрпример', 'Your counterexample'), text: L('В программе заменили lo = mid + 1 на lo = mid. Постройте свой отсортированный массив и запрос, на котором поиск застрянет. Укажите, какое требование нарушено.', 'The program now uses lo = mid instead of lo = mid + 1. Construct a sorted array and target that make it stall. Identify which requirement fails.'), goal: L('Постройте контрпример и отличите инвариант от завершения.', 'Construct a counterexample and distinguish the invariant from termination.'), after: L('Инвариант может сохраняться бесконечно. Для завершения нужен отдельный довод: неотрицательная целая длина hi − lo должна строго уменьшаться.', 'An invariant can remain true forever. Termination needs a separate argument: the nonnegative integer hi − lo must strictly decrease.') },
 ];
 
 export default {
-  modes,
-  mount(ui) {
-    const world = ui.host.closest('.world'); world?.classList.add('algorithm-world');
+  steps,
+  lab: false,
+  setup() {},
+  mountStage(ui) {
+    const solved = new Set();
+    try {
+      const saved = JSON.parse(localStorage.getItem('mathlab-topic-binary-search') || '[]');
+      const legacy = JSON.parse(localStorage.getItem('mathlab-worlds') || '{}')['binary-search'] || [];
+      [...saved, ...legacy.map(id => steps.findIndex(s => s.id === id))]
+        .filter(i => Number.isInteger(i) && i > 0 && i < steps.length).forEach(i => solved.add(i));
+    } catch { /* The lesson remains usable when browser storage is unavailable. */ }
+    let active = 0;
+    const feedback = el('p', 'algorithm-result'); feedback.setAttribute('aria-live', 'polite');
+    ui.status = (message, kind) => { feedback.textContent = message; feedback.className = `algorithm-result ${kind}`; };
+    ui.solve = id => {
+      solved.add(active);
+      try { localStorage.setItem('mathlab-topic-binary-search', JSON.stringify([...solved])); } catch {}
+      ui.status(t(steps.find(s => s.id === id).after), 'right'); ui.onSolve();
+    };
+    const player = ui.host.closest('.topic-player'); player.classList.add('algorithm-topic');
     const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = new URL('../../../css/algorithms.css', import.meta.url).href; document.head.append(css);
-    const root = el('section', 'algorithm-lab'); ui.host.append(root); let film = null;
+    const root = el('section', 'algorithm-lab'); ui.host.append(root, feedback); let film = null;
     function status(message, right = false) { ui.status(t(message), right ? 'right' : 'wrong'); }
     function heading(text) { root.append(el('h2', '', text)); }
     function transfer() {
@@ -54,12 +71,19 @@ export default {
       }), report);
     }
     return {
-      setMode(id) {
-        film?.dispose(); film = null; root.replaceChildren(); root.hidden = id === 'free'; world?.classList.toggle('algorithm-film-mode', id === 'free');
-        if (id === 'free') film = binarySearchStory(ui.host, { onTransfer: () => { location.hash = '#world/binary-search/1'; }, onCounterexample: () => { location.hash = '#world/binary-search/2'; } });
-        else if (id === 'transfer') transfer(); else counterexample();
+      solved,
+      mode: '2d',
+      reset() { this.setStep(active); },
+      setStep(i) {
+        active = i;
+        const id = steps[i]?.id;
+        film?.dispose(); film = null; root.replaceChildren(); root.hidden = id === 'story';
+        feedback.textContent = ''; feedback.className = 'algorithm-result';
+        player.classList.toggle('algorithm-film-mode', id === 'story');
+        if (id === 'story') film = binarySearchStory(ui.host, { onTransfer: () => ui.goto(1), onCounterexample: () => ui.goto(2) });
+        else if (id === 'transfer') transfer(); else if (id === 'counterexample') counterexample();
       },
-      dispose() { film?.dispose(); root.remove(); world?.classList.remove('algorithm-world', 'algorithm-film-mode'); css.remove(); },
+      dispose() { film?.dispose(); root.remove(); feedback.remove(); player.classList.remove('algorithm-topic', 'algorithm-film-mode'); css.remove(); },
     };
   },
 };

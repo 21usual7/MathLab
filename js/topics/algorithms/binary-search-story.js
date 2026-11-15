@@ -12,6 +12,7 @@ const C = { bg: '#070b12', ink: '#edf3fa', dim: '#72859a', blue: '#65b7fa', gold
 export function binarySearchStory(host, { onTransfer, onCounterexample } = {}) {
   const root = el('section', 'algorithm-story'); root.setAttribute('aria-label', t(L('Бинарный поиск: история', 'Binary search: the story')));
   const head = el('header', 'algorithm-story-head');
+  const back = el('a', 'algorithm-back', L('← Алгоритмы и структуры данных', '← Algorithms and data structures')); back.href = '#topics/algorithms'; head.append(back);
   head.append(el('span', 'algorithm-eyebrow', L('Математика через код / 01', 'Mathematics through code / 01')), el('h2', '', L('Право отбросить половину', 'Permission to discard half')));
   const canvas = el('canvas', 'algorithm-canvas'); canvas.setAttribute('aria-hidden', 'true');
   const caption = el('p', 'algorithm-caption'); caption.setAttribute('aria-live', 'polite');

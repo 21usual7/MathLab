@@ -147,7 +147,10 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
   renderMath(root.querySelector('.panel-body'));
 
   const $ = s => root.querySelector(s);
-  const stage = new Stage($('.stage-host'), scene, { mode: topic.view, view2d: topic.view2d, view3d: topic.view3d });
+  // DOM-based lessons use the same steps, navigation and topic metadata as plotted lessons.
+  const stage = topic.mountStage
+    ? topic.mountStage({ host: $('.stage-host'), goto: i => show(i), onSolve: () => updateProgress() })
+    : new Stage($('.stage-host'), scene, { mode: topic.view, view2d: topic.view2d, view3d: topic.view3d });
   const sections = [...root.querySelectorAll('.step[data-i]')]; // N steps + the end
   const live = $('.live'), legendEl = $('.legend'), controlsEl = $('.controls');
   const body = $('.panel-body');
@@ -194,14 +197,14 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
     root.querySelectorAll('.dot').forEach((d, k) => {
       d.classList.toggle('current', k === active);
       d.classList.toggle('done', k < active);
-      d.classList.toggle('solved', !!tasks[k]?.solved);
+      d.classList.toggle('solved', (!!tasks[k]?.solved || !!stage.solved?.has(k)));
       if (k === active) d.setAttribute('aria-current', 'step');
       else d.removeAttribute('aria-current');
     });
     root.querySelectorAll('.step-link').forEach((el, k) => {
       if (k === active) el.setAttribute('aria-current', 'step');
       else el.removeAttribute('aria-current');
-      el.querySelector('.step-result').textContent = tasks[k]?.solved ? '✓' : '';
+      el.querySelector('.step-result').textContent = (tasks[k]?.solved || stage.solved?.has(k)) ? '✓' : '';
     });
   };
 
@@ -239,10 +242,11 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
 
     scene.stopTween?.();
     for (const p of scene.params.values()) p.playing = false;
-    if (i === N) { live.hidden = true; stage.p3?.autoRotate(false); scene.changed(); return; } // "Where next" keeps the last scene
+    if (i === N) { stage.setStep?.(i); live.hidden = true; stage.p3?.autoRotate(false); scene.changed(); return; } // "Where next" keeps the last scene
     live.hidden = false;
     sections[i].querySelector('.live-slot').appendChild(live);
 
+    stage.setStep?.(i);
     const step = topic.steps[i], st = step.state || {};
     if (restart) {
       for (const [name, value] of Object.entries(restartParams)) scene.setParam(name, value);

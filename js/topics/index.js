@@ -1,8 +1,11 @@
+import { ALGORITHMS_SUBJECT, ALGORITHM_TOPICS, loadAlgorithmTopic } from './algorithms/catalog.js';
+
 // The map: tracks and topics. A topic lists what it needs (prereqs) and where it leads (next),
 // so a student can step back to the real cause of a gap. Planned topics are shown on the map too.
 
-// Two subjects, as at school: algebra with the beginnings of calculus, and geometry
+// Subjects and their learning tracks.
 export const SUBJECTS = [
+  ALGORITHMS_SUBJECT,
   { id: 'basics', title: { en: 'Foundations (grades 7–9)', ru: 'Основы (7–9 класс)' } },
   { id: 'algebra', title: { en: 'Algebra and calculus', ru: 'Алгебра и начала анализа' } },
   { id: 'geometry', title: { en: 'Geometry', ru: 'Геометрия' } },
@@ -12,6 +15,7 @@ export const SUBJECTS = [
 ];
 
 export const TRACKS = [
+  { id: 'search', subject: 'algorithms', title: { en: 'Search and invariants', ru: 'Поиск и инварианты' } },
   { id: 'b-geom', subject: 'basics', title: { en: 'Geometry 7–9', ru: 'Геометрия 7–9' } },
   { id: 'b-alg', subject: 'basics', title: { en: 'Algebra 7–9', ru: 'Алгебра 7–9' } },
   { id: 'functions', subject: 'algebra', title: { en: 'Functions', ru: 'Функции' } },
@@ -33,6 +37,7 @@ export const TRACKS = [
 ];
 
 export const CATALOG = [
+  ...ALGORITHM_TOPICS,
   // Foundations: the key theorems and patterns of grades 7–9, each with a short proof and links to grades 10–11
   { id: 'pythagoras', track: 'b-geom', status: 'ready', minutes: 5, next: ['vectors', 'dot', 'axioms'],
     title: { en: 'The Pythagorean theorem', ru: 'Теорема Пифагора' },
@@ -339,5 +344,5 @@ const MODULES = {
 };
 
 export async function loadTopic(id) {
-  return MODULES[id] ? (await MODULES[id]()).default : null;
+  return MODULES[id] ? (await MODULES[id]()).default : loadAlgorithmTopic(id);
 }

@@ -1,5 +1,4 @@
 import { CRYPTO_COLLECTION, CRYPTO_WORLDS, loadCryptoWorld } from './crypto/catalog.js';
-import { ALGORITHMS_COLLECTION, ALGORITHM_WORLDS, loadAlgorithmWorld } from './algorithms/catalog.js';
 
 // Worlds: small research spaces where mathematics is the mechanics. Not steps to read, but a system to
 // play with: free exploration plus a few challenges with a concrete goal. Worlds are grouped into collections;
@@ -9,7 +8,6 @@ import { ALGORITHMS_COLLECTION, ALGORITHM_WORLDS, loadAlgorithmWorld } from './a
 
 export const COLLECTIONS = [
   CRYPTO_COLLECTION,
-  ALGORITHMS_COLLECTION,
   { id: 'inside', title: { en: 'Inside your things', ru: 'Внутри твоих вещей' },
     summary: {
       en: 'Things you use every day, opened up: the mathematics that makes them work — on your own photo, your own voice.',
@@ -24,7 +22,6 @@ export const COLLECTIONS = [
 
 export const WORLDS = [
   ...CRYPTO_WORLDS,
-  ...ALGORITHM_WORLDS,
   { id: 'jpeg', collection: 'inside', minutes: 15, kicker: { en: 'Trigonometry · waves · compression', ru: 'Тригонометрия · волны · сжатие' },
     title: { en: 'How a photo shrinks tenfold', ru: 'Как фото худеет в десять раз' },
     summary: {
@@ -77,5 +74,5 @@ const MODULES = {
 
 export async function loadWorld(id) {
   if (MODULES[id]) return (await MODULES[id]()).default;
-  return (await loadCryptoWorld(id)) || loadAlgorithmWorld(id);
+  return loadCryptoWorld(id);
 }
