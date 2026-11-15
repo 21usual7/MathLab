@@ -20,6 +20,7 @@ const EXAMPLES = [
   ['Surfaces', ['z = x^2 - y^2', 'z = 3 e^(-(x^2 + y^2)/4)', 'z = sin(x y)', 'z = cos(sqrt(x^2 + y^2) - p)']],
   ['Curves', ['(cos(t), sin(t))', '(cos(3t), sin(2t))', '(2cos(t), 2sin(t), sin(5t))', '(t cos(t)/2, t sin(t)/2)']],
   ['Vectors', ['v = [2, 1]', 'w = [a, 2]', 'u = [1, 2, 2]', '[cos(p), sin(p), 1]']],
+  ['Matrices', ['M = [[2, 1], [0, 1]]', 'R = [[cos(p), -sin(p)], [sin(p), cos(p)]]', 'S = [[1, k], [0, 1]]', 'A = [[1, 0, 1], [0, 1, 0], [0, 0, c]]']],
 ];
 
 // What the Lab understands: input → meaning (explanations follow the language switch)
@@ -33,6 +34,7 @@ const SYNTAX = [
   ['(1, 2)  (1; 2)', { en: 'a point; (1, 2, 3) in 3D', ru: 'точка; (1, 2, 3) — в 3D' }],
   ['A(1; 2,5)', { en: 'a named point (with ";" a comma is decimal)', ru: 'точка с именем (с «;» запятая — десятичная)' }],
   ['[1, 2]  v = [a, 1, 2]', { en: 'a vector: an arrow from the origin, in 2D or 3D', ru: 'вектор: стрелка из начала координат, в 2D или 3D' }],
+  ['M = [[2, 1], [0, 1]]', { en: 'a matrix, by rows: the moved grid and its columns; vectors get their images Mv; 3×3 — space', ru: 'матрица по строкам: сдвинутая сетка и её столбцы; у векторов появляются образы Mv; 3×3 — пространство' }],
   ['(cos(t), sin(t))', { en: 'a curve; add {0 <= t <= 4pi} for its range', ru: 'кривая; {0 <= t <= 4pi} — её диапазон' }],
   ['z = x^2 - y^2', { en: 'a surface (2D shows its level lines)', ru: 'поверхность (в 2D — её линии уровня)' }],
   ['sqrt  abs  exp  ln  log(x, 2)', { en: 'functions; also sin, tg, arcsin, floor', ru: 'функции; ещё sin, tg, arcsin, floor' }],

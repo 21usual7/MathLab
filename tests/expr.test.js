@@ -125,3 +125,20 @@ test('vectors', () => {
   assert.equal(analyze('[x, 1]').kind, 'error');
   assert.equal(analyze('x = [1, 2]').kind, 'error');
 });
+
+test('matrices', () => {
+  const m = analyze('M = [[2, 1], [0, 1]]');
+  assert.equal(m.kind, 'matrix2');
+  assert.equal(m.label, 'M');
+  assert.deepEqual(m.nodes.map(n => compile(n)({})), [2, 1, 0, 1]); // by rows
+  assert.equal(m.tex, 'M = \\begin{pmatrix} 2 & 1 \\\\ 0 & 1 \\end{pmatrix}');
+  const r = analyze('[[cos(p), -sin(p)], [sin(p), cos(p)]]');
+  assert.equal(r.kind, 'matrix2');
+  assert.deepEqual(r.params, ['p']);
+  assert.equal(analyze('[[1, 0, 0], [0, 1, 0], [0, 0, k]]').kind, 'matrix3');
+  assert.equal(analyze('[[1, 2], [3]]').kind, 'error');
+  assert.equal(analyze('[[1, 2, 3], [4, 5, 6]]').kind, 'error');
+  assert.equal(analyze('m = [[1, 2], [3, 4]]').kind, 'error');
+  assert.equal(analyze('[[x, 1], [1, 1]]').kind, 'error');
+  assert.equal(analyze('v = [1, 2]').kind, 'vector2'); // a vector is still a vector
+});

@@ -4,7 +4,9 @@
 // Three kinds:
 //   drag    — move points on the scene so that parameters reach the target:
 //             { kind: 'drag', target: { h: 2, k: 1 }, tol, mistakes: [{ params: { h: -2, k: 1 }, text }], hints: { h: text } }
-//             target may be a list when several places are right; a hint may be a function of the parameter's value
+//             target may be a list when several places are right; a hint may be a function of the parameter's value.
+//             When the right answers are a whole region (a line that separates two classes), ok(scope) decides,
+//             mistakes have when(scope), hint(scope) says what is off, and target is one answer to show
 //   formula — read a graph and type its formula:
 //             { kind: 'formula', answer: 'y = sqrt(x - 3)', range: [lo, hi], mistakes: [{ formula: 'y = sqrt(x + 3)', text }] }
 //             lhs: the letter in front of the input when the height is not called y (a slice of a surface: 'z')
@@ -59,9 +61,10 @@ export function bindTask(el, task, index, ctx) {
   const nearest = () => targets.reduce((a, b) => dist(b) < dist(a) ? b : a);
   function checkDrag() {
     const tol = task.tol ?? 0.13;
-    if (targets.some(g => near(g, tol))) { say(true, t(task.right) || ''); return after(true); }
-    const m = (task.mistakes || []).find(mm => mm.params && near(mm.params, tol));
+    if (task.ok ? task.ok(scene.scope()) : targets.some(g => near(g, tol))) { say(true, t(task.right) || ''); return after(true); }
+    const m = (task.mistakes || []).find(mm => (mm.when ? mm.when(scene.scope()) : mm.params && near(mm.params, tol)));
     if (m) { say(false, t(m.text), m.back ?? task.back); return after(false); }
+    if (task.hint) { say(false, t(task.hint(scene.scope()))); return after(false); }
     // Which parameters are off, in the words of the task
     const goal = nearest(), hint = name => {
       const h = (task.hints || {})[name];

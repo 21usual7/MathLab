@@ -1,6 +1,7 @@
 // The determinant: how many times a matrix changes areas. Every cell of the grid is a copy of the unit square,
 // so every area is multiplied by the same number. A stretch multiplies by a·d, a shear does not change areas,
-// in general it is ad − bc; zero when the plane collapses, negative when it is turned inside out.
+// in general it is ad − bc (proved by cutting the parallelogram out of a box); zero when the plane collapses,
+// negative when it is turned inside out.
 
 import { COLORS } from '../core/palette.js';
 import { fmt } from '../core/numeric.js';
@@ -30,6 +31,7 @@ export default {
     scene.ensureParam('jy', 1, { min: -5, max: 5, step: 0.5 });
     scene.ensureParam('t', 1, { min: 0, max: 1, step: 0.01 });
     scene.ensureParam('D', 0, { min: -4, max: 8, step: 0.5 }); // the student's answer in the second task
+    scene.ensureParam('pf', 0, { min: 0, max: 3, step: 1 }); // the stage of the proof
 
     scene.custom.push(
       {
@@ -65,6 +67,43 @@ export default {
           p.handle(s.jx, 1, COLORS.red, x => sc.setParam('jx', Math.max(-5, Math.min(5, Math.round(x * 2) / 2))));
         },
         legend: s => formula({ ix: 1, iy: 0, jx: s.jx, jy: 1 }),
+      },
+      {
+        // The proof: the parallelogram on (a; c) and (b; d) inside the box (a + b) × (c + d); what is left over
+        // are two pairs of triangles and two rectangles b × c. pf: 0 — the box, 1 — triangles, 2 — rectangles, 3 — all
+        id: 'proof',
+        draw2d(p, sc, s) {
+          const a = s.ix, c = s.iy, b = s.jx, d = s.jy, W = a + b, H = c + d, k = s.pf;
+          const piece = (pts, color, on, label, tex) => {
+            p.fill(pts, color + (on ? '55' : '14'));
+            p.polyline([...pts, pts[0]], color + (on ? 'cc' : '33'), 1.2);
+            if (on && label) p.tex(label, tex, pts.reduce((m, q) => m + q[0], 0) / pts.length, pts.reduce((m, q) => m + q[1], 0) / pts.length, color, { dx: 0, dy: 0, align: 'center' });
+          };
+          const tri = k >= 1, rec = k >= 2;
+          piece([[0, 0], [a, 0], [a, c]], COLORS.green, tri, 'p1', '\\tfrac{ac}{2}');
+          piece([[b, d], [b, H], [W, H]], COLORS.green, tri, 'p2', '\\tfrac{ac}{2}');
+          piece([[0, 0], [b, d], [0, d]], COLORS.red, tri, 'p3', '\\tfrac{bd}{2}');
+          piece([[a, c], [W, c], [W, H]], COLORS.red, tri, 'p4', '\\tfrac{bd}{2}');
+          piece([[a, 0], [W, 0], [W, c], [a, c]], COLORS.orange, rec, 'p5', 'bc');
+          piece([[0, d], [b, d], [b, H], [0, H]], COLORS.orange, rec, 'p6', 'bc');
+          p.polyline([[0, 0], [W, 0], [W, H], [0, H], [0, 0]], 'rgba(255,255,255,0.75)', 1.5);
+          const par = [[0, 0], [a, c], [W, H], [b, d]];
+          p.fill(par, COLORS.yellow + (k === 3 ? '66' : '33'));
+          p.polyline([...par, par[0]], COLORS.yellow, 2);
+          p.tex('pw', 'a + b', W / 2, 0, '#e6e9ef', { dx: 0, dy: 16, align: 'center' });
+          p.tex('ph', 'c + d', W, H / 2, '#e6e9ef', { dx: 10, dy: 0 });
+          p.arrow(0, 0, a, c, COLORS.green, { width: 3 });
+          p.arrow(0, 0, b, d, COLORS.red, { width: 3 });
+          // The arrows stay in the first quarter, ĵ′ on the left of î′: the case of the picture
+          const ok = (A, C, B, D) => A > 0 && C >= 0 && B >= 0 && D > 0 && A * D - B * C > 0.2;
+          const snap = v => Math.round(v * 2) / 2;
+          p.handle(a, c, COLORS.green, (x, y) => { if (ok(snap(x), snap(y), b, d)) { sc.setParam('ix', snap(x)); sc.setParam('iy', snap(y)); } });
+          p.handle(b, d, COLORS.red, (x, y) => { if (ok(a, c, snap(x), snap(y))) { sc.setParam('jx', snap(x)); sc.setParam('jy', snap(y)); } });
+        },
+        legend: s => {
+          const a = s.ix, c = s.iy, b = s.jx, d = s.jy;
+          return `(${r2(a)} + ${r2(b)})(${r2(c)} + ${r2(d)}) - \\green{${r2(a * c)}} - \\red{${r2(b * d)}} - \\orange{2 \\cdot ${r2(b * c)}} = \\yellow{${r2(a * d - b * c)}}`;
+        },
       },
       // ---- Tasks ----
       {
@@ -155,6 +194,38 @@ export default {
         reveal: scene => scene.animateParams({ ix: 3, iy: 2, jx: 1, jy: 4 }, 1200),
       },
       state: { show: ['det'], params: { ix: 2, iy: 1, jx: -1, jy: 1, t: 1 }, window: WINDOW, controls: [] },
+    },
+    {
+      proof: true,
+      statement: {
+        en: '<b>Theorem.</b> The parallelogram on the arrows $\\green{(a;\\ c)}$ and $\\red{(b;\\ d)}$ has the area $ad - bc$. We prove it when both arrows are in the first quarter and $\\red{\\hat\\jmath\'}$ is on the left of $\\green{\\hat\\imath\'}$, as in the picture.',
+        ru: '<b>Теорема.</b> Площадь параллелограмма на стрелках $\\green{(a;\\ c)}$ и $\\red{(b;\\ d)}$ равна $ad - bc$. Докажем, когда обе стрелки в первой четверти и $\\red{\\hat\\jmath\'}$ слева от $\\green{\\hat\\imath\'}$, как на картинке.',
+      },
+      title: { en: 'Put it in a box', ru: 'Положим в коробку' },
+      text: {
+        en: 'The far corner of the parallelogram is $(a + b;\\ c + d)$. So the whole parallelogram fits in the rectangle $(a + b) \\times (c + d)$ with its sides along the axes. The area of a rectangle we know. The plan: take the box and cut away everything that is not the parallelogram.',
+        ru: 'Дальний угол параллелограмма — $(a + b;\\ c + d)$. Значит, весь он помещается в прямоугольник $(a + b) \\times (c + d)$ со сторонами вдоль осей. Площадь прямоугольника мы знаем. План: взять коробку и вырезать всё, что не параллелограмм.',
+      },
+      state: { show: ['proof'], params: { ix: 3, iy: 1, jx: 1, jy: 2, pf: 0, t: 1 }, window: { cx: 2, cy: 1.5, unit: 78 }, controls: [] },
+    },
+    {
+      proof: true,
+      title: { en: 'Two pairs of triangles', ru: 'Две пары треугольников' },
+      text: {
+        en: 'Under $\\green{\\hat\\imath\'}$ is a right triangle with legs $a$ and $c$, area $\\frac{ac}{2}$; the same one sits in the opposite corner. Next to $\\red{\\hat\\jmath\'}$ — legs $b$ and $d$, area $\\frac{bd}{2}$, also twice. Together: $\\green{ac} + \\red{bd}$.',
+        ru: 'Под $\\green{\\hat\\imath\'}$ — прямоугольный треугольник с катетами $a$ и $c$, площадь $\\frac{ac}{2}$; такой же сидит в противоположном углу. Рядом с $\\red{\\hat\\jmath\'}$ — катеты $b$ и $d$, площадь $\\frac{bd}{2}$, тоже дважды. Вместе: $\\green{ac} + \\red{bd}$.',
+      },
+      state: { show: ['proof'], params: { ix: 3, iy: 1, jx: 1, jy: 2, pf: 1, t: 1 }, ms: 10, window: { cx: 2, cy: 1.5, unit: 78 }, controls: [] },
+    },
+    {
+      proof: true,
+      title: { en: 'Two rectangles — and subtract', ru: 'Два прямоугольника — и вычтем' },
+      text: {
+        en: 'Two corners are left: rectangles $b \\times c$. Open the brackets: $$(a + b)(c + d) = ac + ad + bc + bd,$$ and subtract the pieces: $$\\ldots - \\green{ac} - \\red{bd} - \\orange{2bc} = \\yellow{ad - bc}.$$ Drag the ends of the arrows: the numbers in the legend change, the answer is always $ad - bc$. Other positions of the arrows give other pieces, but the same answer; the shortest way to see it: a turn of the plane keeps areas, and its determinant is $1$. $\\blacksquare$',
+        ru: 'Остались два угла — прямоугольники $b \\times c$. Раскроем скобки: $$(a + b)(c + d) = ac + ad + bc + bd,$$ и вычтем куски: $$\\ldots - \\green{ac} - \\red{bd} - \\orange{2bc} = \\yellow{ad - bc}.$$ Тяните концы стрелок: числа в подписи меняются, ответ всегда $ad - bc$. При других положениях стрелок куски другие, а ответ тот же; короче всего это видно так: поворот плоскости сохраняет площади, и его определитель равен $1$. $\\blacksquare$',
+      },
+      try: { en: 'Drag $\\hat\\imath\'$ and $\\hat\\jmath\'$ and compare the box minus the pieces with $ad - bc$.', ru: 'Тяните $\\hat\\imath\'$ и $\\hat\\jmath\'$ и сравнивайте коробку без кусков с $ad - bc$.' },
+      state: { show: ['proof'], params: { ix: 3, iy: 1, jx: 1, jy: 2, pf: 3, t: 1 }, ms: 10, window: { cx: 2, cy: 1.5, unit: 78 }, controls: [] },
     },
     {
       title: { en: 'Zero: the plane collapsed', ru: 'Ноль: плоскость схлопнулась' },
@@ -262,7 +333,7 @@ export default {
       task: {
         kind: 'drag',
         target: Array.from({ length: 21 }, (_, k) => ({ jx: 1, jy: -5 + k / 2 })),
-        back: 5,
+        back: 8,
         right: {
           en: '$\\det = 0 \\cdot d - b \\cdot 1 = -b$, so $b = 1$: $\\hat\\jmath\'$ is on the right of $\\hat\\imath\'$, at distance $1$ from its line. The square turned purple.',
           ru: '$\\det = 0 \\cdot d - b \\cdot 1 = -b$, значит $b = 1$: $\\hat\\jmath\'$ справа от $\\hat\\imath\'$, на расстоянии $1$ от его прямой. Квадрат стал фиолетовым.',

@@ -8,6 +8,7 @@ export const SUBJECTS = [
   { id: 'geometry', title: { en: 'Geometry', ru: 'Геометрия' } },
   { id: 'linalg', title: { en: 'Linear algebra', ru: 'Линейная алгебра' } },
   { id: 'crypto', title: { en: 'Cryptography', ru: 'Криптография' } },
+  { id: 'ml', title: { en: 'Machine learning', ru: 'Машинное обучение' } },
 ];
 
 export const TRACKS = [
@@ -26,6 +27,9 @@ export const TRACKS = [
   { id: 'space3', subject: 'linalg', title: { en: 'Three dimensions', ru: 'Три измерения' } },
   { id: 'remainders', subject: 'crypto', title: { en: 'Remainders and ciphers', ru: 'Остатки и шифры' } },
   { id: 'publickey', subject: 'crypto', title: { en: 'Public keys', ru: 'Открытый ключ' } },
+  { id: 'learn', subject: 'ml', title: { en: 'Learning from data', ru: 'Учиться на данных' } },
+  { id: 'nets', subject: 'ml', title: { en: 'Neural networks', ru: 'Нейросети' } },
+  { id: 'structure', subject: 'ml', title: { en: 'Finding structure', ru: 'Найти структуру' } },
 ];
 
 export const CATALOG = [
@@ -100,7 +104,7 @@ export const CATALOG = [
   { id: 'ftc', track: 'integrals', status: 'planned', prereqs: ['area', 'derivative'],
     title: { en: 'Why derivative and integral undo each other', ru: 'Почему производная и интеграл взаимно обратны' } },
 
-  { id: 'surfaces', track: 'multivar', status: 'ready', minutes: 12, prereqs: ['graph', 'derivative'], next: ['gradient'],
+  { id: 'surfaces', track: 'multivar', status: 'ready', minutes: 12, prereqs: ['graph', 'derivative'], next: ['gradient', 'regression'],
     title: { en: 'Surfaces and slices', ru: 'Поверхности и сечения' },
     summary: {
       en: 'A function of two variables is a landscape. Cut it with planes and you are back to ordinary graphs — and to partial derivatives.',
@@ -142,7 +146,7 @@ export const CATALOG = [
       en: 'An arrow is a move; adding is walking, multiplying stretches. Two arrows make a slanted grid over the whole plane — unless they lie on one line.',
       ru: 'Стрелка — это перемещение; сложение — прогулка, умножение — растяжение. Две стрелки дают косую сетку на всю плоскость — если только не лежат на одной прямой.',
     } },
-  { id: 'dot', track: 'vecs', status: 'ready', minutes: 10, prereqs: ['vectors'], next: ['det'],
+  { id: 'dot', track: 'vecs', status: 'ready', minutes: 10, prereqs: ['vectors'], next: ['det', 'classify'],
     title: { en: 'Dot product: how much one arrow goes along another', ru: 'Скалярное произведение: насколько одна стрелка идёт вдоль другой' },
     summary: {
       en: 'The shadow of one arrow on another, times its length — or simply x·x + y·y. Zero means a right angle; the cosine of the angle comes for free.',
@@ -172,7 +176,7 @@ export const CATALOG = [
       en: 'A matrix multiplies every area by the same number. Why it is ad − bc, why it is zero when the plane collapses and negative when it turns over.',
       ru: 'Матрица умножает любую площадь на одно и то же число. Почему оно равно ad − bc, почему ноль, когда плоскость схлопнулась, и минус, когда перевернулась.',
     } },
-  { id: 'eigen', track: 'maps', status: 'ready', minutes: 12, prereqs: ['matrix'],
+  { id: 'eigen', track: 'maps', status: 'ready', minutes: 12, prereqs: ['matrix'], next: ['pca'],
     title: { en: 'Eigenvectors: arrows that keep their line', ru: 'Собственные векторы: стрелки, которые не сходят со своей прямой' },
     summary: {
       en: 'A matrix turns almost every arrow — but some lines stay, only stretched: M·v = λ·v. A rotation has none, a shear one; repeated, a matrix turns everything towards the biggest λ.',
@@ -234,6 +238,44 @@ export const CATALOG = [
       en: 'A line through two points of y² = x³ + ax + b meets the curve once more — reflect that point and you have the sum. The same curve on a clock of a prime turns into a cloud of points, and steps kG are the Diffie–Hellman of today\'s internet.',
       ru: 'Прямая через две точки кривой y² = x³ + ax + b встречает её ещё раз — отразите эту точку, и получится сумма. Та же кривая на часах из простого числа становится облаком точек, а шаги kG — это Диффи — Хеллман сегодняшнего интернета.',
     } },
+
+  // Machine learning: the same linear algebra and derivatives, now learning from data
+  { id: 'regression', track: 'learn', status: 'ready', minutes: 15, prereqs: ['derivative', 'surfaces'], next: ['classify', 'overfit', 'gradient'],
+    title: { en: 'Linear regression: learning is rolling downhill', ru: 'Линейная регрессия: учиться — значит катиться вниз' },
+    summary: {
+      en: 'A line through a cloud of points. Its error is the mean area of squares, every line is a point of a map, the error over the map is a bowl — and learning is gradient descent to its bottom.',
+      ru: 'Прямая сквозь облако точек. Её ошибка — средняя площадь квадратов, каждая прямая — точка на карте, ошибка над картой — чаша, а обучение — градиентный спуск на её дно.',
+    } },
+  { id: 'classify', track: 'learn', status: 'ready', minutes: 15, prereqs: ['regression', 'dot'], next: ['network', 'overfit'],
+    title: { en: 'Classification: a line that separates', ru: 'Классификация: прямая, которая разделяет' },
+    summary: {
+      en: 'Spam or not: the side of a line is the sign of a dot product, the sigmoid turns it into a probability — a smooth step over the plane — and the log loss makes a confident mistake the most expensive thing there is.',
+      ru: 'Спам или нет: сторона прямой — знак скалярного произведения, сигмоида превращает его в вероятность — плавную ступеньку над плоскостью, — а log loss делает уверенную ошибку самой дорогой.',
+    } },
+  { id: 'overfit', track: 'learn', status: 'ready', minutes: 14, prereqs: ['regression'], next: ['network'],
+    title: { en: 'Overfitting: a model that memorises', ru: 'Переобучение: модель, которая зубрит' },
+    summary: {
+      en: 'A polynomial of degree 9 passes through all ten points — and through their noise. Why exactly one curve fits (Lagrange), the error on new points as a U, bias against variance, and two cures: a penalty and more data.',
+      ru: 'Многочлен степени 9 проходит через все десять точек — и через их шум. Почему подходит ровно одна кривая (Лагранж), ошибка на новых точках буквой U, смещение против разброса и два лекарства: штраф и больше данных.',
+    } },
+  { id: 'network', track: 'nets', status: 'ready', minutes: 18, prereqs: ['classify', 'matrix3', 'rank'], next: ['backprop', 'overfit'],
+    title: { en: 'A neural network folds the plane', ru: 'Нейросеть сгибает плоскость' },
+    summary: {
+      en: 'No line separates a ring. A neuron is a line and a fold; three neurons lift the plane into space, ReLU folds it into a corner, and a flat cut there is a bent boundary back in the plane. Then training finds the folds by itself.',
+      ru: 'Кольцо не отделить прямой. Нейрон — это прямая и сгиб; три нейрона поднимают плоскость в пространство, ReLU складывает её в угол, и плоский срез там — изогнутая граница на плоскости. А потом обучение само находит сгибы.',
+    } },
+  { id: 'backprop', track: 'nets', status: 'planned', prereqs: ['network', 'chain'],
+    title: { en: 'Backpropagation: the chain rule on a graph', ru: 'Обратное распространение: цепное правило на графе' } },
+  { id: 'conv', track: 'nets', status: 'planned', prereqs: ['network'],
+    title: { en: 'Convolution: how a network sees a picture', ru: 'Свёртка: как сеть видит картинку' } },
+  { id: 'pca', track: 'structure', status: 'ready', minutes: 14, prereqs: ['eigen', 'regression', 'pythagoras'], next: ['kmeans'],
+    title: { en: 'Principal components: where a cloud is stretched', ru: 'Главные компоненты: куда вытянуто облако' },
+    summary: {
+      en: 'Shadows of a cloud on a line: the widest shadows are also the closest line (Pythagoras for every point). The spread over directions is a wave whose top is an eigenvector of the covariance matrix — and a pancake in space squeezed into a plane.',
+      ru: 'Тени облака на прямой: самые широкие тени дают и ближайшую прямую (Пифагор для каждой точки). Разброс по направлениям — волна, вершина которой — собственный вектор матрицы ковариации. И блин в пространстве, прижатый к плоскости.',
+    } },
+  { id: 'kmeans', track: 'structure', status: 'planned', prereqs: ['pca'],
+    title: { en: 'Clusters: k-means', ru: 'Кластеры: метод k-средних' } },
 ];
 
 export const topicMeta = id => CATALOG.find(x => x.id === id);
@@ -267,6 +309,11 @@ const MODULES = {
   'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
+  regression: () => import('./regression.js'),
+  classify: () => import('./classify.js'),
+  network: () => import('./network.js'),
+  overfit: () => import('./overfit.js'),
+  pca: () => import('./pca.js'),
 };
 
 export async function loadTopic(id) {
