@@ -65,6 +65,7 @@ const START = 7.5; // where the descent starts: far too steep
 const ballAt = (g, w) => { g.circle(vx(w), vy(loss(w, MY)) - 12, 12, C.yellow, '#050607', 2); };
 
 export default {
+  id: 'regression', // the voice lives in audio/films/regression/
   title: L('Как модель учится: промахи и спуск', 'How a model learns: misses and descent'),
   cover: L('Кафе, мороженое и шар,\nкоторый катится к ответу', 'A café, ice cream and a ball\nthat rolls to the answer'),
   note: L('Данные выдуманы, но так устроена любая линейная регрессия.', 'The data are made up, but every linear regression works this way.'),

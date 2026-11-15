@@ -32,6 +32,7 @@ const HISTORY = perceptron(DAYS, 48);
 const seen = p => Math.floor(48 * clamp((p - 0.06) / 0.84) ** 1.5);
 
 export default {
+  id: 'intro', // the voice lives in audio/films/intro/
   title: L('Введение в машинное обучение', 'An introduction to machine learning'),
   cover: L('Как машина учится\nна примерах — и при чём тут мозг', 'How a machine learns\nfrom examples — and what the brain has to do with it'),
   note: L('Искусственный нейрон — сильное упрощение настоящего. Числа о мозге — порядок величины.', 'An artificial neuron is a strong simplification of a real one. The numbers about the brain are orders of magnitude.'),

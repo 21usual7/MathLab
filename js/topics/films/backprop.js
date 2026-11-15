@@ -65,6 +65,7 @@ function conveyor(g, st, { k = 1, back = 0, blames = false } = {}) {
 }
 
 export default {
+  id: 'backprop', // the voice lives in audio/films/backprop/
   title: L('Кто виноват в ошибке?', 'Who is to blame for the error?'),
   cover: L('Как ошибка бежит назад\nи подкручивает каждую ручку', 'How the error runs back\nand turns every knob'),
   note: L('Мозг и обратное распространение — открытый вопрос науки; здесь сказано то, что известно точно.', 'The brain and backpropagation is an open question of science; here we say only what is known for sure.'),
@@ -99,6 +100,10 @@ export default {
     },
     {
       id: 'turn', duration: 14, title: L('Повернуть против вины', 'Turn against the blame'),
+      say: [
+        { at: 0, ru: 'Вина отрицательная: если увеличить ручку, ошибка уменьшится. Значит, каждую ручку чуть поворачиваем против вины, сильнее — где вина больше.' },
+        { at: 0.3, ru: 'Вперёд, назад, поворот — и снова. Ошибка была единицей, стала четвертью, потом совсем маленькой: каждый круг промах уменьшается вдвое.' },
+      ],
       caption: (p, st) => {
         const R = rounds(st, 3), r = run(R[Math.min(3, Math.floor(beat(p, 0.3, 0.95) * 3))]);
         return p < 0.3 ? L('Вина отрицательная: если увеличить ручку, ошибка уменьшится. Значит, каждую ручку чуть поворачиваем против вины, сильнее — где вина больше.', 'The blame is negative: making the knob bigger makes the error smaller. So every knob turns a little against its blame — more where the blame is bigger.')

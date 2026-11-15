@@ -59,3 +59,30 @@ test('films: the numbers the stories tell are true', async () => {
   assert.deepEqual([r.L, r.gb, r.gw], [1, -2, -4]);
   rounds({ w: 0.5, b: 1, eta: 0.05 }, 3).forEach((s, i) => assert.ok(Math.abs(run(s).e + 0.5 ** i) < 1e-12));
 });
+
+test('films: the voice fits — every phrase has its file, retells its caption and starts where it should', async () => {
+  const { readFileSync, existsSync } = await import('node:fs');
+  const { withVoice } = await import('../js/ui/film.js');
+  const real = globalThis.fetch;
+  globalThis.fetch = async url => ({ ok: true, json: async () => JSON.parse(readFileSync(new URL(`../${url}`, import.meta.url))) });
+  try {
+    for (const name of FILMS) {
+      const film = (await import(`../js/topics/films/${name}.js`)).default, st = film.state();
+      const voiced = await withVoice(film);
+      assert.ok(voiced.voiced, name);
+      voiced.chapters.forEach((c, i) => {
+        const start = chapterStart(voiced.chapters, i);
+        assert.ok(c.duration >= film.chapters[i].duration - 1e-9, `${name}/${c.id} only gets longer`);
+        assert.ok(c.voice.length > 0, `${name}/${c.id} is voiced`);
+        for (const v of c.voice) {
+          assert.ok(existsSync(new URL(`../${v.src}`, import.meta.url)), v.src);
+          if (v.text) assert.equal(c.caption(v.at, st).ru, v.text, `${name}/${c.id} caption at ${v.at}`);
+          // The phrase starts exactly at its moment, and the chapter gives it time to finish
+          assert.ok(Math.abs(chapterAt(voiced.chapters, start + v.t + 1e-6).progress - v.at) < 1e-3, `${name}/${c.id} @${v.at}`);
+          const next = c.voice.find(q => q.at > v.at), end = next ? next.t : c.duration;
+          assert.ok(end - v.t >= v.sec, `${name}/${c.id} @${v.at} fits`);
+        }
+      });
+    }
+  } finally { globalThis.fetch = real; }
+});

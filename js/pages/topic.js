@@ -17,7 +17,7 @@ import { SUBJECTS, TRACKS, topicMeta, loadTopic } from '../topics/index.js';
 import { encodeLab } from './lab.js';
 import { taskHTML, bindTask } from '../ui/task.js';
 import { CRYPTO_TOPIC_LABS, CRYPTO_WORLDS } from '../worlds/crypto/catalog.js';
-import { mountFilm } from '../ui/film.js';
+import { mountFilm, withVoice } from '../ui/film.js';
 
 const PRACTICE = {
   title: { en: 'Try it yourself', ru: 'Попробуйте сами' },
@@ -348,7 +348,7 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
     stage.p2?.request?.(); scene.changed();
   };
   const openFilm = async () => {
-    const token = ++filmToken, def = await topic.film();
+    const token = ++filmToken, def = await withVoice(await topic.film());
     if (token !== filmToken || !root.isConnected) return;
     film?.dispose();
     $('.topic-player').classList.add('film-mode');

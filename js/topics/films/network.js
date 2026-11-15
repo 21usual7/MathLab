@@ -61,6 +61,7 @@ function diagram(g, x0, y0, net, { pulse = -1, highlight = -1 } = {}) {
 }
 
 export default {
+  id: 'network', // the voice lives in audio/films/network/
   title: L('Нейрон, веса и сеть', 'A neuron, weights and a network'),
   cover: L('Почему одного нейрона мало,\nчто знает сеть и как она учится', 'Why one neuron is not enough,\nwhat a network knows and how it learns'),
   note: L('Обучение в ролике — настоящее: та же сеть и те же точки, что в теме.', 'The training in the film is real: the same network and the same points as in the topic.'),
@@ -151,6 +152,11 @@ export default {
     },
     {
       id: 'train', duration: 18, title: L('Обучение со случайного старта', 'Training from a random start'),
+      say: [
+        { at: 0, ru: 'Никто не ставит прямые руками. Сначала все 13 чисел случайные — прямые разбросаны как попало.' },
+        { at: 0.15, ru: 'Каждый шаг немного сдвигает все числа против ошибки — как шар в долине, только ручек тринадцать. Прямые ползут на свои места.' },
+        { at: 0.5, ru: 'Все 70 точек угаданы. Сеть сама нашла свои прямые — не обязательно наши. Как она узнаёт, какое число сдвигать и насколько, — в теме «Обратное распространение».' },
+      ],
       caption: p => {
         const f = training(), k = Math.min(f.length - 1, Math.floor(beat(p, 0.08, 0.9) * (f.length - 1))), ok = correct(DATA, (x, y) => forward(f[k].net, x, y).out);
         return p < 0.15 ? L('Никто не ставит прямые руками. Сначала все 13 чисел случайные — прямые разбросаны как попало.', 'Nobody places the lines by hand. At first all 13 numbers are random — the lines are scattered anyhow.')

@@ -11,7 +11,7 @@
 // p is the progress of the chapter 0 → 1; st is the state that the microscope changes. paint draws on a
 // 1000 × 560 picture that is scaled into any screen.
 
-import { t } from '../core/i18n.js';
+import { t, getLang } from '../core/i18n.js';
 
 export const W = 1000, H = 560;
 export const clamp = x => Math.max(0, Math.min(1, x));
@@ -21,16 +21,46 @@ export const mix = (a, b, k) => a + (b - a) * k;
 export const duration = chapters => chapters.reduce((s, c) => s + c.duration, 0);
 export const chapterStart = (chapters, i) => duration(chapters.slice(0, i));
 
+// A voiced chapter runs at its own pace in pieces: warp = [{ p0, p1, t0, t1 }] maps its seconds to progress
+function unwarp(warp, s) {
+  const w = warp.find(q => s < q.t1) || warp[warp.length - 1];
+  return clamp(mix(w.p0, w.p1, clamp((s - w.t0) / (w.t1 - w.t0))));
+}
 // The chapter at a moment and how far into it we are
 export function chapterAt(chapters, seconds) {
   let start = 0;
   for (let i = 0; i < chapters.length; i++) {
     const c = chapters[i];
-    if (seconds < start + c.duration || i === chapters.length - 1) return { index: i, chapter: c, progress: clamp((seconds - start) / c.duration) };
+    if (seconds < start + c.duration || i === chapters.length - 1) return { index: i, chapter: c, progress: c.warp ? unwarp(c.warp, seconds - start) : clamp((seconds - start) / c.duration) };
     start += c.duration;
   }
 }
 
+// The voice: audio/films/<id>.json lists the phrases of every chapter — from which moment they play and how
+// long they are (made by scripts/narrate.mjs). A chapter becomes longer if its phrases do not fit. A phrase that
+// retells a caption plays only while the caption still reads the same: the microscope can change the numbers.
+export async function withVoice(film) {
+  if (!film.id || getLang() !== 'ru') return film;
+  let m;
+  try { const r = await fetch(`audio/films/${film.id}.json`); if (!r.ok) return film; m = await r.json(); } catch { return film; }
+  const chapters = film.chapters.map(c => {
+    const voice = (m.chapters[c.id] || []).map(v => ({ ...v, src: `audio/films/${film.id}/${v.file}` })).sort((a, b) => a.at - b.at);
+    // Every piece between two phrases lasts as long as before, or as long as its phrase needs
+    const cuts = [...new Set([0, ...voice.map(v => v.at), 1])].sort((a, b) => a - b), warp = [];
+    let t0 = 0;
+    for (let i = 0; i + 1 < cuts.length; i++) {
+      const p0 = cuts[i], p1 = cuts[i + 1], v = voice.find(q => q.at === p0);
+      const t1 = t0 + Math.max((p1 - p0) * c.duration, v ? v.sec + 0.7 : 0);
+      warp.push({ p0, p1, t0, t1 });
+      voice.filter(q => q.at === p0).forEach(q => { q.t = t0; });
+      t0 = t1;
+    }
+    return { ...c, duration: Math.round(t0 * 100) / 100, voice, warp };
+  });
+  return { ...film, chapters, voiced: true };
+}
+
+const VOICE_KEY = 'mathlab-voice';
 const clock = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 const tag = (name, cls, text) => { const e = document.createElement(name); if (cls) e.className = cls; if (text != null) e.textContent = typeof text === 'string' ? text : t(text); return e; };
 const button = (text, onClick, primary = false) => { const b = tag('button', `btn${primary ? ' primary' : ''}`, text); b.type = 'button'; b.addEventListener('click', onClick); return b; };
@@ -112,8 +142,19 @@ export function mountFilm(host, film, { onExplore }) {
   select.setAttribute('aria-label', t({ en: 'Scene', ru: 'Сцена' }));
   chapters.forEach((c, i) => { const o = tag('option', '', c.title); o.value = i; select.append(o); });
   const lensBtn = button({ en: '⌕ Under the microscope', ru: '⌕ Под микроскопом' }, () => openLens());
+  let voiceOn = true;
+  try { voiceOn = localStorage.getItem(VOICE_KEY) !== 'off'; } catch (e) {}
+  const voiceBtn = button('', () => {
+    voiceOn = !voiceOn;
+    try { localStorage.setItem(VOICE_KEY, voiceOn ? 'on' : 'off'); } catch (e) {}
+    showVoice();
+    if (!voiceOn) audio.pause(); else { spoken = null; if (running) speak(); }
+  });
+  const showVoice = () => { voiceBtn.textContent = voiceOn ? '🔊' : '🔇'; voiceBtn.setAttribute('aria-label', t(voiceOn ? { en: 'Voice on', ru: 'Голос включён' } : { en: 'Voice off', ru: 'Голос выключен' })); };
+  showVoice();
+  voiceBtn.hidden = !film.voiced;
   const time = tag('span', 'film-time');
-  nav.append(play, prev, next, select, lensBtn, time);
+  nav.append(play, prev, next, select, lensBtn, voiceBtn, time);
   footer.append(timeline, nav);
   root.append(top, stage, caption, extra, footer);
   if (film.note) root.append(tag('p', 'film-note', film.note));
@@ -123,6 +164,26 @@ export function mountFilm(host, film, { onExplore }) {
   let st = film.state(), seconds = 0, frame = chapterAt(chapters, 0), running = false, raf = null, last = 0;
   let started = false, disposed = false, lens = false, lensResume = false, width = 0, height = 0, extraKey = '', captionText = '';
   const answers = new Map();
+  const audio = new Audio();
+  let spoken = null; // which phrase is playing: 'chapter:phrase'
+
+  // Say the phrase of the current moment — from its start, or from the middle after a jump
+  function speak() {
+    const c = frame.chapter;
+    if (!voiceOn || !c.voice || !c.voice.length) return;
+    let k = -1;
+    c.voice.forEach((v, i) => { if (frame.progress >= v.at - 1e-9) k = i; });
+    if (k < 0) return;
+    const v = c.voice[k], key = `${frame.index}:${k}`;
+    if (spoken === key) return;
+    spoken = key;
+    const offset = seconds - (chapterStart(chapters, frame.index) + v.t);
+    if (offset > v.sec - 0.2) return;
+    if (v.text && c.caption(frame.progress, st).ru !== v.text) return;
+    audio.src = offset > 0.3 ? `${v.src}#t=${offset.toFixed(2)}` : v.src;
+    root.dataset.voice = key;
+    audio.play().catch(() => {});
+  }
 
   function resize() {
     const r = stage.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2);
@@ -161,7 +222,8 @@ export function mountFilm(host, film, { onExplore }) {
   // A question is shown once the chapter has reached it; the film waits for an answer
   const asking = () => started && frame.chapter.ask && frame.progress >= frame.chapter.ask.at;
 
-  function pause() {
+  function pause(keepVoice = false) {
+    if (!keepVoice) audio.pause();
     running = false;
     if (raf !== null) cancelAnimationFrame(raf);
     raf = null;
@@ -173,7 +235,8 @@ export function mountFilm(host, film, { onExplore }) {
     seconds = Math.min(total, seconds + Math.min(0.1, (now - last) / 1000));
     last = now;
     draw();
-    if (asking() && !answers.has(frame.chapter.id)) { pause(); return; }
+    speak();
+    if (asking() && !answers.has(frame.chapter.id)) { pause(true); return; } // the voice finishes its sentence
     if (seconds >= total) { pause(); return; }
     raf = requestAnimationFrame(tick);
   }
@@ -186,6 +249,7 @@ export function mountFilm(host, film, { onExplore }) {
       pause(); draw(); return;
     }
     running = true;
+    if (voiceOn && spoken && audio.src && !audio.ended && audio.paused) audio.play().catch(() => {});
     play.textContent = t({ en: '❚❚ Pause', ru: '❚❚ Пауза' });
     last = performance.now();
     draw();
@@ -195,11 +259,12 @@ export function mountFilm(host, film, { onExplore }) {
     pause();
     if (lens) closeLens(false);
     started = true; cover.hidden = true;
+    spoken = null;
     i = Math.max(0, Math.min(chapters.length - 1, i));
     seconds = chapterStart(chapters, i) + (reduced.matches ? chapters[i].duration - 0.001 : 0.001);
     draw();
   }
-  timeline.addEventListener('input', () => { pause(); if (lens) closeLens(false); started = true; cover.hidden = true; seconds = +timeline.value; draw(); });
+  timeline.addEventListener('input', () => { pause(); spoken = null; if (lens) closeLens(false); started = true; cover.hidden = true; seconds = +timeline.value; draw(); });
   select.addEventListener('change', () => jump(+select.value));
 
   // Under the caption: a question, the knobs of the microscope or the way out at the end
@@ -275,7 +340,7 @@ export function mountFilm(host, film, { onExplore }) {
   resize();
   return {
     dispose() {
-      disposed = true; pause(); observer.disconnect();
+      disposed = true; pause(); audio.removeAttribute('src'); observer.disconnect();
       window.removeEventListener('keydown', onKey);
       document.removeEventListener('visibilitychange', hidden);
       root.remove();
