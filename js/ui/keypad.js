@@ -21,16 +21,17 @@ const TABS = {
 };
 
 let panel = null, target = null, tab = '123';
+const INPUTS = 'input[data-keypad], textarea[data-keypad], math-field[data-keypad]';
 const coarse = () => matchMedia('(pointer: coarse)').matches;
 
 document.addEventListener('focusin', e => {
-  if (e.target.matches && e.target.matches('input[data-keypad]')) target = e.target;
+  if (e.target.matches && e.target.matches(INPUTS)) target = e.target;
 });
 
 // The input to type into: the last focused one if it is still on the page, otherwise the first visible one
 function input() {
   if (target && document.body.contains(target) && target.offsetParent !== null) return target;
-  target = [...document.querySelectorAll('input[data-keypad]')].find(el => el.offsetParent !== null) || null;
+  target = [...document.querySelectorAll(INPUTS)].find(el => el.offsetParent !== null) || null;
   return target;
 }
 
@@ -38,6 +39,7 @@ function insert(text) {
   const el = input();
   if (!el) return;
   if (document.activeElement !== el) el.focus();
+  if (el.mathEditor) { el.mathEditor.insert(text); return; }
   const s = el.selectionStart ?? el.value.length, e = el.selectionEnd ?? s;
   if (text === 'LEFT' || text === 'RIGHT') {
     const p = text === 'LEFT' ? Math.max(0, s - (s === e ? 1 : 0)) : Math.min(el.value.length, e + (s === e ? 1 : 0));
@@ -61,6 +63,7 @@ function insert(text) {
 function enter() {
   const el = input();
   if (!el) return;
+  if (el.mathEditor) { el.mathEditor.enter(); return; }
   if (el.form) el.form.requestSubmit();
   else el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
 }
@@ -108,7 +111,7 @@ export function openKeypad(el) {
   panel.hidden = false;
   document.body.classList.add('keypad-open');
   document.body.style.setProperty('--kb', `${panel.offsetHeight}px`);
-  if (coarse()) document.querySelectorAll('input[data-keypad]').forEach(i => { i.inputMode = 'none'; });
+  if (coarse()) document.querySelectorAll(INPUTS).forEach(i => { i.inputMode = 'none'; });
   const i = input();
   if (i) { i.focus(); i.scrollIntoView({ block: 'nearest' }); }
   document.querySelectorAll('.kp-toggle').forEach(b => b.setAttribute('aria-pressed', 'true'));
@@ -118,7 +121,7 @@ export function closeKeypad() {
   if (!panel) return;
   panel.hidden = true;
   document.body.classList.remove('keypad-open');
-  document.querySelectorAll('input[data-keypad]').forEach(i => { i.inputMode = ''; });
+  document.querySelectorAll(INPUTS).forEach(i => { i.inputMode = ''; });
   document.querySelectorAll('.kp-toggle').forEach(b => b.setAttribute('aria-pressed', 'false'));
 }
 
@@ -131,8 +134,9 @@ export function keypadButton(el) {
   b.setAttribute('aria-label', 'Math keyboard');
   b.setAttribute('aria-pressed', String(isKeypadOpen()));
   b.textContent = '⌨';
+  b.mathTarget = el;
   b.addEventListener('pointerdown', e => e.preventDefault());
-  b.addEventListener('click', () => (isKeypadOpen() ? closeKeypad() : openKeypad(el)));
+  b.addEventListener('click', () => (isKeypadOpen() ? closeKeypad() : openKeypad(b.mathTarget)));
   return b;
 }
 

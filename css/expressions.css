@@ -1,0 +1,53 @@
+/* Structured expression editor. Scoped to Lab; independent of world styles. */
+.expression-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+.add-expression { padding: 5px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--raised); color: var(--soft); cursor: pointer; font: 12px var(--sans); letter-spacing: 0; }
+.add-expression:hover { border-color: var(--blue); color: var(--blue); }
+.exprlist .expression-row { gap: 9px; min-height: 84px; padding: 14px 10px 14px 8px; transition: background .15s; }
+.expression-row::before { display: none; }
+.expression-row.editing { background: color-mix(in srgb, var(--blue) 5%, var(--panel)); box-shadow: inset 3px 0 var(--blue); }
+.expression-row.has-error { box-shadow: inset 3px 0 var(--red); }
+.expression-gutter { flex: none; width: 29px; display: flex; align-items: center; flex-direction: column; gap: 9px; padding-top: 1px; }
+.expression-number { color: var(--faint); font: 10px/1 var(--mono); }
+.expression-row .swatch { margin: 0; width: 19px; height: 19px; border-width: 3px; }
+.expression-row .row-body { gap: 5px; min-height: 50px; }
+.expression-actions { display: flex; flex-direction: column; align-items: center; gap: 7px; padding-top: 9px; }
+.expression-row .del { font-size: 19px; padding: 3px; opacity: .5; }
+.expression-row:hover .del, .expression-row.editing .del, .expression-row .del:focus-visible { opacity: 1; }
+.expression-row .deriv { margin: 0; font-size: 16px; padding: 3px; }
+.expression-row .row-error { font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; padding: 0 7px; }
+.expression-row.off .math-entry, .expression-row.off .math-preview { opacity: .4; }
+.expression-row.is-param .swatch { visibility: visible; background: transparent; border-color: var(--faint); }
+.expression-row.is-param.off .swatch { opacity: .4; }
+.expression-row.is-draft { min-height: 70px; border-bottom-style: dashed; }
+.expression-row.is-draft .swatch, .expression-row.is-draft .expression-actions { display: none; }
+.expression-row.is-draft .expression-number { padding-top: 15px; font-size: 20px; color: var(--muted); }
+.expression-editor-host { min-width: 0; }
+.math-editor { position: relative; min-width: 0; }
+.math-editor.is-visual.is-empty::before { content: 'Enter an expression…'; position: absolute; top: 15px; left: 8px; color: var(--faint); font: 15px var(--sans); pointer-events: none; }
+.math-entry { display: block; width: 100%; min-height: 48px; padding: 3px 5px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--text); font-size: 22px; outline: none; --caret-color: var(--blue); --selection-background-color: #58c4dd35; --selection-color: var(--text); --placeholder-color: var(--muted); --contains-highlight-background-color: #58c4dd15; }
+.math-entry[hidden], .math-source[hidden], .math-preview[hidden], .math-source-toggle[hidden] { display: none; }
+.math-entry:focus-within { border-color: var(--line); }
+.math-entry::part(virtual-keyboard-toggle), .math-entry::part(menu-toggle) { display: none; }
+.math-entry::part(content) { padding: 4px 0; }
+.math-preview { padding: 5px 7px 9px; overflow-x: auto; overflow-y: hidden; font-size: 20px; min-height: 35px; }
+.math-source { display: block; width: 100%; min-height: 38px; resize: vertical; padding: 8px; border: 1px solid var(--line); border-radius: 6px; outline: none; background: var(--bg); color: var(--soft); font: 14px/1.5 var(--mono); }
+.math-source:focus { border-color: var(--blue); }
+.math-source::placeholder { color: var(--faint); }
+.math-editor-tools { display: flex; justify-content: flex-end; align-items: center; gap: 6px; margin-top: 5px; }
+.math-editor.is-visual .math-editor-tools { display: none; }
+.expression-row.editing .math-editor-tools, .expression-row:focus-within .math-editor-tools { display: flex; }
+.math-source-toggle { border: 0; border-radius: 4px; background: transparent; color: var(--faint); font: 12px var(--mono); cursor: pointer; padding: 4px 6px; }
+.math-source-toggle:hover, .math-source-toggle[aria-pressed=true] { color: var(--blue); background: var(--raised); }
+.math-editor-tools .kp-toggle { border: 0; background: transparent; width: 28px; height: 24px; font-size: 17px; }
+.expression-hint { display: flex; flex-wrap: wrap; gap: 5px 15px; padding: 11px 18px; font-size: 10px; line-height: 1.5; color: var(--faint); }
+.expression-hint span { margin-left: auto; }
+.expression-row .param { padding: 0 7px; }
+@media (pointer: coarse) {
+  .math-editor.is-visual .math-editor-tools { display: flex; }
+  .math-editor-tools .kp-toggle, .math-source-toggle { min-width: 38px; min-height: 34px; }
+  .expression-row .del, .expression-row .deriv { min-width: 28px; min-height: 30px; opacity: 1; }
+}
+@media (max-width: 600px) {
+  .math-entry { font-size: 20px; }
+  .expression-row .row-error { font-size: 11px; }
+}
