@@ -17,6 +17,7 @@ export class Scene {
     this.items = [];
     this.custom = [];
     this.params = new Map();
+    this.paramItems = new Map(); // parameter rows only, so animation updates do not scan every scene item
     this.listeners = new Set();
     this.pending = false;
     this.colorIndex = 0;
@@ -107,8 +108,18 @@ export class Scene {
   }
 
   analyzeItem(item) {
+    if (item.paramName) {
+      const old = this.paramItems.get(item.paramName);
+      old.delete(item);
+      if (!old.size) this.paramItems.delete(item.paramName);
+    }
     item.info = analyze(item.text, this.defs);
     const info = item.info;
+    item.paramName = info.kind === 'param' ? info.name : null;
+    if (item.paramName) {
+      if (!this.paramItems.has(item.paramName)) this.paramItems.set(item.paramName, new Set());
+      this.paramItems.get(item.paramName).add(item);
+    }
     item.fn = info.node ? compile(info.node) : null;
     item.fns = info.nodes ? info.nodes.map(compile) : null;
     item.lo = info.domain && info.domain.lo ? compile(info.domain.lo) : null;
@@ -125,6 +136,12 @@ export class Scene {
 
   remove(item) {
     this.items = this.items.filter(i => i !== item);
+    if (item.paramName) {
+      const rows = this.paramItems.get(item.paramName);
+      rows.delete(item);
+      if (!rows.size) this.paramItems.delete(item.paramName);
+      item.paramName = null;
+    }
     if (this.updateDefs()) this.items.forEach(i => this.analyzeItem(i));
     this.changed();
   }
@@ -161,12 +178,10 @@ export class Scene {
     if (!p) return;
     p.value = value;
     // A parameter typed as "a = 1" shows its current value
-    for (const item of this.items) {
-      if (item.info.kind === 'param' && item.info.name === name) {
-        item.text = `${name} = ${fmt(value)}`;
-        item.info.value = value;
-        item.info.tex = `${symTex(name)} = ${numTex(value)}`;
-      }
+    for (const item of this.paramItems.get(name) || []) {
+      item.text = `${name} = ${fmt(value)}`;
+      item.info.value = value;
+      item.info.tex = `${symTex(name)} = ${numTex(value)}`;
     }
     this.changed();
   }

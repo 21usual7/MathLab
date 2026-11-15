@@ -42,6 +42,9 @@ test('functions without brackets', () => {
   assert.equal(T('y = sin 2x + 1'), 'y = \\sin 2 x + 1');
   assert.equal(T('y = sinx'), 'y = \\sin x');
   assert.equal(T('y = cos3x'), 'y = \\cos 3 x');
+  assert.equal(T('y = arcsinx'), 'y = \\arcsin x');
+  assert.equal(T('y = arctan2x'), 'y = \\arctan 2 x');
+  assert.ok(!normalize('y = arctanh x').includes('atan(h)')); // not arctan of h
   assert.equal(T('y = ln x'), 'y = \\ln x');
   assert.equal(T('y = lnx'), 'y = \\ln x');
   assert.equal(T('y = ln(x + 1)'), 'y = \\ln\\left(x + 1\\right)');

@@ -72,6 +72,9 @@ test('linear algebra in space', async () => {
   const m = meet2([1, 1, 1], 3, [1, -1, 1], 1);
   assert.deepEqual(m.p, [1, 1, 1]);
   assert.equal(dot(m.u, [1, 1, 1]), 0);
+  // Rescaling an equation must not change whether its planes intersect.
+  assert.ok(meet2([1e-6, 1e-6, 1e-6], 3e-6, [1, -1, 1], 1));
   assert.deepEqual(meet3([1, 1, 1], 3, [1, -1, 1], 1, [2, 1, -1], 2).map(v => Math.round(v * 1e9) / 1e9), [1, 1, 1]);
+  assert.deepEqual(meet3([1e-4, 1e-4, 1e-4], 3e-4, [1, -1, 1], 1, [2, 1, -1], 2).map(v => Math.round(v * 1e9) / 1e9), [1, 1, 1]);
   assert.equal(meet3([1, 1, 1], 3, [1, -1, 1], 1, [2, 0, 2], 2), null);
 });

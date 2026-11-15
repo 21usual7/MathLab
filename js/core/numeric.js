@@ -1,10 +1,15 @@
 // Numeric helpers: derivative, integral, roots, number formatting
 
+const steps = (n, min, fallback) => Number.isFinite(Number(n)) ? Math.max(min, Math.ceil(Number(n))) : fallback;
+
 // Central difference
 export const slope = (f, x, h = 1e-5) => (f(x + h) - f(x - h)) / (2 * h);
 
 // Simpson's rule; NaN if f is not finite somewhere on [a, b]
 export function integrate(f, a, b, n = 2000) {
+  // Simpson's rule requires an even number of subintervals.
+  n = steps(n, 2, 2000);
+  if (n % 2) n++;
   const h = (b - a) / n;
   let s = f(a) + f(b);
   for (let i = 1; i < n; i++) s += f(a + i * h) * (i % 2 ? 4 : 2);
@@ -14,6 +19,7 @@ export function integrate(f, a, b, n = 2000) {
 
 // Zeros of f on [lo, hi]: sign changes refined by bisection; jumps through infinity are rejected
 export function findRoots(f, lo, hi, n = 800) {
+  n = steps(n, 1, 800);
   const roots = [];
   let x0 = lo, y0 = f(lo);
   for (let i = 1; i <= n; i++) {
@@ -30,12 +36,14 @@ export function findRoots(f, lo, hi, n = 800) {
     }
     x0 = x1; y0 = y1;
   }
+  if (y0 === 0) roots.push(x0);
   return roots.filter((r, i) => i === 0 || Math.abs(r - roots[i - 1]) > 1e-6);
 }
 
 // Peaks and valleys of f on [lo, hi]: a sample higher (lower) than both neighbours, refined by golden-section
 // search. A "peak" at a jump taller than maxJump (tan x at π/2) is a break, not an extremum.
 export function extrema(f, lo, hi, n = 600, maxJump = Infinity) {
+  n = steps(n, 2, 600);
   const xs = [], ys = [], out = [];
   for (let i = 0; i <= n; i++) { const x = lo + (hi - lo) * i / n; xs.push(x); ys.push(f(x)); }
   const PHI = (Math.sqrt(5) - 1) / 2;

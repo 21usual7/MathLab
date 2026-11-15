@@ -135,7 +135,8 @@ export function clipLine(p, u, R, Z) {
 // Common line of the planes n₁·X = d₁ and n₂·X = d₂: { p, u }, or null if they are parallel
 export function meet2(n1, d1, n2, d2) {
   const u = cross(n1, n2), uu = dot(u, u);
-  if (uu < 1e-9) return null;
+  const scale = dot(n1, n1) * dot(n2, n2);
+  if (scale === 0 || uu < EPS * EPS * scale) return null;
   // The point of the line closest to the origin
   const p = mul(add(mul(cross(n2, u), d1), mul(cross(u, n1), d2)), 1 / uu);
   return { p, u };
@@ -144,7 +145,8 @@ export function meet2(n1, d1, n2, d2) {
 // Common point of three planes (Cramer's rule), or null if there is no single one
 export function meet3(n1, d1, n2, d2, n3, d3) {
   const D = det3(n1, n2, n3);
-  if (Math.abs(D) < 1e-9) return null;
+  const scale = len(n1) * len(n2) * len(n3);
+  if (scale === 0 || Math.abs(D) < EPS * scale) return null;
   // The rows are n₁, n₂, n₃; the solution is det with a column replaced by d, divided by D
   const r = [n1, n2, n3], d = [d1, d2, d3];
   const col = k => [0, 1, 2].map(i => r[i][k]);

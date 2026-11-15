@@ -84,17 +84,18 @@ export function explainDiff(diag) {
 export function shape(xs, ys, noise = 0.25) {
   const zeros = [], turns = [];
   // Crossings of the axis: the sign must really change, not just touch zero
-  let sign = 0;
+  let sign = 0, side = 0; // side forgets a gap, sign is the last finite sign
   ys.forEach((y, i) => {
+    if (!isFinite(y)) { side = 0; return; }
     const s = y > noise / 2 ? 1 : y < -noise / 2 ? -1 : 0;
     if (!s) return;
-    if (sign && s !== sign) {
+    if (side && s !== side) {
       let k = i;
       while (k > 0 && Math.sign(ys[k - 1]) === s) k--;
       const a = ys[k - 1], b = ys[k];
       zeros.push(xs[k - 1] + (xs[k] - xs[k - 1]) * (a / (a - b)));
     }
-    sign = s;
+    sign = side = s;
   });
   // Turns: the graph went up by more than noise and then down by more than noise (or the other way)
   let dir = 0, ext = ys[0], extX = xs[0], lo = ys[0], loX = xs[0], hi = ys[0], hiX = xs[0], start = 0;

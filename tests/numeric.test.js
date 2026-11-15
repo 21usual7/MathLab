@@ -8,6 +8,8 @@ test('roots', () => {
   const r = findRoots(x => x * x - 2, -3, 3);
   assert.equal(r.length, 2);
   near(r[0], -Math.SQRT2); near(r[1], Math.SQRT2);
+  assert.deepEqual(findRoots(x => x - 1, 0, 1), [1]); // include a root at the upper endpoint
+  assert.deepEqual(findRoots(x => x - 1, 0, 1, 3.5), [1]); // fractional step counts are rounded up consistently
   // 1/x changes sign at 0 through infinity: not a root
   assert.equal(findRoots(x => 1 / x, -1, 1.3).length, 0);
 });
@@ -25,5 +27,6 @@ test('extrema', () => {
 
 test('integral and slope', () => {
   near(integrate(Math.sin, 0, Math.PI), 2);
+  assert.equal(integrate(x => x ** 4, 0, 1, 3), integrate(x => x ** 4, 0, 1, 4)); // Simpson needs an even interval count
   near(slope(x => x * x, 3), 6, 1e-6);
 });

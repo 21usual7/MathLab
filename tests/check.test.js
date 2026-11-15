@@ -38,6 +38,8 @@ test('shape of a hand-drawn graph', () => {
   assert.ok(Math.abs(d.turns[0].x) < 0.06);
   assert.equal(d.zeros.length, 2);
   assert.ok(Math.abs(d.zeros[1] - 2 / Math.sqrt(3)) < 0.03);
+  assert.deepEqual(shape([0, 1, 2], [1, NaN, -1]).zeros, []); // do not invent a crossing across a missing sample
+  assert.equal(shape([0, 1, 2], [1, 2, NaN]).sign, 1); // a gap at the end keeps the last sign
   // A shaky hand: the same shape
   const shaky = of(x => 3 * x * x / 4 - 1 + 0.08 * Math.sin(37 * x));
   assert.equal(compareShape(shaky, d).type, 'same');

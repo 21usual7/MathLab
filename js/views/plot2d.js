@@ -217,15 +217,15 @@ export class Plot2D {
   param(fx, fy, t0, t1, color, width = 3, n = Math.min(6000, Math.max(800, Math.round(130 * (t1 - t0))))) {
     const ctx = this.ctx;
     ctx.beginPath();
-    let pen = false, prev = null;
+    let pen = false, prevX = 0, prevY = 0;
     for (let i = 0; i <= n; i++) {
       const t = t0 + (t1 - t0) * i / n, x = fx(t), y = fy(t);
       if (!isFinite(x) || !isFinite(y)) { pen = false; continue; }
       const px = this.sx(x), py = this.sy(y);
-      if (pen && prev && Math.hypot(px - prev[0], py - prev[1]) < this.h) ctx.lineTo(px, py);
+      if (pen && Math.hypot(px - prevX, py - prevY) < this.h) ctx.lineTo(px, py);
       else ctx.moveTo(px, py);
       pen = true;
-      prev = [px, py];
+      prevX = px; prevY = py;
     }
     this.stroke(color, width);
   }

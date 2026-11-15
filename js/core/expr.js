@@ -48,6 +48,7 @@ export function normalize(text, fns = NONE) {
     .replace(/\btg\b/g, 'tan')
     .replace(/\bctg\b/g, 'cot')
     .replace(/\barc(sin|cos|tan)\b/g, 'a$1')
+    .replace(/\barc(sin|cos|tan)([0-9.]*)([a-z])\b/g, (m, fn, num, v) => (num || v !== 'h' ? `a${fn}(${num}${v})` : m))  // arctanh is not arctan(h)
     .replace(/\b([A-Za-z][A-Za-z0-9]*)('+)\s*\(/g, (m, name, primes) => `${name}_d${primes.length}(`)
     // sin x, sin 2x, ln x, sinx, cos3t: a function without brackets takes the number and the letter after it
     .replace(BARE_SPACED, (m, fn, arg) => `${fn}(${arg})`)
