@@ -1,5 +1,5 @@
 // Linear regression: a line through a cloud of points. The error of a line is the mean area of the squares
-// on its misses; every line (w, b) is a point of a map, the error over the map is a bowl, and learning is
+// on its misses — and the energy of springs that tie the points to the line; every line (w, b) is a point of a map, the error over the map is a bowl, and learning is
 // rolling down the bowl along −∇L. Proof: the best line passes through the centre of the cloud.
 // Then why data are centred: a shifted cloud stretches the bowl into a canyon.
 
@@ -92,6 +92,49 @@ export default {
         draw2d(p, sc, s) { drawFit(p, data(s), s.w, s.b, { sq: true }); handles(p, sc, s); },
         draw3d(p, sc, s) { const P = data(s); bowl(p, P); ball(p, P, s.w, s.b); },
         legend: s => rows(lineTex(s.w, s.b), lossTex(data(s), s.w, s.b)),
+      },
+      {
+        // Springs: every point pulls the line by a vertical spring. The force of a spring is k·(miss), its energy ½k·(miss)²,
+        // so the line comes to rest where the sum of forces and the sum of their moments are zero — the least squares
+        // line, whatever the mass and the friction. The line is a rigid rod: it slides up and down and turns about x = 0.
+        id: 'springs',
+        v: [0, 0], // velocities of w and b
+        t: 0, // time of the last frame
+        held: 0, // the line is held by the hand until this moment
+        draw2d(p, sc, s) {
+          const P = data(s), now = performance.now(), dt = Math.min(0.04, (now - (this.t || now)) / 1000);
+          this.t = now;
+          let { w, b } = s;
+          if (now > this.held && dt > 0) {
+            const K = 14, G = 1.6, I = 3.4, n = P.length; // stiffness, friction, how hard the rod is to turn
+            for (let k = 0; k < 4; k++) {
+              const h = dt / 4;
+              let F = 0, T = 0;
+              for (const [x, y] of P) { const f = -K * (w * x + b - y); F += f; T += f * x; }
+              this.v[0] += h * (T / n / I - G * this.v[0]);
+              this.v[1] += h * (F / n - G * this.v[1]);
+              w += h * this.v[0];
+              b += h * this.v[1];
+            }
+            if (Math.hypot(...this.v) > 2e-4 || Math.hypot(...mseGrad(P, w, b)) > 2e-3) { sc.setParam('w', w); sc.setParam('b', b); }
+          } else if (now > this.held) sc.changed(); // the first frame only starts the clock
+          for (const [x, y] of P) {
+            const yh = w * x + b, r = yh - y, N = 9, pts = [];
+            for (let i = 0; i <= 2 * N; i++) {
+              const q = i / (2 * N), side = i === 0 || i === 2 * N ? 0 : (i % 2 ? 1 : -1);
+              pts.push([x + 0.09 * side, y + r * q]);
+            }
+            p.polyline(pts, `rgba(252,98,85,${Math.min(1, 0.35 + 0.5 * Math.abs(r))})`, 1.6);
+          }
+          p.line(0, b, 1, w + b, COLORS.yellow, { width: 3.5, extend: true });
+          for (const [x, y] of P) p.dot(x, y, COLORS.blue, 5.5);
+          // Holding a handle stops the springs; letting go releases the line
+          const hold = f => (x, y) => { this.held = performance.now() + 150; this.v = [0, 0]; f(x, y); };
+          p.handle(0, b, COLORS.yellow, hold((x, y) => sc.setParam('b', Math.max(-4, Math.min(4, snap(y))))));
+          p.handle(2.5, 2.5 * w + b, COLORS.yellow, hold((x, y) => sc.setParam('w', Math.max(-2, Math.min(2, snap((y - b) / 2.5))))));
+          if (now < this.held) sc.changed(); // keep the frames coming, to release the line when the hand stops
+        },
+        legend: s => rows(lineTex(s.w, s.b), `\\text{${t({ en: 'energy of the springs', ru: 'энергия пружин' })}} \\propto ${lossTex(data(s), s.w, s.b)}`),
       },
       {
         // Downhill: the arrow −∇L on the bowl, and in the plane the line after one step
@@ -197,6 +240,16 @@ export default {
         },
       },
       state: { view: '2d', show: ['squares'], params: { w: -0.3, b: 2, sh: 0 }, window: WIN, controls: [] },
+    },
+    {
+      title: { en: 'Springs find the line', ru: 'Пружинки находят прямую' },
+      text: {
+        en: 'There is a physical way to see the squares. Tie every point to the line with a vertical spring and let the line go. A spring stretched by $r$ pulls with a force $kr$ and stores the energy $\\frac12 kr^2$ — a square again. The line swings, the friction calms it, and it stops where the pulls up and down and their turning effects cancel out. The total energy of the springs is then the smallest: the line that rests is exactly the line of least squares.',
+        ru: 'Квадраты можно увидеть физически. Привяжем каждую точку к прямой вертикальной пружинкой и отпустим прямую. Пружина, растянутая на $r$, тянет с силой $kr$ и запасает энергию $\\frac12 kr^2$ — снова квадрат. Прямая качается, трение её успокаивает, и она замирает там, где тяги вверх и вниз и их поворачивающие действия уравновешены. Суммарная энергия пружин при этом наименьшая: прямая, которая успокоилась, — ровно прямая наименьших квадратов.',
+      },
+      try: { en: 'Grab the line by a handle, pull it far away and let go. Then pull one end only.', ru: 'Схватите прямую за ручку, оттяните далеко и отпустите. Потом потяните только за один конец.' },
+      state: { view: '2d', show: ['springs'], params: { sh: 0 }, window: WIN, controls: [] },
+      enter(scene) { const o = scene.get('springs'); o.v = [0, 0]; o.held = 0; o.t = 0; scene.setParam('w', -0.6); scene.setParam('b', 2.8); },
     },
     {
       title: { en: 'Every line is a point of a map', ru: 'Каждая прямая — точка на карте' },
@@ -326,7 +379,7 @@ export default {
         kind: 'drag',
         ok: s => { const pa = descend((w, b) => mseGrad(cloud(0), w, b), START, s.eta, 10); return pa.length === 11 && mse(cloud(0), ...pa[10]) < 0.25; },
         target: { eta: 0.2 },
-        back: 5,
+        back: 6,
         right: {
           en: 'Around $\\eta = 0.14$–$0.28$ ten steps are enough. Smaller — the ball is still on its way; bigger — it jumps across the valley too wildly or flies out.',
           ru: 'Примерно при $\\eta = 0.14$–$0.28$ десяти шагов хватает. Меньше — шар ещё в пути; больше — слишком сильно скачет через долину или вылетает.',

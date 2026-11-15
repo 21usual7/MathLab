@@ -131,6 +131,8 @@ export default {
     scene.ensureParam('sd', 1, { min: 1, max: 12, step: 1 }); // the random start of training
     scene.ensureParam('k', 0, { min: 0, max: 150, step: 0.01 }); // a frame of training: 20 epochs each
     scene.ensureParam('H', 3, { min: 3, max: 8, step: 1 }); // neurons in the hidden layer
+    scene.ensureParam('px', 2.6, { min: -4, max: 4, step: 0.05 }); // the light meter
+    scene.ensureParam('py', 1.6, { min: -4, max: 4, step: 0.05 });
 
     scene.custom.push(
       {
@@ -156,15 +158,36 @@ export default {
         legend: s => `\\textcolor{${NEU[0]}}{h_1} = \\max(0,\\ ${r2(Math.cos(s.a0))}\\,x ${Math.sin(s.a0) < 0 ? '-' : '+'} ${r2(Math.abs(Math.sin(s.a0)))}\\,y - ${r2(s.d0)})`,
       },
       {
-        // Three folds in the plane
-        id: 'three',
+        // Three lamps: neuron i lights the far side of its line, brighter with every step past it (ReLU),
+        // and the output neuron is a light meter — dark means blue. The meter can be carried around.
+        id: 'lamps',
         draw2d(p, sc, s) {
-          const n = hand(s);
-          tints(p, n);
+          const n = hand(s), glow = (x, y) => n.W.map((w, i) => Math.max(0, w[0] * x + w[1] * y + n.b[i]));
+          // The light of the three lamps adds up; the colour is packed into one number for paint()
+          paint(p, (x, y) => {
+            const h = glow(x, y), c = [0, 0, 0];
+            h.forEach((v, i) => { const k = Math.min(1, 0.45 * v); for (let j = 0; j < 3; j++) c[j] += NRGB[i][j] * k; });
+            return Math.min(255, c[0] | 0) * 65536 + Math.min(255, c[1] | 0) * 256 + Math.min(255, c[2] | 0);
+          }, v => { const r = v >> 16, g = (v >> 8) & 255, b = v & 255; return [r, g, b, Math.min(200, 1.1 * Math.max(r, g, b))]; });
           points(p, DATA);
           folds(p, sc, n, { drag: true });
+          // The meter: three bars of light, and their sum (white) against the threshold ¼
+          const h = glow(s.px, s.py), sum = h[0] + h[1] + h[2], blue = sum < 0.25;
+          const bx = p.sx(s.px) + 16, by = p.sy(s.py) - 8, H = 46;
+          p.ctx.fillStyle = 'rgba(13,17,23,0.85)';
+          p.ctx.fillRect(bx - 4, by - H - 6, 74, H + 26);
+          [...h, sum].forEach((v, i) => { const hh = Math.min(H, v * H); p.ctx.fillStyle = i < 3 ? NEU[i] : '#e6e9ef'; p.ctx.fillRect(bx + 2 + 14 * i + (i > 2 ? 6 : 0), by - hh, 10, hh); });
+          p.ctx.strokeStyle = 'rgba(255,255,255,0.6)'; p.ctx.setLineDash([3, 3]);
+          p.ctx.beginPath(); p.ctx.moveTo(bx + 46, by - 0.25 * H); p.ctx.lineTo(bx + 66, by - 0.25 * H); p.ctx.stroke(); p.ctx.setLineDash([]);
+          p.ctx.fillStyle = blue ? COLORS.blue : COLORS.orange;
+          p.ctx.font = '600 11px Inter, system-ui, sans-serif'; p.ctx.textAlign = 'left';
+          p.ctx.fillText(blue ? t({ en: 'dark', ru: 'темно' }) : t({ en: 'light', ru: 'светло' }), bx, by + 14);
+          p.handle(s.px, s.py, blue ? COLORS.blue : COLORS.orange, (x, y) => { sc.setParam('px', Math.round(x * 20) / 20); sc.setParam('py', Math.round(y * 20) / 20); });
         },
-        legend: s => layerTex(hand(s)),
+        legend: s => {
+          const n = hand(s), h = n.W.map((w, i) => Math.max(0, w[0] * s.px + w[1] * s.py + n.b[i]));
+          return `\\begin{gathered} ${h.map((v, i) => `\\textcolor{${NEU[i]}}{h_${i + 1} = ${r2(v)}}`).join(',\\ ')} \\\\ p = \\sigma(1.5 - 6 \\cdot ${r2(h[0] + h[1] + h[2])}) = ${r2(forward(n, s.px, s.py).out)} \\end{gathered}`;
+        },
       },
       {
         // The plane in space: lifted by the matrix, folded by ReLU
@@ -241,12 +264,12 @@ export default {
       state: { view: 'split', show: ['neuron'], params: { a0: 1.57, d0: 1.1 }, window: WIN, camera: [7.5, -8, 5.5], controls: [] },
     },
     {
-      title: { en: 'Three neurons — three folds', ru: 'Три нейрона — три сгиба' },
+      title: { en: 'Three neurons — three lamps', ru: 'Три нейрона — три лампы' },
       text: {
-        en: 'Take three neurons with their arrows looking outwards. Each tints its active side in its colour. Inside the triangle not one of them fires: $h_1 = h_2 = h_3 = 0$. Together the three are one formula: a $3 \\times 2$ matrix times the point, plus a shift, and ReLU on every row — the layer of a network.',
-        ru: 'Возьмём три нейрона со стрелками наружу. Каждый подкрашивает свою активную сторону своим цветом. Внутри треугольника не срабатывает ни один: $h_1 = h_2 = h_3 = 0$. Вместе три нейрона — одна формула: матрица $3 \\times 2$ на точку, плюс сдвиг, и ReLU в каждой строке — это и есть слой сети.',
+        en: 'Think of a neuron as a lamp behind its line: on the near side it is dark, past the line it gets brighter with every step — that is exactly $\\max(0, s)$. Take three lamps with their arrows looking outwards. Their light adds up, and inside the triangle not one of them reaches: $h_1 = h_2 = h_3 = 0$, darkness. The output neuron is a light meter: dark — blue, light — orange. Together the three lamps are one formula: a $3 \\times 2$ matrix times the point, plus a shift, and ReLU on every row — a layer of a network.',
+        ru: 'Представьте нейрон лампой за своей линией: по эту сторону темно, за линией с каждым шагом светлее — это ровно $\\max(0, s)$. Возьмём три лампы со стрелками наружу. Их свет складывается, а внутрь треугольника не достаёт ни одна: $h_1 = h_2 = h_3 = 0$, темнота. Выходной нейрон — датчик света: темно — синий, светло — оранжевый. Вместе три лампы — одна формула: матрица $3 \\times 2$ на точку, плюс сдвиг, и ReLU в каждой строке — это слой сети.',
       },
-      try: { en: 'Drag the three points and put all the blue ones in the untinted triangle.', ru: 'Тяните три точки и уложите все синие в неподкрашенный треугольник.' },
+      try: { en: 'Carry the light meter around: the three bars are the three lamps. Then drag the lamps so that all the blue points are in the dark.', ru: 'Поводите датчик: три столбика — три лампы. Потом двигайте лампы так, чтобы все синие точки оказались в темноте.' },
       check: {
         q: { en: 'Could two folds enclose the blue points instead of three?', ru: 'Можно ли окружить синие точки двумя сгибами вместо трёх?' },
         options: [
@@ -259,13 +282,13 @@ export default {
           ru: 'Две прямые режут плоскость на четыре (или три) части, и каждая уходит в бесконечность. Треугольник — наименьшее число прямых, замыкающих область, поэтому для кольца нужно минимум три нейрона.',
         },
       },
-      state: { view: '2d', show: ['three'], params: { a0: 1.57, d0: 1.1, a1: -2.62, d1: 1.1, a2: -0.52, d2: 1.1 }, window: WIN, controls: [] },
+      state: { view: '2d', show: ['lamps'], params: { a0: 1.57, d0: 1.1, a1: -2.62, d1: 1.1, a2: -0.52, d2: 1.1 }, window: WIN, controls: [] },
     },
     {
       title: { en: 'The plane goes into space', ru: 'Плоскость уходит в пространство' },
       text: {
-        en: 'Now look at the plane through the eyes of the network. Every point $(x;\\ y)$ gets three numbers $(h_1;\\ h_2;\\ h_3)$ — a point in space. First only the matrix and the shift: the plane is carried into space as a <b>tilted plane</b> (a $3 \\times 2$ matrix has rank $2$ — it cannot fill space). The axes are in the colours of the neurons. Nothing is separated yet: a plane is still a plane.',
-        ru: 'Теперь посмотрим на плоскость глазами сети. Каждая точка $(x;\\ y)$ получает три числа $(h_1;\\ h_2;\\ h_3)$ — точку в пространстве. Сначала только матрица и сдвиг: плоскость переносится в пространство как <b>наклонная плоскость</b> (у матрицы $3 \\times 2$ ранг $2$ — пространство ей не заполнить). Оси — в цветах нейронов. Пока ничего не разделено: плоскость остаётся плоскостью.',
+        en: 'Now look at the plane through the eyes of the network. Every point $(x;\\ y)$ gets three numbers — the light of the three lamps, $(h_1;\\ h_2;\\ h_3)$. Use them as coordinates: a point in space. First only the matrix and the shift: the plane is carried into space as a <b>tilted plane</b> (a $3 \\times 2$ matrix has rank $2$ — it cannot fill space). The axes are in the colours of the neurons. Nothing is separated yet: a plane is still a plane.',
+        ru: 'Теперь посмотрим на плоскость глазами сети. Каждая точка $(x;\\ y)$ получает три числа — свет трёх ламп, $(h_1;\\ h_2;\\ h_3)$. Сделаем их координатами: получится точка в пространстве. Сначала только матрица и сдвиг: плоскость переносится в пространство как <b>наклонная плоскость</b> (у матрицы $3 \\times 2$ ранг $2$ — пространство ей не заполнить). Оси — в цветах нейронов. Пока ничего не разделено: плоскость остаётся плоскостью.',
       },
       try: { en: 'Press ▶ at $u$ or drag it from $0$ to $1$.', ru: 'Нажмите ▶ у $u$ или тяните его от $0$ до $1$.' },
       state: { view: 'split', show: ['space'], params: { a0: 1.57, d0: 1.1, a1: -2.62, d1: 1.1, a2: -0.52, d2: 1.1 }, window: WIN, controls: ['u'] },
