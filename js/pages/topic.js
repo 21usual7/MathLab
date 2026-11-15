@@ -5,6 +5,7 @@
 // shared link opens the same step.
 // A step may ask a question first ("predict, then check"): the answer is shown on the scene by
 // check.reveal(scene, stage) only after the student has made a guess. A hint opens on demand.
+// Proofs are steps too (step.proof): part of the main path, each with a «skip the proof» link.
 
 import { Scene } from '../core/scene.js';
 import { Stage } from '../ui/stage.js';
@@ -46,6 +47,25 @@ export async function mountTopic(root, id, startStep = 0) {
   const subject = SUBJECTS.find(x => x.id === track.subject);
   const N = topic.steps.length;
   const taskNo = i => topic.steps.slice(0, i + 1).filter(x => x.task).length;
+  // A proof is a run of steps with `proof`: one thought and one picture per step, inside the main path.
+  // Every proof step can be skipped to the step after the proof; the first one states what is proved.
+  const proofOf = i => {
+    if (!topic.steps[i] || !topic.steps[i].proof) return null;
+    let a = i, b = i;
+    while (a > 0 && topic.steps[a - 1].proof) a--;
+    while (b + 1 < N && topic.steps[b + 1].proof) b++;
+    return { a, b, k: i - a + 1, n: b - a + 1 };
+  };
+  const proofHead = (s, i) => {
+    const g = proofOf(i);
+    if (!g) return '';
+    const statement = topic.steps[g.a].statement;
+    return `<div class="proof-head">
+      <span class="proof-label">${t({ en: 'Proof', ru: 'Доказательство' })} · ${g.k} / ${g.n}</span>
+      ${g.k === 1 && statement ? `<div class="proof-statement">${t(statement)}</div>` : ''}
+      <button type="button" class="ghost proof-skip" data-go="${g.b + 1}">${t({ en: 'Skip the proof', ru: 'Пропустить доказательство' })} →</button>
+    </div>`;
+  };
 
   root.innerHTML = `
     <article class="topic">
@@ -53,7 +73,7 @@ export async function mountTopic(root, id, startStep = 0) {
         <div class="panel-top">
           <div class="crumbs"><a href="#topics/${subject.id}">${t(subject.title)}</a><span>/</span><span>${t(track.title)}</span></div>
           <div class="dots" role="tablist">
-            ${topic.steps.map((s, i) => `<button type="button" class="dot${s.task ? ' is-task' : ''}" data-go="${i}" title="${i + 1}. ${t(s.title).replace(/"/g, '&quot;')}" aria-label="Step ${i + 1}"></button>`).join('')}
+            ${topic.steps.map((s, i) => `<button type="button" class="dot${s.task ? ' is-task' : ''}${s.proof ? ' is-proof' : ''}" data-go="${i}" title="${i + 1}. ${t(s.title).replace(/"/g, '&quot;')}" aria-label="Step ${i + 1}"></button>`).join('')}
             <span class="counter"></span>
           </div>
         </div>
@@ -67,6 +87,7 @@ export async function mountTopic(root, id, startStep = 0) {
           ${topic.steps.map((s, i) => `
             <section class="step${s.task ? ' task-step' : ''}" data-i="${i}" hidden>
               ${s.task && taskNo(i) === 1 ? `<div class="practice-head"><h2>${t(PRACTICE.title)}</h2><p>${t(PRACTICE.text)}</p></div>` : ''}
+              ${proofHead(s, i)}
               <div class="step-num">${s.task ? `Task ${taskNo(i)}` : String(i + 1).padStart(2, '0')}</div>
               <h2>${t(s.title)}</h2>
               <div class="step-text">${t(s.text)}</div>

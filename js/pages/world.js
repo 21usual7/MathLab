@@ -1,5 +1,6 @@
 // A world: on the left the panel — what this world is, the mode (free exploration or a challenge), its goal,
-// a «Why is it so?» block with the proof (mode.proof; the world's proof(open) may draw it on the stage),
+// a «Why is it so?» tab: a proof as a run of slides on the same stage (mode.kind = 'proof', mode.slides; the world's
+// slide(k) sets the stage for slide k),
 // live numbers and controls; on the right the world itself on the whole remaining area. The mode is kept in
 // the address (#world/<id>/<n>, 0 = free). Solved challenges are remembered in this browser.
 
@@ -20,7 +21,10 @@ const L = {
   next: { en: 'Next challenge →', ru: 'Следующее испытание →' },
   free2: { en: 'Back to free exploration', ru: 'К свободному исследованию' },
   worlds: { en: 'Worlds', ru: 'Миры' },
-  why: { en: 'Why is it so? The proof', ru: 'Почему это так? Доказательство' },
+  why: { en: 'Why it works', ru: 'Почему так' },
+  proof: { en: 'Proof', ru: 'Доказательство' },
+  back: { en: 'Back', ru: 'Назад' },
+  nextSlide: { en: 'Next', ru: 'Далее' },
 };
 
 export async function mountWorld(root, id, startMode = 0) {
@@ -33,7 +37,11 @@ export async function mountWorld(root, id, startMode = 0) {
     return () => {};
   }
   const modes = world.modes;
-  const tabName = (m, i) => (i === 0 ? t(L.free) : `${t(L.challenge)} ${i}`);
+  // Tabs: free exploration, challenges (numbered), proofs («Why it works»)
+  const isProof = m => m.kind === 'proof';
+  const challengeNo = i => modes.slice(1, i + 1).filter(m => !isProof(m)).length;
+  const challenges = modes.slice(1).filter(m => !isProof(m)).length;
+  const tabName = (m, i) => (i === 0 ? t(L.free) : isProof(m) ? `${t(L.why)}` : `${t(L.challenge)} ${challengeNo(i)}`);
 
   root.innerHTML = `
     <article class="topic world">
@@ -50,11 +58,12 @@ export async function mountWorld(root, id, startMode = 0) {
             <h1>${t(meta.title)}</h1>
           </header>
           <section class="mode-info">
+            <div class="proof-head" hidden><span class="proof-label"></span><div class="proof-statement"></div></div>
             <div class="step-num"></div>
             <h2></h2>
             <div class="step-text"></div>
             <div class="goal" hidden><span class="goal-label">${t(L.goal)}</span><div class="goal-text"></div></div>
-            <details class="hint proof" hidden><summary></summary><div class="hint-body"></div></details>
+            <div class="proof-nav" hidden><button type="button" class="btn" data-slide="-1"></button><button type="button" class="btn primary" data-slide="1"></button></div>
             <div class="world-status" aria-live="polite" hidden></div>
             <p class="world-howto"></p>
           </section>
@@ -72,7 +81,7 @@ export async function mountWorld(root, id, startMode = 0) {
 
   const $ = s => root.querySelector(s);
   const info = $('.mode-info'), status = $('.world-status'), readoutEl = $('.readout'), controls = $('.controls');
-  const proof = $('.proof'), hud = $('.world-hud'), howto = $('.world-howto'), tabs = [...root.querySelectorAll('.mode-tab')];
+  const proofHead = $('.proof-head'), proofNav = $('.proof-nav'), hud = $('.world-hud'), howto = $('.world-howto'), tabs = [...root.querySelectorAll('.mode-tab')];
   let current = -1;
 
   const markTabs = () => {
@@ -132,18 +141,16 @@ export async function mountWorld(root, id, startMode = 0) {
     i = Math.max(0, Math.min(modes.length - 1, i));
     current = i;
     const m = modes[i];
-    info.querySelector('.step-num').textContent = i === 0 ? t(L.free) : `${t(L.challenge)} ${i} / ${modes.length - 1}`;
-    info.querySelector('h2').textContent = t(m.title);
-    info.querySelector('.step-text').innerHTML = t(m.text);
+    info.querySelector('.step-num').textContent = i === 0 ? t(L.free) : isProof(m) ? t(L.why) : `${t(L.challenge)} ${challengeNo(i)} / ${challenges}`;
     const goal = info.querySelector('.goal');
     goal.hidden = !m.goal;
     goal.querySelector('.goal-text').innerHTML = t(m.goal) || '';
-    // «Why is it so?»: the proof of what the mode shows; the world may draw it on the stage while it is open
-    proof.open = false;
-    proof.hidden = !m.proof;
-    proof.querySelector('summary').textContent = t(L.why);
-    proof.querySelector('.hint-body').innerHTML = t(m.proof) || '';
-    renderMath(info);
+    proofHead.hidden = proofNav.hidden = !isProof(m);
+    if (!isProof(m)) {
+      info.querySelector('h2').textContent = t(m.title);
+      info.querySelector('.step-text').innerHTML = t(m.text);
+      renderMath(info);
+    }
     status.className = 'world-status';
     status.hidden = true;
     controls.innerHTML = '';
@@ -153,11 +160,34 @@ export async function mountWorld(root, id, startMode = 0) {
     markTabs();
     history.replaceState(null, '', `#world/${id}/${i}`);
     inst.setMode(m.id);
+    if (isProof(m)) slide(0);
     if (window.innerWidth > 900) $('.panel-body').scrollTop = 0;
   }
 
+  // A proof slide: one thought in the panel, the world draws its picture
+  let k = 0;
+  function slide(n) {
+    const m = modes[current], S = m.slides;
+    k = Math.max(0, Math.min(S.length - 1, n));
+    proofHead.querySelector('.proof-label').textContent = `${t(L.proof)} · ${k + 1} / ${S.length}`;
+    proofHead.querySelector('.proof-statement').innerHTML = k === 0 && m.statement ? t(m.statement) : '';
+    proofHead.querySelector('.proof-statement').hidden = !(k === 0 && m.statement);
+    info.querySelector('h2').textContent = t(S[k].title);
+    info.querySelector('.step-text').innerHTML = t(S[k].text);
+    const [prev, next] = proofNav.querySelectorAll('button');
+    prev.textContent = `← ${t(L.back)}`;
+    prev.disabled = k === 0;
+    next.textContent = k === S.length - 1 ? (current + 1 < modes.length ? t(L.next) : t(L.free2)) : `${t(L.nextSlide)} →`;
+    renderMath(info);
+    if (inst.slide) inst.slide(k);
+  }
+  proofNav.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    const S = modes[current].slides;
+    if (+b.dataset.slide > 0 && k === S.length - 1) return go(current + 1 < modes.length ? current + 1 : 0);
+    slide(k + +b.dataset.slide);
+  }));
+
   tabs.forEach(b => b.addEventListener('click', () => go(+b.dataset.m)));
-  proof.addEventListener('toggle', () => { if (inst.proof) inst.proof(proof.open); });
   go(startMode);
 
   return () => inst.dispose();

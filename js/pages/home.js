@@ -9,7 +9,7 @@ import { WORLDS, ready } from '../worlds/index.js';
 import { topicNode, worldCard } from './catalog.js';
 
 // A few entries of each catalog: the home page stays the same size however many topics and worlds there are
-const FEATURED_TOPICS = ['graph', 'derivative', 'matrix', 'mod'];
+const FEATURED_TOPICS = ['pythagoras', 'graph', 'derivative', 'mod'];
 const FEATURED_WORLDS = ['jpeg', 'billiard', 'epidemic'];
 
 const TEXT = {

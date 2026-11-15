@@ -125,3 +125,25 @@ test('billiards: the proof of the focal property holds for every point of the el
     assert.ok(Math.abs(d(F1, P) + d(P, F2m) - d(F1, F2m)) < 1e-9);
   }
 });
+
+test('Foundations: the pictures of the proofs are exact', async () => {
+  const { triangles, moved } = await import('../js/topics/pythagoras.js');
+  // The triangles move rigidly from the first arrangement to the second, and stay inside the square
+  for (const [a, b] of [[3, 4], [2.5, 4.5], [1, 6]]) {
+    triangles(a, b).forEach(tr => {
+      const end = moved(tr, 1), mid = moved(tr, 0.5);
+      end.forEach((P, i) => { assert.ok(Math.hypot(P[0] - tr[1][i][0], P[1] - tr[1][i][1]) < 1e-9); });
+      const side = (T, i, j) => Math.hypot(T[i][0] - T[j][0], T[i][1] - T[j][1]);
+      assert.ok(Math.abs(side(mid, 0, 1) - a) < 1e-9 && Math.abs(side(mid, 0, 2) - b) < 1e-9); // the same triangle on the way
+    });
+    // Free area: (a + b)² − 4·ab/2 is c² = a² + b²
+    assert.ok(Math.abs((a + b) ** 2 - 2 * a * b - (a * a + b * b)) < 1e-9);
+  }
+  // Gauss and the shifted geometric sum
+  for (let n = 1; n < 30; n++) assert.equal(Array.from({ length: n }, (_, i) => i + 1).reduce((x, y) => x + y), n * (n + 1) / 2);
+  for (const q of [0.5, 0.7, 1.3, 2]) {
+    let S = 0;
+    for (let i = 0; i < 8; i++) S += q ** i;
+    assert.ok(Math.abs(S - (q ** 8 - 1) / (q - 1)) < 1e-9);
+  }
+});

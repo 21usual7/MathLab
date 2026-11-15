@@ -3,6 +3,7 @@
 
 // Two subjects, as at school: algebra with the beginnings of calculus, and geometry
 export const SUBJECTS = [
+  { id: 'basics', title: { en: 'Foundations (grades 7–9)', ru: 'Основы (7–9 класс)' } },
   { id: 'algebra', title: { en: 'Algebra and calculus', ru: 'Алгебра и начала анализа' } },
   { id: 'geometry', title: { en: 'Geometry', ru: 'Геометрия' } },
   { id: 'linalg', title: { en: 'Linear algebra', ru: 'Линейная алгебра' } },
@@ -10,6 +11,8 @@ export const SUBJECTS = [
 ];
 
 export const TRACKS = [
+  { id: 'b-geom', subject: 'basics', title: { en: 'Geometry 7–9', ru: 'Геометрия 7–9' } },
+  { id: 'b-alg', subject: 'basics', title: { en: 'Algebra 7–9', ru: 'Алгебра 7–9' } },
   { id: 'functions', subject: 'algebra', title: { en: 'Functions', ru: 'Функции' } },
   { id: 'limits', subject: 'algebra', title: { en: 'Limits', ru: 'Пределы' } },
   { id: 'derivatives', subject: 'algebra', title: { en: 'Derivatives', ru: 'Производные' } },
@@ -26,19 +29,40 @@ export const TRACKS = [
 ];
 
 export const CATALOG = [
+  // Foundations: the key theorems and patterns of grades 7–9, each with a short proof and links to grades 10–11
+  { id: 'pythagoras', track: 'b-geom', status: 'ready', minutes: 5, next: ['vectors', 'dot', 'axioms'],
+    title: { en: 'The Pythagorean theorem', ru: 'Теорема Пифагора' },
+    summary: {
+      en: 'Why a² + b² = c²: four triangles moved inside one square. And where it lives later — distances, vector lengths, circles.',
+      ru: 'Почему a² + b² = c²: четыре треугольника, переложенные внутри одного квадрата. И где это живёт дальше — расстояния, длины векторов, окружности.',
+    } },
+  { id: 'similar', track: 'b-geom', status: 'planned', title: { en: 'Similar triangles', ru: 'Подобные треугольники' } },
+  { id: 'quadratic', track: 'b-alg', status: 'ready', minutes: 6, next: ['transform', 'derivative', 'limit', 'ecc'],
+    title: { en: 'The quadratic equation and Vieta', ru: 'Квадратное уравнение и Виет' },
+    summary: {
+      en: 'The formula for the roots proved by completing a square with areas — and why the roots add up to −b and multiply to c.',
+      ru: 'Формула корней, доказанная достраиванием квадрата из площадей, — и почему сумма корней равна −b, а произведение c.',
+    } },
+  { id: 'progressions', track: 'b-alg', status: 'ready', minutes: 6, next: ['e', 'exp-log', 'limit'],
+    title: { en: 'Progressions', ru: 'Прогрессии' },
+    summary: {
+      en: 'Gauss\'s staircase for 1 + 2 + … + n, the shift that sums 1 + q + q² + …, and an infinite sum that stays finite.',
+      ru: 'Лесенка Гаусса для 1 + 2 + … + n, сдвиг, который суммирует 1 + q + q² + …, и бесконечная сумма, которая остаётся конечной.',
+    } },
+  { id: 'powers', track: 'b-alg', status: 'planned', title: { en: 'Powers and roots', ru: 'Степени и корни' } },
   { id: 'graph', track: 'functions', status: 'ready', minutes: 8, next: ['transform', 'exp-log', 'limit'],
     title: { en: 'A function: a machine and a picture', ru: 'Функция: машина и картинка' },
     summary: {
       en: 'A function turns an input into an output; its graph is every answer drawn at once. How to read it forward and backward.',
       ru: 'Функция превращает вход в выход, а её график — все ответы, нарисованные разом. Как читать его вперёд и назад.',
     } },
-  { id: 'transform', track: 'functions', status: 'ready', minutes: 10, prereqs: ['graph'], next: ['exp-log', 'derivative'],
+  { id: 'transform', track: 'functions', status: 'ready', minutes: 10, prereqs: ['quadratic', 'graph'], next: ['exp-log', 'derivative'],
     title: { en: 'Shifting and stretching graphs', ru: 'Сдвиги и растяжения графиков' },
     summary: {
       en: 'Why f(x − 2) moves right, f(2x) squeezes, and the vertex of a(x − h)² + k is simply (h, k).',
       ru: 'Почему f(x − 2) сдвигает вправо, f(2x) сжимает, а вершина a(x − h)² + k — просто (h, k).',
     } },
-  { id: 'exp-log', track: 'functions', status: 'ready', minutes: 10, prereqs: ['graph'], next: ['e', 'derivative'],
+  { id: 'exp-log', track: 'functions', status: 'ready', minutes: 10, prereqs: ['progressions', 'graph'], next: ['e', 'derivative'],
     title: { en: 'Exponent and logarithm', ru: 'Экспонента и логарифм' },
     summary: {
       en: 'An exponent multiplies by the same number at every step; a logarithm counts the steps. The same curve, seen in a mirror.',
@@ -51,7 +75,7 @@ export const CATALOG = [
       en: 'A hole in a graph, values closing in from both sides, the ε–δ corridor — and limits that do not exist.',
       ru: 'Дырка в графике, значения, подбирающиеся с двух сторон, коридор «эпсилон–дельта» — и пределы, которых нет.',
     } },
-  { id: 'e', track: 'limits', status: 'ready', minutes: 10, prereqs: ['limit', 'exp-log'], next: ['derivative', 'taylor'],
+  { id: 'e', track: 'limits', status: 'ready', minutes: 10, prereqs: ['progressions', 'limit', 'exp-log'], next: ['derivative', 'taylor'],
     title: { en: 'Where the number e comes from', ru: 'Откуда берётся число e' },
     summary: {
       en: 'A bank paying interest more and more often hits a ceiling of 2.718… — and the exponent with that base is its own slope.',
@@ -112,7 +136,7 @@ export const CATALOG = [
   { id: 'volumes', track: 'solids', status: 'planned', prereqs: ['polyhedra'],
     title: { en: 'Why a pyramid is one third of a prism', ru: 'Почему пирамида — треть призмы' } },
 
-  { id: 'vectors', track: 'vecs', status: 'ready', minutes: 12, next: ['dot', 'matrix'],
+  { id: 'vectors', track: 'vecs', status: 'ready', minutes: 12, prereqs: ['pythagoras'], next: ['dot', 'matrix'],
     title: { en: 'Vectors: arrows and numbers', ru: 'Векторы: стрелки и числа' },
     summary: {
       en: 'An arrow is a move; adding is walking, multiplying stretches. Two arrows make a slanted grid over the whole plane — unless they lie on one line.',
@@ -204,7 +228,7 @@ export const CATALOG = [
       en: 'Powers on a clock of n = p·q come back after (p − 1)(q − 1) steps. So a public e and a secret d with e·d ≡ 1 lock and unlock — and finding d means factoring n.',
       ru: 'Степени на часах из n = p·q возвращаются через (p − 1)(q − 1) шагов. Поэтому открытое e и секретное d с e·d ≡ 1 запирают и отпирают — а найти d значит разложить n на множители.',
     } },
-  { id: 'ecc', track: 'publickey', status: 'ready', minutes: 15, prereqs: ['dh', 'derivative'],
+  { id: 'ecc', track: 'publickey', status: 'ready', minutes: 15, prereqs: ['quadratic', 'dh', 'derivative'],
     title: { en: 'Elliptic curves: adding points', ru: 'Эллиптические кривые: сложение точек' },
     summary: {
       en: 'A line through two points of y² = x³ + ax + b meets the curve once more — reflect that point and you have the sum. The same curve on a clock of a prime turns into a cloud of points, and steps kG are the Diffie–Hellman of today\'s internet.',
@@ -215,6 +239,9 @@ export const CATALOG = [
 export const topicMeta = id => CATALOG.find(x => x.id === id);
 
 const MODULES = {
+  pythagoras: () => import('./pythagoras.js'),
+  quadratic: () => import('./quadratic.js'),
+  progressions: () => import('./progressions.js'),
   graph: () => import('./graph.js'),
   transform: () => import('./transform.js'),
   'exp-log': () => import('./exp-log.js'),

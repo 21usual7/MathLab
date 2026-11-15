@@ -228,6 +228,17 @@ button { font: inherit; color: inherit; }
 .dot.is-task { background: rgba(255, 159, 90, 0.3); }
 .dot.is-task.current { background: var(--orange); }
 .dot.solved { background: var(--green); }
+.dot.is-proof { background: rgba(92, 208, 179, 0.3); }
+.dot.is-proof.done { background: rgba(92, 208, 179, 0.6); }
+.dot.is-proof.current { background: var(--teal); }
+/* A proof inside a topic or a world: a run of slides with its own label and a way to skip it */
+.proof-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 14px; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(92, 208, 179, 0.35); background: rgba(92, 208, 179, 0.05); }
+.proof-label { font: 600 11px var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--teal); }
+.proof-statement { flex-basis: 100%; order: 3; color: var(--text); font-size: 15px; line-height: 1.6; }
+.proof-skip { margin-left: auto; padding: 4px 10px; font-size: 12.5px; }
+.proof-nav { display: flex; gap: 8px; margin-top: 16px; }
+.proof-nav .btn { padding: 8px 16px; font-size: 14px; white-space: nowrap; }
+.proof-nav .btn.primary { margin-left: auto; }
 .dots .counter { margin-left: 8px; font: 12px var(--mono); color: var(--muted); }
 
 .panel-body { flex: 1; min-height: 0; overflow-y: auto; padding: 26px 28px 32px; scroll-behavior: smooth; }

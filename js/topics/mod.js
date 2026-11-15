@@ -136,6 +136,49 @@ export default {
           return `${a}^0, ${a}^1, ${a}^2, \\ldots \\bmod ${n}:\\ \\purple{${seq.join(',\\ ')}},\\ \\yellow{${powmod(a, seq.length, n)}}, \\ldots`;
         },
       },
+      {
+        // Fermat, step 1: multiplying by a sends the marks 1 … n − 1 to the same marks, shuffled
+        id: 'fermatMap',
+        draw2d(p, sc, s) {
+          const n = I(s.n), a = mod(I(s.a), n);
+          clock(p, 'fermatMap', n, { marks: lit(Array.from({ length: n - 1 }, (_, i) => [i + 1, COLORS.green])) });
+          for (let k = 1; k < n; k++) {
+            const j = mod(a * k, n);
+            if (j !== k) p.arrow(...at(k, n, R - 0.16), ...at(j, n, R - 0.16), j ? COLORS.green + 'cc' : COLORS.red, { width: 1.8 });
+          }
+        },
+        legend: s => {
+          const n = I(s.n), a = mod(I(s.a), n), img = Array.from({ length: n - 1 }, (_, i) => mod(a * (i + 1), n));
+          const perm = new Set(img).size === n - 1 && !img.includes(0);
+          return `${a} \\cdot (1, 2, \\ldots, ${n - 1}) \\equiv \\green{(${img.join(',\\ ')})}` + (perm
+            ? t({ en: '\\quad \\text{— the same numbers, shuffled}', ru: '\\quad \\text{— те же числа, перемешанные}' })
+            : t({ en: '\\quad \\text{— repeats: not a shuffle}', ru: '\\quad \\text{— есть повторы: не перестановка}' }));
+        },
+      },
+      {
+        // Fermat, step 2: the product of both piles is the same
+        id: 'fermatProd',
+        draw2d(p, sc, s) { sc.custom.find(c => c.id === 'fermatMap').draw2d(p, sc, s); },
+        legend: s => {
+          const n = I(s.n), a = mod(I(s.a), n), img = Array.from({ length: n - 1 }, (_, i) => mod(a * (i + 1), n));
+          return `(${a} \\cdot 1)(${a} \\cdot 2) \\cdots (${a} \\cdot ${n - 1}) = ${a}^{${n - 1}} \\cdot (1 \\cdot 2 \\cdots ${n - 1}) \\equiv \\green{${img.join(' \\cdot ')}} = 1 \\cdot 2 \\cdots ${n - 1}`;
+        },
+      },
+      {
+        // Fermat, step 3: cancel (p − 1)!, it has an inverse
+        id: 'fermatCancel',
+        draw2d(p, sc, s) {
+          const n = I(s.n), a = mod(I(s.a), n), seq = powers(a, n);
+          clock(p, 'fermatCancel', n, { marks: lit([...seq.map(k => [k, COLORS.purple]), [1, COLORS.yellow]]) });
+          chords(p, seq, n, COLORS.purple);
+        },
+        legend: s => {
+          const n = I(s.n), a = mod(I(s.a), n);
+          let f = 1;
+          for (let k = 2; k < n; k++) f = (f * k) % n;
+          return `${a}^{${n - 1}} \\cdot \\orange{${f}} \\equiv \\orange{${f}} \\;\\Rightarrow\\; ${a}^{${n - 1}} \\equiv \\yellow{${powmod(a, n - 1, n)}} \\pmod{${n}}`;
+        },
+      },
       // ---- Tasks ----
       {
         id: 'solveAdd',
@@ -243,8 +286,8 @@ export default {
     {
       title: { en: 'Powers go around too', ru: 'Степени тоже ходят по кругу' },
       text: {
-        en: 'Now multiply again and again: $1, a, a^2, a^3, \\ldots$ On a clock of $7$ the powers of $3$ are $1, 3, 2, 6, 4, 5$ and then $3^6 \\equiv 1$ again: they visit every mark except $0$ in a scrambled order. Powers of $2$ come back sooner: $1, 2, 4, 1$. For a prime $p$ always $a^{p-1} \\equiv 1$ (Fermat\'s little theorem). Cryptography is built on this circle: going forward is easy, going back is hard.',
-        ru: 'Теперь умножаем снова и снова: $1, a, a^2, a^3, \\ldots$ На часах из $7$ степени тройки — $1, 3, 2, 6, 4, 5$, а потом снова $3^6 \\equiv 1$: они обходят все отметки, кроме $0$, в перепутанном порядке. Степени двойки возвращаются раньше: $1, 2, 4, 1$. Для простого $p$ всегда $a^{p-1} \\equiv 1$ (малая теорема Ферма). На этом круге построена криптография: вперёд идти легко, назад — трудно.',
+        en: 'Now multiply again and again: $1, a, a^2, a^3, \\ldots$ On a clock of $7$ the powers of $3$ are $1, 3, 2, 6, 4, 5$ and then $3^6 \\equiv 1$ again: they visit every mark except $0$ in a scrambled order. Powers of $2$ come back sooner: $1, 2, 4, 1$. For a prime $p$ always $a^{p-1} \\equiv 1$ (Fermat\'s little theorem) — we prove it right after the question. Cryptography is built on this circle: going forward is easy, going back is hard.',
+        ru: 'Теперь умножаем снова и снова: $1, a, a^2, a^3, \\ldots$ На часах из $7$ степени тройки — $1, 3, 2, 6, 4, 5$, а потом снова $3^6 \\equiv 1$: они обходят все отметки, кроме $0$, в перепутанном порядке. Степени двойки возвращаются раньше: $1, 2, 4, 1$. Для простого $p$ всегда $a^{p-1} \\equiv 1$ (малая теорема Ферма) — докажем это сразу после вопроса. На этом круге построена криптография: вперёд идти легко, назад — трудно.',
       },
       try: { en: 'Try $n = 11$ or $n = 13$ and find an $a$ whose powers visit all marks.', ru: 'Попробуйте $n = 11$ или $n = 13$ и найдите $a$, степени которого обходят все отметки.' },
       check: {
@@ -257,6 +300,38 @@ export default {
         reveal: scene => scene.animateParams({ a: 5 }, 800),
       },
       state: { show: ['powers'], params: { n: 7, a: 3 }, window: WINDOW, controls: ['a', 'n'] },
+    },
+    {
+      proof: true,
+      statement: {
+        en: '<b>Fermat\'s little theorem.</b> If $p$ is prime and $a$ is not a multiple of $p$, then $a^{p-1} \\equiv 1 \\pmod p$.',
+        ru: '<b>Малая теорема Ферма.</b> Если $p$ простое и $a$ не делится на $p$, то $a^{p-1} \\equiv 1 \\pmod p$.',
+      },
+      title: { en: 'Multiplying by a shuffles the marks', ru: 'Умножение на a перемешивает отметки' },
+      text: {
+        en: 'Send every mark $1, 2, \\ldots, p - 1$ to $a$ times itself (the arrows). Two different marks never land on the same one: if $a \\cdot k \\equiv a \\cdot m$, multiply both by the inverse of $a$ — it exists, $p$ is prime — and get $k \\equiv m$. And nothing lands on $0$. So $a \\cdot 1, a \\cdot 2, \\ldots, a \\cdot (p - 1)$ are <b>the same</b> numbers $1, \\ldots, p - 1$, only in another order.',
+        ru: 'Отправим каждую отметку $1, 2, \\ldots, p - 1$ в $a$, умноженное на неё (стрелки). Две разные отметки никогда не попадут в одну: если $a \\cdot k \\equiv a \\cdot m$, умножим обе части на обратный к $a$ — он есть, ведь $p$ простое, — и получим $k \\equiv m$. И в $0$ не попадает никто. Значит, $a \\cdot 1, a \\cdot 2, \\ldots, a \\cdot (p - 1)$ — <b>те же самые</b> числа $1, \\ldots, p - 1$, только в другом порядке.',
+      },
+      try: { en: 'Change $a$. Then try $n = 12$: the arrows collide, and some go to $0$ (red) — that is why $p$ must be prime.', ru: 'Меняйте $a$. Потом попробуйте $n = 12$: стрелки сталкиваются, некоторые ведут в $0$ (красные) — поэтому $p$ должно быть простым.' },
+      state: { show: ['fermatMap'], params: { n: 7, a: 3 }, window: WINDOW, controls: ['a', 'n'] },
+    },
+    {
+      proof: true,
+      title: { en: 'Multiply both piles', ru: 'Перемножим обе стопки' },
+      text: {
+        en: 'If two piles hold the same numbers, their products are equal. Multiply the shuffled pile: each factor brings one $a$, so we get $a^{p-1}$ times $1 \\cdot 2 \\cdots (p - 1)$. Multiply the plain pile: just $1 \\cdot 2 \\cdots (p - 1)$. So $a^{p-1} \\cdot (p-1)! \\equiv (p-1)!$.',
+        ru: 'Если в двух стопках одни и те же числа, их произведения равны. Перемножим перемешанную стопку: каждый множитель приносит одно $a$, выходит $a^{p-1}$, умноженное на $1 \\cdot 2 \\cdots (p - 1)$. Перемножим обычную стопку: просто $1 \\cdot 2 \\cdots (p - 1)$. Значит, $a^{p-1} \\cdot (p-1)! \\equiv (p-1)!$.',
+      },
+      state: { show: ['fermatProd'], params: { n: 7, a: 3 }, window: WINDOW, controls: ['a'] },
+    },
+    {
+      proof: true,
+      title: { en: 'Cancel', ru: 'Сократим' },
+      text: {
+        en: 'The number $(p-1)!$ is a product of marks that all have inverses, so it has an inverse too (the product of their inverses). Multiply both sides of $a^{p-1} \\cdot \\orange{(p-1)!} \\equiv \\orange{(p-1)!}$ by it — and $a^{p-1} \\equiv 1$. The powers of $a$ always come back to $1$ after $p - 1$ steps (or sooner). $\\blacksquare$',
+        ru: 'Число $(p-1)!$ — произведение отметок, у каждой из которых есть обратный, поэтому обратный есть и у него (произведение их обратных). Умножим на него обе части $a^{p-1} \\cdot \\orange{(p-1)!} \\equiv \\orange{(p-1)!}$ — и получим $a^{p-1} \\equiv 1$. Степени $a$ всегда возвращаются к $1$ через $p - 1$ шагов (или раньше). $\\blacksquare$',
+      },
+      state: { show: ['fermatCancel'], params: { n: 7, a: 3 }, window: WINDOW, controls: ['a'] },
     },
     {
       title: { en: 'Your turn', ru: 'Теперь сами' },

@@ -179,7 +179,7 @@ const TXT = {
     ru: 'Тяните в любом месте — прицел · тяните шар — переставить · точный угол — ползунок',
   },
   hudFixed: { en: 'Drag anywhere to aim · fine angle — the slider', ru: 'Тяните в любом месте — прицел · точный угол — ползунок' },
-  hudProof: { en: 'Drag P along the ellipse and Q along the tangent', ru: 'Тяните P по эллипсу и Q по касательной' },
+  hudProof: { en: 'Drag P along the ellipse (and Q along the tangent)', ru: 'Тяните P по эллипсу (и Q по касательной)' },
 };
 
 const MODES = [
@@ -216,21 +216,45 @@ const MODES = [
       en: 'Any direction works. For every point of the ellipse $|PF_1| + |PF_2|$ is the same, so the lines to the foci make equal angles with the cushion — exactly the law of reflection. In «whispering galleries» with an elliptic ceiling, a whisper at one focus is heard at the other.',
       ru: 'Подходит любое направление. Для каждой точки эллипса $|PF_1| + |PF_2|$ одно и то же, поэтому прямые к фокусам составляют с бортом равные углы — ровно закон отражения. В «шепчущих галереях» с эллиптическим сводом шёпот в одном фокусе слышен в другом.',
     },
-    // The proof of the focal property, drawn on the table while it is open (P on the ellipse, Q on its tangent)
-    proof: {
-      en: `<ol>
-        <li><b>Definition.</b> The ellipse is all points $X$ with $|XF_1| + |XF_2| = 2a$ (here $2a = 8$). For a point $X$ outside it the sum is at least $2a$: the segment $F_1X$ crosses the ellipse at some $Y$, and by the triangle inequality $|XF_1| + |XF_2| = |YF_1| + |YX| + |XF_2| \\ge |YF_1| + |YF_2| = 2a$.</li>
-        <li><b>The tangent.</b> The ellipse is convex, so its tangent at $P$ lies outside it everywhere except $P$. Hence for every point $Q$ of the tangent $|QF_1| + |QF_2| \\ge 2a = |PF_1| + |PF_2|$: on the whole tangent the sum of distances to the foci is smallest at $P$. Drag $Q$ along the tangent — the sum in the table never drops below $8$.</li>
-        <li><b>The mirror.</b> Reflect $F_2$ in the tangent: the point $F_2'$. For every $Q$ of the tangent $|QF_2| = |QF_2'|$, so $|QF_1| + |QF_2| = |QF_1| + |QF_2'| \\ge |F_1F_2'|$ — a broken line is not shorter than a straight one, and equality holds only where the segment $F_1F_2'$ crosses the tangent: in one point. The smallest sum is reached at $P$ (step 2) — so that point is $P$: $F_1$, $P$, $F_2'$ lie on one line (the orange dashes go through $P$).</li>
-        <li><b>The angles.</b> The line $F_1F_2'$ crosses the tangent at $P$, so $F_1P$ and $PF_2'$ make equal (vertical) angles with it. $PF_2'$ is the mirror image of $PF_2$, so $PF_2$ makes the same angle too. The segments to the foci make equal angles with the cushion — that is the law of reflection: a ball sent from $F_1$ to $P$ bounces exactly to $F_2$. And $P$ is any point — so any direction works. $\\blacksquare$</li>
-      </ol>Drag $P$ along the ellipse: the picture holds for every point.`,
-      ru: `<ol>
-        <li><b>Определение.</b> Эллипс — это все точки $X$, для которых $|XF_1| + |XF_2| = 2a$ (здесь $2a = 8$). Для точки $X$ снаружи сумма не меньше $2a$: отрезок $F_1X$ пересекает эллипс в какой-то точке $Y$, и по неравенству треугольника $|XF_1| + |XF_2| = |YF_1| + |YX| + |XF_2| \\ge |YF_1| + |YF_2| = 2a$.</li>
-        <li><b>Касательная.</b> Эллипс выпуклый, поэтому касательная в точке $P$ лежит снаружи него везде, кроме самой $P$. Значит, для любой точки $Q$ касательной $|QF_1| + |QF_2| \\ge 2a = |PF_1| + |PF_2|$: на всей касательной сумма расстояний до фокусов наименьшая в $P$. Тяните $Q$ по касательной — сумма в таблице никогда не опускается ниже $8$.</li>
-        <li><b>Зеркало.</b> Отразим $F_2$ относительно касательной — получим точку $F_2'$. Для любой точки $Q$ касательной $|QF_2| = |QF_2'|$, поэтому $|QF_1| + |QF_2| = |QF_1| + |QF_2'| \\ge |F_1F_2'|$: ломаная не короче отрезка, и равенство — только там, где отрезок $F_1F_2'$ пересекает касательную, то есть в одной точке. Наименьшая сумма достигается в $P$ (шаг 2) — значит, это и есть $P$: точки $F_1$, $P$, $F_2'$ лежат на одной прямой (оранжевый пунктир проходит через $P$).</li>
-        <li><b>Углы.</b> Прямая $F_1F_2'$ пересекает касательную в $P$, поэтому $F_1P$ и $PF_2'$ образуют с ней равные (вертикальные) углы. $PF_2'$ — зеркальная копия $PF_2$, значит, и $PF_2$ образует с касательной тот же угол. Отрезки к фокусам составляют с бортом равные углы — это и есть закон отражения: шар, пущенный из $F_1$ в $P$, отскочит точно в $F_2$. А $P$ — любая точка, поэтому подходит любое направление. $\\blacksquare$</li>
-      </ol>Тяните $P$ по эллипсу: картинка верна для каждой точки.`,
+  },
+  {
+    id: 'why-ellipse',
+    kind: 'proof',
+    title: { en: 'Why the ellipse whispers', ru: 'Почему эллипс «шепчет»' },
+    statement: {
+      en: 'A ball sent from one focus of an elliptic table bounces off the cushion straight into the other focus — whatever the direction.',
+      ru: 'Шар, пущенный из одного фокуса эллиптического стола, отскакивает от борта точно в другой фокус — в каком бы направлении его ни ударили.',
     },
+    slides: [
+      {
+        title: { en: 'What an ellipse is', ru: 'Что такое эллипс' },
+        text: {
+          en: 'Tie a string of length $8$ to two pins $F_1$ and $F_2$ and draw with a pencil keeping it tight — you get an ellipse. So for every point $P$ of it $|PF_1| + |PF_2| = 8$. Drag $P$: the yellow broken line changes, its length does not. And for a point outside the ellipse the sum is <b>bigger</b> than $8$: the string would have to stretch.',
+          ru: 'Привяжите нитку длины $8$ к двум гвоздикам $F_1$ и $F_2$ и ведите карандаш, натягивая её, — получится эллипс. Поэтому для каждой его точки $P$ верно $|PF_1| + |PF_2| = 8$. Тяните $P$: жёлтая ломаная меняется, её длина — нет. А у точки снаружи эллипса сумма <b>больше</b> $8$: нитке пришлось бы растянуться.',
+        },
+      },
+      {
+        title: { en: 'The tangent: the shortest way via a line', ru: 'Касательная: кратчайший путь через прямую' },
+        text: {
+          en: 'Draw the tangent at $P$. The ellipse is convex, so all other points $Q$ of the tangent lie outside it — and for them $|QF_1| + |QF_2| > 8$. So among all points of the tangent, $P$ gives the <b>shortest</b> way from $F_1$ to the line and on to $F_2$. Drag $Q$ and watch the blue sum: it is smallest exactly at $P$.',
+          ru: 'Проведём касательную в точке $P$. Эллипс выпуклый, поэтому все остальные точки $Q$ касательной лежат снаружи — и у них $|QF_1| + |QF_2| > 8$. Значит, среди всех точек касательной именно $P$ даёт <b>кратчайший</b> путь от $F_1$ до прямой и дальше до $F_2$. Тяните $Q$ и смотрите на синюю сумму: она наименьшая ровно в $P$.',
+        },
+      },
+      {
+        title: { en: 'A mirror straightens the way', ru: 'Зеркало выпрямляет путь' },
+        text: {
+          en: 'Reflect $F_2$ in the tangent: the point $F_2\'$. Any point $Q$ of the tangent is equally far from $F_2$ and $F_2\'$, so the way $F_1 \\to Q \\to F_2$ is as long as $F_1 \\to Q \\to F_2\'$. The shortest way between two points is the straight segment $F_1F_2\'$, and it crosses the tangent in one point. We already know where the shortest way is — at $P$. So $F_1$, $P$, $F_2\'$ lie on <b>one straight line</b>: see, the dashes continue the yellow segment.',
+          ru: 'Отразим $F_2$ относительно касательной — точка $F_2\'$. Любая точка $Q$ касательной одинаково далека от $F_2$ и от $F_2\'$, поэтому путь $F_1 \\to Q \\to F_2$ такой же длины, как $F_1 \\to Q \\to F_2\'$. Кратчайший путь между двумя точками — прямой отрезок $F_1F_2\'$, и он пересекает касательную в одной точке. Где кратчайший путь, мы уже знаем — в $P$. Значит, $F_1$, $P$, $F_2\'$ лежат на <b>одной прямой</b>: смотрите, пунктир продолжает жёлтый отрезок.',
+        },
+      },
+      {
+        title: { en: 'Equal angles — the law of reflection', ru: 'Равные углы — закон отражения' },
+        text: {
+          en: 'A straight line crossing the tangent makes equal angles on both sides of it (vertical angles), so $F_1P$ and $PF_2\'$ make the same angle with the tangent. And $PF_2$ is the mirror image of $PF_2\'$ — the same angle again. The two arcs are equal: the angle of incidence equals the angle of reflection. So a ball sent from $F_1$ to $P$ bounces exactly to $F_2$. $P$ was any point of the ellipse — so any direction works. $\\blacksquare$',
+          ru: 'Прямая, пересекающая касательную, образует с ней равные углы по обе стороны (вертикальные углы), поэтому $F_1P$ и $PF_2\'$ образуют с касательной один и тот же угол. А $PF_2$ — зеркальная копия $PF_2\'$, у неё тот же угол. Две дуги равны: угол падения равен углу отражения. Значит, шар, пущенный из $F_1$ в $P$, отскакивает точно в $F_2$. Точка $P$ была любой — значит, подходит любое направление. $\\blacksquare$',
+        },
+      },
+    ],
   },
   {
     id: 'star',
@@ -269,7 +293,7 @@ export default {
       unfold: false, foci: false, twin: false, preview: false,
       obstacles: [], target: null, fixed: false,
       shot: null, twinShot: null, s: 0, playing: false, mode: 'free', hits: [],
-      proof: false, pTh: 1.1, qS: 1.4, // the proof on the table: P = (a cos θ, b sin θ), Q = P + s·(tangent)
+      proof: -1, pTh: 1.1, qS: 1.4, // the slide of the proof on the table (−1: none): P = (a cos θ, b sin θ), Q = P + s·(tangent)
     };
     const plot = new Plot2D(ui.host, p => draw(p), { ...VIEW.rect });
     let raf = 0, last = 0, angleCtl = null;
@@ -316,31 +340,55 @@ export default {
       return { P, T, F1, F2, F2m: [F2[0] - k * n[0], F2[1] - k * n[1]], Q: [P[0] + S.qS * T[0], P[1] + S.qS * T[1]] };
     }
     const dist = (A, B) => Math.hypot(A[0] - B[0], A[1] - B[1]);
+    // Slide k adds one thing: 0 — P and the string, 1 — the tangent and Q, 2 — the mirror F₂′, 3 — the equal angles
     function drawProof(p) {
-      const { P, T, F1, F2, F2m, Q } = proofFigure();
-      p.line(P[0] - T[0], P[1] - T[1], P[0] + T[0], P[1] + T[1], 'rgba(255,255,255,0.55)', { width: 1.4, extend: true });
-      p.line(...F1, ...F2m, 'rgba(255,159,90,0.75)', { width: 1.5, dash: [7, 6] });
-      p.line(...P, ...F2m, COLORS.orange, { width: 1.6, dash: [3, 4] });
-      p.line(...F1, ...Q, 'rgba(88,196,221,0.8)', { width: 1.4 });
-      p.line(...Q, ...F2, 'rgba(88,196,221,0.8)', { width: 1.4 });
+      const k = S.proof, { P, T, F1, F2, F2m, Q } = proofFigure();
+      if (k >= 1) p.line(P[0] - T[0], P[1] - T[1], P[0] + T[0], P[1] + T[1], 'rgba(255,255,255,0.55)', { width: 1.4, extend: true });
+      if (k >= 2) {
+        p.line(...P, ...F2m, COLORS.orange, { width: 1.8, dash: [6, 5] });
+        p.line(...F2, ...F2m, 'rgba(255,159,90,0.35)', { width: 1, dash: [2, 4] });
+        p.dot(...F2m, COLORS.orange, 5);
+        p.tex('pfF2m', "F_2'", ...F2m, COLORS.orange, { dx: 8, dy: -12 });
+      }
+      if (k === 1 || k === 2) {
+        p.line(...F1, ...Q, 'rgba(88,196,221,0.85)', { width: 1.4 });
+        p.line(...Q, ...(k === 2 ? F2m : F2), 'rgba(88,196,221,0.85)', { width: 1.4, dash: k === 2 ? [4, 4] : [] });
+        p.handle(...Q, COLORS.blue, (x, y) => { S.qS = Math.max(-5, Math.min(5, (x - P[0]) * T[0] + (y - P[1]) * T[1])); report(); plot.request(); });
+        p.tex('pfQ', 'Q', ...Q, COLORS.blue, { dx: 10, dy: -14 });
+      }
       p.line(...F1, ...P, COLORS.yellow, { width: 2.4 });
       p.line(...P, ...F2, COLORS.yellow, { width: 2.4 });
-      p.dot(...F2m, COLORS.orange, 5);
-      p.tex('pfF2m', "F_2'", ...F2m, COLORS.orange, { dx: 8, dy: -12 });
-      p.handle(...Q, COLORS.blue, (x, y) => { S.qS = Math.max(-5, Math.min(5, (x - P[0]) * T[0] + (y - P[1]) * T[1])); report(); plot.request(); });
-      p.tex('pfQ', 'Q', ...Q, COLORS.blue, { dx: 10, dy: -14 });
-      p.handle(...P, COLORS.teal, (x, y) => { S.pTh = Math.atan2(y / TABLES.ellipse.b, x / TABLES.ellipse.a); report(); plot.request(); });
+      if (k >= 3) {
+        // Equal angles between the tangent and the two segments: arcs of the same size on both sides
+        const side = Math.sign((F1[0] - P[0]) * T[0] + (F1[1] - P[1]) * T[1]) || 1, T1 = [T[0] * side, T[1] * side];
+        const arc = (u, v, key) => {
+          const a0 = Math.atan2(u[1], u[0]); let a1 = Math.atan2(v[1], v[0]);
+          let d = a1 - a0; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
+          p.polyline(Array.from({ length: 21 }, (_, i) => [P[0] + 0.55 * Math.cos(a0 + d * i / 20), P[1] + 0.55 * Math.sin(a0 + d * i / 20)]), COLORS.teal, 2.5);
+          const m = a0 + d / 2;
+          p.tex(key, '\\alpha', P[0] + 0.85 * Math.cos(m), P[1] + 0.85 * Math.sin(m), COLORS.teal, { dx: 0, dy: 0, align: 'center' });
+        };
+        arc(T1, [F1[0] - P[0], F1[1] - P[1]], 'pfA1');
+        arc([-T1[0], -T1[1]], [F2[0] - P[0], F2[1] - P[1]], 'pfA2');
+      }
+      p.handle(...P, COLORS.teal, (x, y) => { S.pTh = Math.atan2(y / TABLES.ellipse.b, x / TABLES.ellipse.a); report(); plot.request(); if (S.proof === 3) proofShot(); });
       p.tex('pfP', 'P', ...P, COLORS.teal, { dx: 10, dy: -14 });
+    }
+    // On the last slide the ball really flies: from F₁ through P, and the cushion sends it to F₂
+    function proofShot() {
+      const { P, F1 } = proofFigure();
+      S.ball = F1;
+      S.angle = Math.atan2(P[1] - F1[1], P[0] - F1[0]) / deg;
+      S.bounces = 1;
+      shoot();
     }
 
     function report() {
-      if (S.proof) {
-        const { P, F1, F2, F2m, Q } = proofFigure();
-        return ui.readout([
-          ['$|PF_1| + |PF_2|$', (dist(P, F1) + dist(P, F2)).toFixed(3)],
-          ['$|QF_1| + |QF_2|$', (dist(Q, F1) + dist(Q, F2)).toFixed(3)],
-          ["$|F_1F_2'|$", dist(F1, F2m).toFixed(3)],
-        ]);
+      if (S.proof >= 0) {
+        const { P, F1, F2, F2m, Q } = proofFigure(), k = S.proof, rows = [['$|PF_1| + |PF_2|$', (dist(P, F1) + dist(P, F2)).toFixed(3)]];
+        if (k === 1) rows.push(['$|QF_1| + |QF_2|$', (dist(Q, F1) + dist(Q, F2)).toFixed(3)]);
+        if (k === 2) rows.push(["$|QF_1| + |QF_2'|$", (dist(Q, F1) + dist(Q, F2m)).toFixed(3)], ["$|F_1F_2'|$", dist(F1, F2m).toFixed(3)]);
+        return ui.readout(rows);
       }
       const rows = [[t({ en: 'Angle', ru: 'Угол' }), `${S.angle.toFixed(2)}°`]];
       if (S.shot) {
@@ -431,7 +479,7 @@ export default {
 
       // The aim: dashed to the first cushion; with the unfolding — the whole straight line through the copies
       const d = [Math.cos(S.angle * deg), Math.sin(S.angle * deg)];
-      if (!S.playing && !S.proof) {
+      if (!S.playing && S.proof < 0) {
         if (unfold) p.line(...S.ball, S.ball[0] + 60 * d[0], S.ball[1] + 60 * d[1], 'rgba(244,211,94,0.55)', { width: 1.5, dash: [7, 6] });
         if (S.preview && !unfold) {
           const pv = trace(S.kind, S.ball, S.angle, opts());
@@ -458,14 +506,14 @@ export default {
         }
         if (S.twinShot) chart(p);
       }
-      if (S.proof) drawProof(p);
+      if (S.proof >= 0) drawProof(p);
       // The ball where it is now; before the next shot also the start, which can be dragged
       if (S.shot) p.dot(...pos, '#ffffff', 7);
       if (!S.playing) {
         if (S.fixed) p.dot(...S.ball, S.shot ? 'rgba(255,255,255,0.45)' : '#ffffff', 7);
         else p.handle(...S.ball, '#ffffff', (x, y) => { if (inside(S.kind, [x, y], 0.08)) { S.ball = [x, y]; clearShot(); report(); plot.request(); } });
       }
-      if (!S.playing) p.pen = pts => {
+      if (!S.playing && S.proof < 0) p.pen = pts => {
         const [x, y] = pts[pts.length - 1];
         if (Math.hypot(x - S.ball[0], y - S.ball[1]) < 0.05) return;
         S.angle = ((Math.atan2(y - S.ball[1], x - S.ball[0]) / deg) % 360 + 360) % 360;
@@ -525,7 +573,7 @@ export default {
     return {
       setMode(id) {
         stop();
-        Object.assign(S, { mode: id, shot: null, twinShot: null, s: 0, obstacles: [], target: null, fixed: false, hits: [], unfold: false, foci: false, twin: false, preview: false, proof: false });
+        Object.assign(S, { mode: id, shot: null, twinShot: null, s: 0, obstacles: [], target: null, fixed: false, hits: [], unfold: false, foci: false, twin: false, preview: false, proof: -1 });
         if (id === 'free') {
           Object.assign(S, { kind: 'rect', ball: [-2.4, -0.9], angle: 24, bounces: 14 });
           controls({ table: true, toggles: ['unfold', 'foci', 'twin', 'preview'], bounces: true });
@@ -535,6 +583,9 @@ export default {
         } else if (id === 'focus') {
           Object.assign(S, { kind: 'ellipse', ball: [-FOCUS, 0], angle: 60, bounces: 4, fixed: true, foci: true, obstacles: [[[0, -0.9], [0, 0.9]]], target: { c: [FOCUS, 0], r: 0.2 } });
           controls({});
+        } else if (id === 'why-ellipse') {
+          Object.assign(S, { kind: 'ellipse', ball: [-FOCUS, 0], fixed: true, foci: true, proof: 0, pTh: 1.1, qS: 1.4 });
+          ui.controls.innerHTML = '';
         } else if (id === 'star') {
           Object.assign(S, { kind: 'circle', ball: [-1.2, -0.4], angle: 30, bounces: 10 });
           controls({});
@@ -542,15 +593,16 @@ export default {
           Object.assign(S, { kind: 'stadium', ball: [-1.2, 0.3], angle: 37, bounces: 30, twin: true });
           controls({});
         }
-        ui.hud(t(S.fixed ? TXT.hudFixed : TXT.hudAim));
+        ui.hud(t(S.proof >= 0 ? TXT.hudProof : S.fixed ? TXT.hudFixed : TXT.hudAim));
         view();
         plot.request();
         report();
       },
-      // «Why is it so?» opened or closed: draw the proof on the table (only where the mode has one)
-      proof(open) {
-        S.proof = open && !!MODES.find(m => m.id === S.mode).proof;
-        ui.hud(t(S.proof ? TXT.hudProof : S.fixed ? TXT.hudFixed : TXT.hudAim));
+      // A slide of the proof: what the table shows
+      slide(k) {
+        clearShot();
+        S.proof = k;
+        if (k === 3) proofShot();
         report();
         plot.request();
       },
