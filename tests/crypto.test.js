@@ -32,3 +32,44 @@ test('Caesar shift', () => {
   assert.equal(shift('ёж, да!', 1), 'ЖЗ, ЕБ!');
   assert.equal(shift(shift('ЗАМОК', 5), -5), 'ЗАМОК');
 });
+
+test('elliptic curve y² = x³ − x + 1', async () => {
+  const { X0, onCurve, sOf, chord, exact, PTS, PM, MULT, ORDER, plusMod, chordMod } = await import('../js/topics/ecc.js');
+  const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} ≠ ${b}`);
+  close(X0 ** 3 - X0 + 1, 0);
+  // A point by one number s: on the curve, and back by sOf
+  for (const s of [-2, -0.3, 0, 0.7, 2]) { const [x, y] = onCurve(s); close(y * y, x ** 3 - x + 1); }
+  close(onCurve(sOf(3, -1))[1], -5);
+  // (−1; 1) + (0; 1): the line y = 1, third point (1; 1), sum (1; −1); 2·(1; 1) = (−1; 1); P + (−P) = O
+  const c = chord([-1, 1], [0, 1]);
+  close(c.R[0], 1); close(c.S[1], -1);
+  const d = chord([1, 1], [1, 1]);
+  close(d.S[0], -1); close(d.S[1], 1);
+  assert.equal(chord([1, 1], [1, -1]), null);
+  // The tasks: (0; −1) + (1; 1) = (3; −5), 2·(1; −1) = (−1; −1)
+  const t1 = chord([0, -1], [1, 1]).S, t2 = chord([1, -1], [1, -1]).S;
+  close(t1[0], 3); close(t1[1], -5); close(t2[0], -1); close(t2[1], -1);
+  // Exact multiples of (1; 1): 4P = (3; −5), 6P = (1/4; 7/8)
+  assert.deepEqual(exact[4], [[3n, 1n], [-5n, 1n]]);
+  assert.deepEqual(exact[6], [[1n, 4n], [7n, 8n]]);
+  // Modulo 29: 36 points, all on the curve; G = (1; 1) has the prime order 37
+  assert.equal(PTS.length, 36);
+  PTS.forEach(([x, y]) => assert.equal((y * y - x ** 3 + x - 1 + 29 * 29 * 29) % PM, 0));
+  assert.equal(ORDER, 37);
+  assert.equal(MULT[37], null);
+  assert.deepEqual(MULT[4], [3, 24]); // (3; −5) on the clock
+  assert.deepEqual(MULT[6], [22, 19]); // (1/4; 7/8): 4·22 ≡ 1, 7·11 ≡ 19
+  assert.deepEqual(MULT[13], [12, 8]);
+  assert.deepEqual(MULT[24], [12, 21]);
+  assert.deepEqual(chordMod([28, 1], [0, 1]).S, [1, 28]);
+  // The exchange: k(mG) = m(kG)
+  for (const [k, m] of [[6, 15], [3, 20], [36, 2]]) {
+    let A = null, B = null, S1 = null, S2 = null;
+    for (let i = 0; i < k; i++) A = plusMod(A, MULT[1]);
+    for (let i = 0; i < m; i++) B = plusMod(B, MULT[1]);
+    for (let i = 0; i < k; i++) S1 = plusMod(S1, B);
+    for (let i = 0; i < m; i++) S2 = plusMod(S2, A);
+    assert.deepEqual(S1, S2);
+    assert.deepEqual(S1, MULT[(k * m) % 37]);
+  }
+});

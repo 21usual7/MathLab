@@ -204,8 +204,12 @@ export const CATALOG = [
       en: 'Powers on a clock of n = p·q come back after (p − 1)(q − 1) steps. So a public e and a secret d with e·d ≡ 1 lock and unlock — and finding d means factoring n.',
       ru: 'Степени на часах из n = p·q возвращаются через (p − 1)(q − 1) шагов. Поэтому открытое e и секретное d с e·d ≡ 1 запирают и отпирают — а найти d значит разложить n на множители.',
     } },
-  { id: 'ecc', track: 'publickey', status: 'planned', prereqs: ['dh'],
-    title: { en: 'Elliptic curves: adding points', ru: 'Эллиптические кривые: сложение точек' } },
+  { id: 'ecc', track: 'publickey', status: 'ready', minutes: 15, prereqs: ['dh', 'derivative'],
+    title: { en: 'Elliptic curves: adding points', ru: 'Эллиптические кривые: сложение точек' },
+    summary: {
+      en: 'A line through two points of y² = x³ + ax + b meets the curve once more — reflect that point and you have the sum. The same curve on a clock of a prime turns into a cloud of points, and steps kG are the Diffie–Hellman of today\'s internet.',
+      ru: 'Прямая через две точки кривой y² = x³ + ax + b встречает её ещё раз — отразите эту точку, и получится сумма. Та же кривая на часах из простого числа становится облаком точек, а шаги kG — это Диффи — Хеллман сегодняшнего интернета.',
+    } },
 ];
 
 export const topicMeta = id => CATALOG.find(x => x.id === id);
@@ -232,6 +236,7 @@ const MODULES = {
   caesar: () => import('./caesar.js'),
   dh: () => import('./dh.js'),
   rsa: () => import('./rsa.js'),
+  ecc: () => import('./ecc.js'),
   'cube-sections': () => import('./cube-sections.js'),
   derivative: () => import('./derivative.js'),
   surfaces: () => import('./surfaces.js'),
