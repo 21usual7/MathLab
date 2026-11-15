@@ -27,9 +27,11 @@ const L = {
   nextSlide: { en: 'Next', ru: 'Далее' },
 };
 
-export async function mountWorld(root, id, startMode = 0) {
+export async function mountWorld(root, id, startMode = 0, { signal } = {}) {
   const meta = worldMeta(id);
   const world = meta && meta.status !== 'planned' ? await loadWorld(id) : null;
+  // Imports cannot be aborted; discard stale results before touching the DOM or allocating a scene.
+  if (signal?.aborted) return () => {};
   if (!world) {
     root.innerHTML = meta
       ? `<div class="empty"><h1>${t(meta.title)}</h1><p>${t({ en: 'This world is on the way.', ru: 'Этот мир в работе.' })}</p><a href="#worlds/${meta.collection}">← ${t(L.worlds)}</a></div>`

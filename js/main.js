@@ -14,9 +14,13 @@ import { closeKeypad } from './ui/keypad.js';
 const app = document.getElementById('app');
 let cleanup = null;
 let seq = 0;
+let navigation = null;
 
 async function route() {
   const my = ++seq;
+  navigation?.abort();
+  navigation = new AbortController();
+  const { signal } = navigation;
   if (cleanup) { cleanup(); cleanup = null; }
   closeKeypad();
   const [path, query] = location.hash.slice(1).split('?');
@@ -29,8 +33,8 @@ async function route() {
 
   let c;
   if (page === 'lab') c = mountLab(app, new URLSearchParams(query || ''));
-  else if (page === 'topic') c = await mountTopic(app, id, (parseInt(step, 10) || 1) - 1);
-  else if (page === 'world') c = await mountWorld(app, id, parseInt(step, 10) || 0);
+  else if (page === 'topic') c = await mountTopic(app, id, (parseInt(step, 10) || 1) - 1, { signal });
+  else if (page === 'world') c = await mountWorld(app, id, parseInt(step, 10) || 0, { signal });
   else if (page === 'topics') c = mountTopics(app, id);
   else if (page === 'worlds') c = mountWorlds(app, id);
   else c = mountHome(app);

@@ -33,9 +33,11 @@ const chip = id => {
     : `<span class="chip planned" title="Planned">${t(m.title)}</span>`;
 };
 
-export async function mountTopic(root, id, startStep = 0) {
+export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
   const meta = topicMeta(id);
   const topic = meta && meta.status === 'ready' ? await loadTopic(id) : null;
+  // Imports cannot be aborted; discard stale results before touching the DOM or allocating a scene.
+  if (signal?.aborted) return () => {};
   if (!topic) {
     root.innerHTML = `<div class="empty"><h1>${meta ? t(meta.title) : 'Not found'}</h1><p>${meta ? 'This topic is planned.' : ''}</p><a href="#">← Back to the map</a></div>`;
     return () => {};
@@ -209,6 +211,9 @@ export async function mountTopic(root, id, startStep = 0) {
     setControls(st.controls || topic.controls || []);
     if (step.enter) step.enter(scene, stage);
     if (answered.has(i) && step.check.reveal) step.check.reveal(scene, stage);
+    if (step.task && !tasks[i]) tasks[i] = bindTask(sections[i], step.task, i, {
+      scene, goto: show, stepLabel: k => `${k + 1}. ${t(topic.steps[k].title)}`,
+    });
     if (tasks[i]) tasks[i].enter();
     // In a task the Lab would show the formula of the goal graph — the answer
     const labBtn = $('[data-act=lab]');
@@ -218,13 +223,15 @@ export async function mountTopic(root, id, startStep = 0) {
   };
 
   // ---- Tasks: built on the scene, checked, mistakes explained ----
-  tasks = topic.steps.map((s, i) => s.task
-    ? bindTask(sections[i], s.task, i, { scene, goto: show, stepLabel: k => `${k + 1}. ${t(topic.steps[k].title)}` })
-    : null);
-  // A solved task is marked on its dot
-  root.addEventListener('click', e => {
-    if (e.target.closest('.task')) setTimeout(() => root.querySelectorAll('.dot').forEach((d, k) => d.classList.toggle('solved', !!(tasks[k] && tasks[k].solved))), 0);
-  });
+  // Create task controllers only when visited. Preserve them for subsequent attempts.
+  let solvedTimer;
+  const onTaskClick = e => {
+    if (!e.target.closest('.task')) return;
+    clearTimeout(solvedTimer);
+    solvedTimer = setTimeout(() => root.querySelectorAll('.dot').forEach((d, k) =>
+      d.classList.toggle('solved', !!tasks[k]?.solved)), 0);
+  };
+  root.addEventListener('click', onTaskClick);
 
   // ---- Questions: one guess, then the explanation and the answer on the scene ----
   sections.forEach((el, i) => {
@@ -273,6 +280,8 @@ export async function mountTopic(root, id, startStep = 0) {
 
   return () => {
     window.removeEventListener('keydown', onKey);
+    root.removeEventListener('click', onTaskClick);
+    clearTimeout(solvedTimer);
     off();
     stage.dispose();
     scene.dispose();
