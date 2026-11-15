@@ -70,11 +70,17 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
   };
 
   root.innerHTML = `
-    <article class="topic">
+    <article class="topic topic-player">
       <section class="panel">
         <div class="panel-top">
           <div class="crumbs"><a href="#topics/${subject.id}">${t(subject.title)}</a><span>/</span><span>${t(track.title)}</span></div>
-          <div class="dots" role="tablist">
+          <details class="step-menu">
+            <summary>${t({ en: 'Lesson steps', ru: 'Шаги темы' })}<span class="step-position"></span></summary>
+            <nav class="step-list" aria-label="${t({ en: 'Lesson steps', ru: 'Шаги темы' })}">
+              ${topic.steps.map((s, i) => `<button type="button" data-go="${i}" class="step-link"><span class="step-index">${i + 1}</span><span>${t(s.title)}<small>${t(s.task ? { en: 'Practice', ru: 'Задание' } : s.proof ? { en: 'Proof', ru: 'Доказательство' } : { en: 'Explore', ru: 'Исследование' })}</small></span><span class="step-result"></span></button>`).join('')}
+            </nav>
+          </details>
+          <div class="dots" aria-label="${t({ en: 'Progress', ru: 'Прогресс' })}">
             ${topic.steps.map((s, i) => `<button type="button" class="dot${s.task ? ' is-task' : ''}${s.proof ? ' is-proof' : ''}" data-go="${i}" title="${i + 1}. ${t(s.title).replace(/"/g, '&quot;')}" aria-label="Step ${i + 1}"></button>`).join('')}
             <span class="counter"></span>
           </div>
@@ -92,9 +98,9 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
               ${proofHead(s, i)}
               <div class="step-num">${s.task ? `Task ${taskNo(i)}` : String(i + 1).padStart(2, '0')}</div>
               <h2>${t(s.title)}</h2>
-              <div class="step-text">${t(s.text)}</div>
+              ${s.try ? `<details class="step-explanation" open><summary>${t({ en: 'Why it works', ru: 'Почему так' })}</summary><div class="step-text">${t(s.text)}</div></details>` : `<div class="step-text">${t(s.text)}</div>`}
               <div class="live-slot"></div>
-              ${s.try ? `<p class="try"><span class="try-label">Try</span>${t(s.try)}</p>` : ''}
+              ${s.try ? `<p class="try"><span class="try-label">${t({ en: 'Try it', ru: 'Попробуйте' })}</span>${t(s.try)}</p>` : ''}
               ${s.task ? taskHTML(s.task) : ''}
               ${s.check ? `
                 <div class="check">
@@ -124,8 +130,13 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
       </section>
 
       <aside class="topic-stage">
+        <div class="scene-tools">
+          <span class="scene-step-title"></span>
+          <button class="ghost" type="button" data-act="restart">↺ ${t({ en: 'Reset scene', ru: 'Сбросить сцену' })}</button>
+          ${topic.lab === false ? '' : '<button class="ghost" type="button" data-act="lab">Open in Lab</button>'}
+        </div>
         <div class="stage-host"></div>
-        ${topic.lab === false ? '' : '<button class="ghost stage-lab" data-act="lab">Open in Lab</button>'}
+        <div class="scene-action" hidden></div>
       </aside>
     </article>`;
   renderMath(root.querySelector('.panel-body'));
@@ -168,20 +179,46 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
   let active = -1;
   const answered = new Set();
   let tasks = [];
+  let restartParams = {};
+  let restartView = topic.view;
+  const narrow = matchMedia('(max-width: 900px)');
+  const syncExplanations = () => root.querySelectorAll('.step-explanation').forEach(el => { el.open = !narrow.matches; });
+  syncExplanations();
+  narrow.addEventListener('change', syncExplanations);
+  const updateProgress = () => {
+    root.querySelectorAll('.dot').forEach((d, k) => {
+      d.classList.toggle('current', k === active);
+      d.classList.toggle('done', k < active);
+      d.classList.toggle('solved', !!tasks[k]?.solved);
+      if (k === active) d.setAttribute('aria-current', 'step');
+      else d.removeAttribute('aria-current');
+    });
+    root.querySelectorAll('.step-link').forEach((el, k) => {
+      if (k === active) el.setAttribute('aria-current', 'step');
+      else el.removeAttribute('aria-current');
+      el.querySelector('.step-result').textContent = tasks[k]?.solved ? '✓' : '';
+    });
+  };
 
-  const show = i => {
+  const show = (i, restart = false) => {
     i = Math.max(0, Math.min(N, i));
-    if (i === active) return;
+    if (i === active && !restart) return;
     const back = i < active;
     active = i;
     sections.forEach((el, k) => { el.hidden = k !== i; });
     $('.topic-head').hidden = i !== 0;
-    root.querySelectorAll('.dot').forEach((d, k) => {
-      d.classList.toggle('current', k === i);
-      d.classList.toggle('done', k < i);
-      d.classList.toggle('solved', !!(tasks[k] && tasks[k].solved));
-    });
+    updateProgress();
+    $('.step-menu').open = false;
     $('.counter').textContent = i < N ? `${i + 1} / ${N}` : `${N} / ${N}`;
+    $('.step-position').textContent = i < N ? `${i + 1} / ${N}` : '✓';
+    $('.scene-step-title').textContent = i < N ? t(topic.steps[i].title) : t({ en: 'Where next', ru: 'Куда дальше' });
+    $('[data-act="restart"]').hidden = i === N;
+    // Keep a single instruction node: it follows its step into the scene footer.
+    const action = $('.scene-action'), oldTry = action.querySelector('.try');
+    if (oldTry) sections[+oldTry.dataset.step].appendChild(oldTry);
+    const instruction = sections[i].querySelector('.try');
+    if (instruction) { instruction.dataset.step = i; action.appendChild(instruction); }
+    action.hidden = !instruction;
     $('[data-nav="-1"]').disabled = i === 0;
     const next = $('[data-nav="1"]');
     next.hidden = i === N;
@@ -195,15 +232,24 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
     if (active !== -1 && matchMedia('(max-width: 900px)').matches && window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
     history.replaceState(null, '', `#topic/${id}${i ? `/${i + 1}` : ''}`);
 
-    if (i === N) { live.hidden = true; return; } // "Where next" keeps the last scene
+    scene.stopTween?.();
+    for (const p of scene.params.values()) p.playing = false;
+    if (i === N) { live.hidden = true; stage.p3?.autoRotate(false); scene.changed(); return; } // "Where next" keeps the last scene
     live.hidden = false;
     sections[i].querySelector('.live-slot').appendChild(live);
 
     const step = topic.steps[i], st = step.state || {};
-    for (const p of scene.params.values()) p.playing = false;
+    if (restart) {
+      for (const [name, value] of Object.entries(restartParams)) scene.setParam(name, value);
+      stage.setMode(restartView);
+      stage.reset();
+    } else {
+      restartParams = { ...Object.fromEntries([...scene.params].map(([name, p]) => [name, p.value])), ...st.params };
+      restartView = st.view || stage.mode;
+    }
     if (st.view) stage.setMode(st.view);
     if (st.show) scene.showOnly(st.show);
-    if (st.params) scene.animateParams(st.params, st.ms || 1000);
+    if (st.params && !restart) scene.animateParams(st.params, st.ms ?? 1000);
     if (st.window && stage.p2) stage.p2.setView(typeof st.window === 'function' ? st.window(scene) : st.window, st.windowMs || 1200);
     if (st.camera && stage.p3) stage.p3.setCamera(st.camera);
     if (stage.p3) stage.p3.autoRotate(!!st.rotate);
@@ -228,8 +274,7 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
   const onTaskClick = e => {
     if (!e.target.closest('.task')) return;
     clearTimeout(solvedTimer);
-    solvedTimer = setTimeout(() => root.querySelectorAll('.dot').forEach((d, k) =>
-      d.classList.toggle('solved', !!tasks[k]?.solved)), 0);
+    solvedTimer = setTimeout(updateProgress, 0);
   };
   root.addEventListener('click', onTaskClick);
 
@@ -256,9 +301,14 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
 
   // ---- Navigation: buttons, dots, keyboard ----
   root.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => show(active + +b.dataset.nav)));
-  root.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => show(+b.dataset.go)));
+  root.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => {
+    const inMenu = !!b.closest('.step-menu');
+    show(+b.dataset.go);
+    if (inMenu) { $('.step-menu').open = false; $('.step-menu summary').focus(); }
+  }));
+  $('[data-act="restart"]').addEventListener('click', () => show(active, true));
   const onKey = e => {
-    if (e.target.closest('input, textarea, [contenteditable]') || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.target.closest('input, textarea, summary, .step-menu button, [contenteditable]') || e.altKey || e.ctrlKey || e.metaKey) return;
     if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); show(active + 1); }
     if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(active - 1); }
   };
@@ -279,6 +329,7 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
   show(Math.max(0, Math.min(N - 1, startStep)));
 
   return () => {
+    narrow.removeEventListener('change', syncExplanations);
     window.removeEventListener('keydown', onKey);
     root.removeEventListener('click', onTaskClick);
     clearTimeout(solvedTimer);

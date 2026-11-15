@@ -131,8 +131,8 @@ button { font: inherit; color: inherit; }
   .stage-views[data-mode="split"] { flex-direction: column; }
 }
 .plot2d, .plot3d { position: relative; flex: 1 1 0; min-width: 0; min-height: 0; background: var(--stage); overflow: hidden; }
-.plot3d { order: 1; }
-.plot2d { order: 2; }
+.plot2d { order: 1; }
+.plot3d { order: 2; }
 .plot2d canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
 .plot2d canvas.dragging { cursor: grabbing; }
 .plot2d canvas.over-handle { cursor: pointer; }
@@ -578,4 +578,61 @@ body.keypad-open { padding-bottom: var(--kb, 0px); }
   .site-header { gap: 4px; padding: 0 8px; }
   .site-nav a { padding: 6px 3px; }
   .lang button { padding: 3px 5px; }
+}
+
+/* Topic player: named steps and instructions stay beside the experiment. */
+.topic-player .panel-top { position: relative; }
+.step-menu summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; cursor: pointer; color: var(--soft); font-size: 14px; list-style: none; }
+.step-menu summary::-webkit-details-marker { display: none; }
+.step-menu summary::after { content: '⌄'; }
+.step-menu[open] summary::after { content: '⌃'; }
+.step-position { margin-left: auto; color: var(--muted); font: 12px var(--mono); }
+.step-list { position: absolute; left: 12px; right: 12px; top: calc(100% - 10px); z-index: 20; max-height: min(60dvh, 540px); overflow-y: auto; padding: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 16px 40px #0008; }
+.step-link { display: grid; grid-template-columns: 24px minmax(0, 1fr) 18px; gap: 10px; align-items: center; width: 100%; min-height: 52px; padding: 10px; text-align: left; border: 0; border-radius: 8px; background: transparent; cursor: pointer; color: var(--soft); font-size: 14px; line-height: 1.4; }
+.step-link:hover { background: var(--raised); }
+.step-link[aria-current] { background: var(--raised); color: var(--blue); }
+.step-link small { display: block; margin-top: 3px; font-size: 11px; color: var(--muted); }
+.step-index { color: var(--muted); font: 12px var(--mono); }
+.step-result { color: var(--green); }
+.topic-player .dots { flex-wrap: nowrap; gap: 4px; }
+.topic-player .dot { flex: 1; min-width: 3px; width: auto; }
+.topic-player .counter { flex-shrink: 0; }
+.topic-player .topic-stage { display: flex; flex-direction: column; }
+.scene-tools { display: flex; gap: 8px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line-soft); }
+.scene-tools .ghost { flex-shrink: 0; min-height: 36px; }
+.scene-step-title { flex: 1; min-width: 0; color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topic-player .topic-stage .stage-host { position: relative; inset: auto; flex: 1; min-height: 0; }
+.scene-action { flex-shrink: 0; padding: 10px 18px; border-top: 1px solid var(--line-soft); background: var(--panel); }
+.scene-action .try { margin: 0; padding: 0 0 0 12px; font-size: 14px; line-height: 1.5; }
+.step-explanation > summary { color: var(--muted); font-size: 14px; cursor: pointer; padding: 8px 0; }
+.step-explanation[open] > summary { margin-bottom: 6px; }
+.topic-player :is(button, summary):focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+@media (min-width: 901px) {
+  .step-explanation > summary { display: none; }
+}
+@media (max-width: 900px) {
+  .topic-player .topic-stage { height: 54dvh; }
+  .topic-player .topic-stage:has(.stage-views[data-mode="split"]) { height: 62dvh; }
+  .topic-player .panel-top { z-index: 7; }
+  .scene-tools { padding: 6px 10px; }
+  .scene-tools .ghost { font-size: 12px; padding: 5px 10px; }
+  .scene-action { padding: 8px 12px; }
+  .scene-action .try { font-size: 13px; }
+  .scene-action .try-label { font-size: 10px; }
+  .topic-player .panel-body { padding-bottom: 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .topic-player .step { animation: none; }
+}
+@media (max-width: 900px) {
+  /* Keep reading and navigation in their own space below the live scene. */
+  .topic-player { height: calc(100dvh - var(--header)); grid-template-rows: minmax(0, 52fr) minmax(0, 48fr); }
+  .topic-player .topic-stage,
+  .topic-player .topic-stage:has(.stage-views[data-mode="split"]) { position: relative; top: auto; height: auto; }
+  .topic-player .panel { min-height: 0; }
+  .topic-player .panel-top { flex-shrink: 0; padding: 4px 12px 8px; gap: 2px; }
+  .topic-player .panel-top .crumbs { display: none; }
+  .topic-player .panel-body { overflow-y: auto; padding: 14px 16px 24px; }
+  .topic-player .panel-nav { position: relative; flex-shrink: 0; }
+  .topic-player .dots .counter { display: none; }
 }

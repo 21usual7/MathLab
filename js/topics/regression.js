@@ -204,7 +204,7 @@ export default {
         en: 'A line is two numbers $(w;\\ b)$ — a point on a flat map. Above every point of the map raise its error $L$: you get a landscape. For a line it is a <b>bowl</b>: $L$ is a sum of squares of expressions linear in $w$ and $b$, a paraboloid. The yellow ball is your line; the green dot at the bottom is the best line. Learning is finding the bottom.',
         ru: 'Прямая — это два числа $(w;\\ b)$, точка на плоской карте. Над каждой точкой карты поднимем её ошибку $L$ — получится рельеф. Для прямой это <b>чаша</b>: $L$ — сумма квадратов выражений, линейных по $w$ и $b$, параболоид. Жёлтый шар — ваша прямая; зелёная точка на дне — лучшая прямая. Учиться — значит найти дно.',
       },
-      try: { en: 'Drag the line on the left and watch the ball roll over the bowl on the right.', ru: 'Тяните прямую слева и смотрите, как шар катается по чаше справа.' },
+      try: { en: 'Drag the yellow handles on the line and watch the ball move over the bowl.', ru: 'Тяните жёлтые ручки на прямой и смотрите, как шар катается по чаше.' },
       check: {
         q: { en: 'How many lowest points does this bowl have?', ru: 'Сколько самых низких точек у этой чаши?' },
         options: [{ text: { en: 'One', ru: 'Одна' }, ok: true }, { text: { en: 'Several valleys', ru: 'Несколько долин' } }, { text: { en: 'It depends on the start', ru: 'Зависит от старта' } }],

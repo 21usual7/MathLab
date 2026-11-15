@@ -63,13 +63,13 @@ export class Plot3D {
     this.bindHandles();
     this.needBuild = true;
     this.dirty = true;
+    this.raf = null;
 
     this.ro = new ResizeObserver(() => this.resize());
     this.ro.observe(this.el);
-    this.resize();
 
     const tick = () => {
-      this.raf = requestAnimationFrame(tick);
+      this.raf = null;
       if (this.needBuild) this.build();
       const moved = this.controls.update();
       if (moved || this.dirty) {
@@ -79,11 +79,22 @@ export class Plot3D {
         renderer.render(this.scene, this.camera);
         this.labelRenderer.render(this.scene, this.camera);
       }
+      if (moved || this.controls.autoRotate) this.requestFrame();
     };
-    tick();
+    this.requestFrame = () => {
+      if (this.raf === null) this.raf = requestAnimationFrame(tick);
+    };
+    this.controls.addEventListener('start', this.requestFrame);
+    renderer.domElement.addEventListener('pointermove', this.requestFrame);
+    this.controls.addEventListener('change', () => {
+      this.dirty = true;
+      this.requestFrame();
+    });
+    this.resize();
+    this.requestFrame();
   }
 
-  request() { this.needBuild = true; }
+  request() { this.needBuild = true; this.requestFrame(); }
 
   resize() {
     const w = this.el.clientWidth, h = this.el.clientHeight;
@@ -96,6 +107,7 @@ export class Plot3D {
     this.camera.fov = this.camera.aspect >= WIDE ? FOV : 2 * Math.atan(Math.tan(FOV * Math.PI / 360) * WIDE / this.camera.aspect) * 180 / Math.PI;
     this.camera.updateProjectionMatrix();
     this.dirty = true;
+    this.requestFrame();
   }
 
   build() {
@@ -481,10 +493,11 @@ export class Plot3D {
     this.stopTween = tween(ms, k => {
       this.camera.position.set(lerp(from.x, to.x, k), lerp(from.y, to.y, k), lerp(from.z, to.z, k));
       this.dirty = true;
+      this.requestFrame();
     });
   }
 
-  autoRotate(on) { this.controls.autoRotate = on; }
+  autoRotate(on) { this.controls.autoRotate = on; if (on) this.requestFrame(); }
 
   disposeObj(group) {
     group.traverse(m => {
