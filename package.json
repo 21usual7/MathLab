@@ -2,11 +2,13 @@
   "name": "mathlab",
   "private": true,
   "type": "module",
-  "description": "No build step. npm is only used to run the tests of the engine.",
+  "description": "Static ES modules with mathematical and browser acceptance tests.",
   "scripts": {
-    "test": "node --test tests/"
+    "test": "node --test tests/",
+    "test:crypto:browser": "node scripts/check-crypto.mjs"
   },
   "devDependencies": {
-    "mathjs": "12.4.2"
+    "mathjs": "12.4.2",
+    "playwright": "1.65.1"
   }
 }

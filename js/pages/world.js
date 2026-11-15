@@ -162,6 +162,7 @@ export async function mountWorld(root, id, startMode = 0, { signal } = {}) {
     markTabs();
     history.replaceState(null, '', `#world/${id}/${i}`);
     inst.setMode(m.id);
+    ui.host.scrollTop = 0; // A scrollable workshop starts each experiment at its scene.
     if (isProof(m)) slide(0);
     if (window.innerWidth > 900) $('.panel-body').scrollTop = 0;
   }

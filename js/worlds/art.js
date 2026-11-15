@@ -1,3 +1,6 @@
+import { actor, envelope } from './crypto/ui.js';
+import { CRYPTO_WORLDS } from './crypto/catalog.js';
+
 // Small drawings on the cards of the worlds (inline SVG: no requests, sharp at any size)
 
 export const ART = {
@@ -27,3 +30,9 @@ export const ART = {
     return `<rect x="${8 + x * 14}" y="${8 + y * 17}" width="11" height="14" rx="2" fill="${c}" opacity="${c === '#fc6255' ? 0.55 : 1}"/>`;
   }).join('')}</svg>`,
 };
+
+for (const [i, world] of CRYPTO_WORLDS.entries()) {
+  ART[world.id] = `<svg viewBox="0 0 240 120" aria-hidden="true"><path d="M60 42H180M120 42V85" fill="none" stroke="#5f7389" stroke-dasharray="3 4"/>${actor('alice', 30, 43, .38)}${actor('bob', 210, 43, .38)}${actor('eve', 120, 87, .23)}<g transform="translate(100 42) scale(.6)">${envelope}</g><text x="157" y="90" fill="${i % 2 ? '#b69df8' : '#f4d35e'}" font-size="18" font-family="monospace">${({ 'crypto-xor': '⊕', 'crypto-tamper': 'Δ', 'crypto-mitm': 'A↔B', 'crypto-hashes': 'H(x)', 'crypto-signatures': '(r,s)', 'crypto-passwords': 'p(x)', 'crypto-channel': '✓' })[world.id]}</text></svg>`;
+}
+
+ART['crypto-hashes'] = `<svg viewBox="0 0 240 120" aria-hidden="true"><path d="M34 35H77M34 80H77" stroke="#58c4dd" stroke-width="2"/><rect x="77" y="20" width="66" height="78" rx="10" fill="#172d3d" stroke="#58c4dd"/><text x="110" y="66" text-anchor="middle" fill="#f4d35e" font-size="24" font-family="serif">H</text>${Array.from({length:32},(_,i)=>`<rect x="${160+(i%8)*8}" y="${35+Math.floor(i/8)*12}" width="5" height="8" rx="1" fill="${i%3?'#58c4dd':'#ff9f5a'}"/>`).join('')}<text x="12" y="40" fill="#b9c1cd" font-size="12">M</text><text x="12" y="84" fill="#ff9f5a" font-size="12">M′</text></svg>`;

@@ -16,6 +16,7 @@ import { fmt } from '../core/numeric.js';
 import { SUBJECTS, TRACKS, topicMeta, loadTopic } from '../topics/index.js';
 import { encodeLab } from './lab.js';
 import { taskHTML, bindTask } from '../ui/task.js';
+import { CRYPTO_TOPIC_LABS, CRYPTO_WORLDS } from '../worlds/crypto/catalog.js';
 
 const PRACTICE = {
   title: { en: 'Try it yourself', ru: 'Попробуйте сами' },
@@ -91,6 +92,7 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
             <h1>${t(meta.title)}</h1>
             <p class="lead">${t(meta.summary)}</p>
             ${meta.prereqs && meta.prereqs.length ? `<div class="prereqs"><span class="label">Builds on</span>${meta.prereqs.map(chip).join('')}</div>` : ''}
+            ${CRYPTO_TOPIC_LABS[id] ? `<div class="prereqs topic-labs"><span class="label">${t({ en: 'Try an attack', ru: 'Исследовать атаку' })}</span>${CRYPTO_TOPIC_LABS[id].map(wid => `<a class="chip" href="#world/${wid}">${t(CRYPTO_WORLDS.find(w => w.id === wid).title)} ↗</a>`).join('')}</div>` : ''}
           </header>
           ${topic.steps.map((s, i) => `
             <section class="step${s.task ? ' task-step' : ''}" data-i="${i}" hidden>

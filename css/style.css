@@ -636,3 +636,224 @@ body.keypad-open { padding-bottom: var(--kb, 0px); }
   .topic-player .panel-nav { position: relative; flex-shrink: 0; }
   .topic-player .dots .counter { display: none; }
 }
+
+/* Crypto workshops: characters, letters and inspectable computations, without plot axes. */
+.topic-labs { margin-top: 14px; }
+.crypto-world .world-stage .stage-host { overflow-y: auto; }
+.crypto-world .world-hud { display: none; }
+.crypto-lab { min-height: 100%; background: radial-gradient(ellipse at 40% 0, #18303b 0, #0d141e 55%); padding: 24px clamp(16px, 3vw, 42px) 20px; }
+.crypto-theatre { max-width: 1000px; margin: 0 auto 24px; border-bottom: 1px solid #344653; padding-bottom: 16px; }
+.crypto-scene-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.crypto-eyebrow { color: var(--teal); text-transform: uppercase; font: 600 10px/1.5 var(--sans); letter-spacing: .15em; }
+.crypto-play-state { font: 11px var(--mono); color: var(--muted); }
+.crypto-cast { display: block; width: 100%; max-height: 320px; overflow: visible; }
+.crypto-name { fill: var(--text); font: 20px var(--serif); }
+.crypto-name.eve-name { fill: var(--purple); font-size: 15px; }
+.crypto-badge { fill: var(--soft); font: 12px var(--sans); }
+.crypto-channel-label { fill: var(--muted); font: 13px var(--sans); }
+.crypto-copy, .crypto-stop { opacity: 0; }
+.crypto-caption { max-width: 720px; min-height: 3em; margin: 0 auto 14px; color: var(--soft); font-size: 14px; line-height: 1.6; }
+.crypto-transport { display: flex; align-items: center; gap: 12px; }
+.crypto-transport .ghost { white-space: nowrap; min-height: 40px; }
+.crypto-transport input { min-width: 36px; flex: 1; accent-color: var(--yellow); }
+.crypto-workspace { max-width: 1000px; margin: 0 auto; border: 1px solid #344653; border-radius: 18px; background: #101b26cc; padding: clamp(14px, 2vw, 24px); }
+.crypto-work-head { margin-bottom: 18px; }
+.crypto-work-head h2 { font-size: 28px; line-height: 1.3; margin-top: 5px; }
+.crypto-experiment { display: flex; flex-direction: column; gap: 16px; }
+.crypto-experiment h3 { font-size: 20px; }
+.crypto-experiment p { margin: 0; }
+.crypto-actions { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
+.crypto-actions .btn { font-size: 13px; padding: 9px 14px; }
+.crypto-field { display: flex; flex: 1; min-width: 120px; flex-direction: column; gap: 7px; font-size: 13px; color: var(--soft); }
+.crypto-experiment :is(input:not([type=checkbox]):not([type=range]), select) { width: 100%; min-height: 42px; border-radius: 8px; background: #0d141e; border: 1px solid #425667; color: var(--text); padding: 8px 10px; font: 14px var(--mono); }
+.crypto-experiment input[type=range] { width: 100%; min-height: 32px; accent-color: var(--teal); }
+.crypto-experiment input[type=checkbox] { accent-color: var(--teal); width: 19px; height: 19px; margin: 0; flex-shrink: 0; }
+.crypto-check { flex: 0; flex-direction: row-reverse; justify-content: start; align-items: center; min-height: 40px; gap: 10px; }
+.crypto-check > span { flex: 1; }
+.crypto-micro { font-size: 12px; color: var(--muted); line-height: 1.6; overflow-wrap: anywhere; }
+.crypto-known { padding: 12px 14px; border-left: 2px solid var(--yellow); background: #f4d35e08; color: var(--soft); font-size: 14px; }
+.crypto-plaintext { white-space: pre-wrap; color: var(--text); font: 15px/1.7 var(--mono); }
+.crypto-byte-table { display: flex; flex-direction: column; gap: 6px; overflow-x: auto; padding-bottom: 6px; }
+.crypto-byte-row { display: flex; gap: 10px; align-items: center; min-width: max-content; }
+.crypto-row-name { width: 70px; flex-shrink: 0; font: 12px var(--mono); color: var(--soft); }
+.crypto-byte-cells { display: flex; gap: 3px; }
+.crypto-byte { width: 34px; min-height: 38px; padding: 0; border-radius: 6px; border: 1px solid #354756; background: #172633; color: var(--soft); font: 12px var(--mono); cursor: pointer; }
+.crypto-byte.selected { border-color: var(--yellow); color: var(--yellow); }
+.crypto-byte.crib-range { background: #284044; }
+.crypto-bits { border-radius: 10px; padding: 14px; background: #0a121b; }
+.crypto-bits h3 { margin-bottom: 12px; font: 13px var(--sans); color: var(--soft); }
+.crypto-bit-row { display: grid; grid-template-columns: 42px repeat(8, minmax(0, 1fr)); gap: 5px; margin: 5px 0; font: 15px/1.7 var(--mono); }
+.crypto-bit-row span:not(:first-child) { text-align: center; border-radius: 4px; }
+.crypto-bit-row .one { color: var(--yellow); background: #f4d35e18; }
+.crypto-bit-row .zero { color: #7d94a7; background: #182736; }
+.crypto-equation { display: block; color: var(--soft); font: 13px/1.8 var(--mono); overflow-wrap: anywhere; }
+.crypto-bits .crypto-equation { margin-top: 12px; }
+.crypto-decoded { padding: 16px; border-radius: 8px; border: 1px solid #496252; color: var(--green); font: 24px var(--mono); letter-spacing: .1em; min-height: 60px; overflow-wrap: anywhere; }
+.crypto-receipt { display: block; min-height: 48px; padding: 14px; background: #0b141f; color: var(--soft); border: 1px solid #334858; border-radius: 10px; font-size: 14px; overflow-wrap: anywhere; }
+.crypto-receipt.accepted { border-color: var(--yellow); }
+.crypto-receipt.rejected { border-color: var(--green); }
+.crypto-bit-buttons { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+.crypto-bit-button { min-height: 48px; border: 1px solid #425667; border-radius: 8px; font: 20px var(--mono); background: #142332; cursor: pointer; }
+.crypto-bit-button.on { color: var(--yellow); background: #514a28; border-color: var(--yellow); }
+.crypto-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.crypto-output, .crypto-document { padding: 16px; background: #0d1620; border: 1px solid #344653; border-radius: 12px; }
+.crypto-output span { display: block; color: var(--muted); font-size: 12px; }
+.crypto-output strong { display: block; color: var(--yellow); font: 24px/1.5 var(--mono); margin-top: 6px; }
+.crypto-document h3 { margin: 10px 0; }
+.crypto-signature { color: var(--yellow); font: 16px var(--mono); padding-bottom: 12px; }
+.crypto-equations { display: flex; flex-direction: column; gap: 10px; }
+.crypto-experiment .btn:disabled { opacity: .4; cursor: default; }
+.crypto-password-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.crypto-password { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; min-height: 50px; padding: 10px 12px; border: 1px solid #3b5060; border-radius: 10px; background: #0f1c29; color: var(--soft); cursor: pointer; }
+.crypto-password span { color: var(--muted); font-size: 12px; }
+.crypto-password.selected { border-color: var(--yellow); color: var(--yellow); background: #393b27; }
+.crypto-population { display: grid; grid-template-columns: repeat(20, 1fr); gap: 4px; }
+.crypto-population svg { display: block; width: 100%; max-height: 30px; fill: #34495b; }
+.crypto-population .exposed svg { fill: var(--orange); }
+.crypto-hash-records { white-space: pre-wrap; overflow-wrap: anywhere; padding: 14px; border-radius: 10px; background: #0a121b; font-size: 12px; }
+.crypto-results { display: flex; flex-direction: column; gap: 10px; }
+.crypto-trial { padding: 14px; border: 1px solid #425667; border-radius: 10px; font-size: 13px; }
+.crypto-trial strong { color: var(--green); }
+.crypto-trial.broken strong { color: var(--orange); }
+.crypto-trial p { margin: 8px 0; color: var(--soft); }
+.crypto-evidence { display: block; color: var(--muted); overflow-wrap: anywhere; font-size: 11px; }
+.crypto-foot { max-width: 1000px; margin: 16px auto 0; font-size: 11px; color: var(--muted); line-height: 1.7; }
+.crypto-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.crypto-next { font-size: 13px; }
+.crypto-lab :is(button, input, select):focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+@media (max-width: 900px) {
+  .crypto-world { height: calc(100dvh - var(--header)); grid-template-rows: minmax(0, 1fr) 160px; }
+  .crypto-world .topic-stage { position: relative; top: auto; height: auto; }
+  .crypto-world .panel { min-height: 0; }
+  .crypto-world .panel-top { padding: 6px 12px; flex-shrink: 0; }
+  .crypto-world .crumbs { display: none; }
+  .crypto-world .panel-body { overflow-y: auto; padding: 10px 14px 20px; }
+  .crypto-world .topic-head { display: none; }
+  .crypto-world .mode-info .step-num { display: none; }
+  .crypto-world .mode-info h2 { font-size: 19px; }
+  .crypto-world .step-text { font-size: 14px; line-height: 1.6; }
+  .crypto-world .mode-tab { min-height: 32px; padding: 4px 10px; font-size: 12px; }
+  .crypto-lab { padding: 14px 12px; }
+  .crypto-theatre { padding-bottom: 12px; margin-bottom: 16px; }
+  .crypto-cast { min-height: 140px; }
+  .crypto-caption { font-size: 13px; }
+  .crypto-play-state { font-size: 10px; }
+  .crypto-work-head h2 { font-size: 23px; }
+  .crypto-row-name { width: 62px; }
+  .crypto-population { grid-template-columns: repeat(10, 1fr); }
+}
+.world .proof-head[hidden], .world .proof-nav[hidden] { display: none; }
+.crypto-packet-label { font: 13px var(--mono); fill: var(--yellow); }
+.crypto-cancel-demo { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.crypto-cancel-card { position: relative; display: flex; align-items: center; gap: 8px; padding: 26px 12px 14px; border-radius: 10px; border: 1px solid #3c5364; background: #172b39; font: 15px var(--mono); }
+.crypto-cancel-card > span { position: absolute; top: 7px; left: 12px; font-size: 11px; color: var(--muted); }
+.crypto-cancel-card strong { color: var(--soft); font-weight: 400; }
+.crypto-pad { color: var(--yellow); font-weight: 400; }
+.crypto-xor-symbol { color: var(--purple); font: 28px var(--mono); }
+@media (max-width: 900px) {
+  .crypto-cast .crypto-name { font-size: 28px; }
+  .crypto-cast .crypto-badge { display: none; }
+}
+.crypto-inspect { border-top: 1px solid #344653; padding-top: 12px; }
+.crypto-inspect summary { cursor: pointer; color: var(--teal); font-size: 13px; padding: 8px 0; }
+.crypto-inspect[open] summary { margin-bottom: 12px; }
+.crypto-inspect .crypto-bits { margin-top: 12px; }
+
+/* Algorithm scenes share a transport, but visualize their own mathematics. */
+.crypto-cast[hidden] { display: none; }
+.process-people { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0 18px; }
+.process-people svg { width: 48px; height: 64px; flex-shrink: 0; }
+.process-people > div { text-align: center; }
+.process-people strong { display: block; color: var(--text); font: 23px var(--serif); }
+.process-people span { display: block; color: var(--muted); font-size: 12px; margin-top: 6px; }
+.process-explanation { display: block; min-height: 3.2em; margin: 14px 0; color: var(--soft); font-size: 13px; line-height: 1.6; }
+.xor-process-row { display: grid; grid-template-columns: 12% repeat(8,minmax(0,1fr)); gap: 0; align-items: center; }
+.xor-process-row > strong { font: 12px var(--mono); color: var(--soft); overflow-wrap: anywhere; }
+.xor-input-bit, .xor-result-bit { min-width: 0; min-height: 38px; padding: 6px 0; margin: 3px; border: 1px solid #3f5669; border-radius: 7px; text-align: center; color: #819aac; background: #142636; font: 20px var(--mono); }
+.xor-input-bit { cursor: pointer; }
+.xor-input-bit:disabled { cursor: default; }
+.xor-input-bit.one, .xor-result-bit.one { color: var(--yellow); background: #3c3c25; border-color: #8e7e40; }
+.xor-gates { height: 110px; }
+.xor-gates svg { width: 100%; height: 100%; display: block; }
+.xor-process-output { margin-bottom: 14px; }
+.xor-cancellation { display: grid; grid-template-columns: 1fr 1fr 24px 1fr 1fr 1fr; gap: 6px; align-items: center; padding: 14px; border: 1px solid #40596d; border-radius: 12px; font: 14px var(--mono); text-align: center; }
+.xor-cancellation[hidden] { display: none; }
+.xor-cancellation b { color: var(--yellow); padding: 8px 4px; border-radius: 6px; background: #484025; transition: transform .3s, opacity .3s; }
+.xor-cancellation span { color: var(--blue); }
+.xor-cancellation .cancel-zero { color: var(--green); opacity: 0; }
+.xor-cancellation.paired b:first-of-type { transform: translateX(30%); }
+.xor-cancellation.paired b:last-of-type { transform: translateX(-30%); }
+.xor-cancellation.cancelled b { opacity: .2; text-decoration: line-through; }
+.xor-cancellation.cancelled .cancel-zero { opacity: 1; }
+.hash-process-head { margin: 20px 0 8px; font: 22px var(--serif); color: var(--text); }
+.hash-round-count { display: block; color: var(--yellow); font: 12px/1.7 var(--mono); }
+.hash-round-operation { display: flex; align-items: center; justify-content: space-around; gap: 8px; margin: 14px 0; padding: 14px 10px; border: 1px solid #486373; border-radius: 12px; font: 12px var(--mono); color: var(--muted); }
+.hash-round-operation strong { color: var(--teal); }
+.hash-state-board { padding: 12px; border-radius: 12px; background: #0b1621; }
+.hash-state-row { display: grid; grid-template-columns: 14px 170px minmax(0,1fr); gap: 8px; align-items: center; margin: 8px 0; }
+.hash-state-row > strong { font: italic 17px var(--serif); color: var(--blue); }
+.hash-state-words { font-size: 10px; color: var(--muted); }
+.hash-state-bits { display: grid; grid-template-columns: repeat(32,minmax(0,1fr)); gap: 2px; }
+.hash-state-bits span { height: 17px; background: #1b2d3d; border-radius: 2px; }
+.hash-state-bits .one { background: #4f98ab; }
+.hash-state-bits .different { background: var(--orange); }
+.hash-round-process > code { white-space: pre-wrap; font-size: 11px; }
+.hash-digests { display: flex; flex-direction: column; gap: 10px; }
+.hash-digest { display: flex; flex-direction: column; gap: 7px; padding: 12px; border-radius: 8px; background: #0b1621; }
+.hash-digest strong { color: var(--teal); font-size: 11px; }
+.hash-digest code { color: var(--soft); overflow-wrap: anywhere; font-size: 12px; }
+.hash-family { padding: 14px 0; border-bottom: 1px solid #304354; }
+.hash-family h3 { color: var(--teal); font-size: 19px; margin-bottom: 8px; }
+.hash-family p { color: var(--soft); font-size: 14px; line-height: 1.7; }
+.hash-bucket-process h3, .hash-trust-process h3 { margin: 18px 0; font: 23px var(--serif); }
+.hash-dropping-card { width: 140px; margin: 20px auto 32px; padding: 15px; border: 1px solid var(--yellow); border-radius: 8px; background: #3c3824; text-align: center; color: var(--yellow); font: 15px var(--mono); }
+.hash-buckets { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.hash-bucket { min-height: 35px; border: 1px solid #486073; border-radius: 5px; color: var(--muted); text-align: center; font: 12px/35px var(--mono); background: #11202d; }
+.hash-bucket.occupied { border-color: var(--blue); background: #23414e; }
+.hash-bucket.collided { border-color: var(--orange); background: #7d4a2a; color: var(--yellow); }
+.hash-buckets.many { grid-template-columns: repeat(16,1fr); gap: 3px; }
+.hash-buckets.many .hash-bucket { min-height: 14px; height: 14px; line-height: 14px; border-radius: 2px; }
+.hash-collision-evidence code { display: block; margin: 10px 0; overflow-wrap: anywhere; font-size: 12px; color: var(--soft); }
+.hash-trust-flow { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.hash-trust-card { padding: 16px 12px; border: 1px solid #3c5568; border-radius: 10px; background: #10212f; }
+.hash-trust-card strong { display: block; font-size: 12px; color: var(--blue); margin-bottom: 12px; }
+.hash-trust-card code { font-size: 11px; color: var(--soft); overflow-wrap: anywhere; }
+.hash-trust-flow[data-phase="2"] .hash-trust-card { border-color: var(--yellow); }
+.hash-role-case { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid #3c5366; border-radius: 10px; }
+.hash-role-case strong { color: var(--soft); font-size: 14px; }
+.hash-purpose-process { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr); gap: 12px; align-items: center; padding-top: 24px; }
+.hash-purpose-process > div { padding: 24px 8px; border: 1px solid #435c70; border-radius: 10px; text-align: center; color: var(--soft); font: 12px/1.6 var(--mono); overflow-wrap: anywhere; }
+.hash-purpose-process .hash-purpose-machine { color: var(--yellow); background: #253b40; border-color: var(--teal); transform: scale(calc(1 + var(--process-progress,0)*.03)); }
+.hash-purpose-process .process-explanation { grid-column: 1/-1; }
+@media (max-width:900px) {
+  .process-people { gap: 6px; }
+  .process-people strong { font-size: 19px; }
+  .process-people span { font-size: 11px; }
+  .process-people svg { width: 32px; height: 50px; }
+  .xor-input-bit,.xor-result-bit { margin: 2px; font-size: 18px; }
+  .hash-state-row { grid-template-columns: 14px minmax(0,1fr); gap: 6px; }
+  .hash-state-words { grid-column: 2; grid-row: span 1; }
+  .hash-state-bits { grid-column: 2; }
+  .hash-state-bits span { height: 9px; }
+  .hash-round-operation { font-size: 9px; padding: 10px 4px; }
+  .hash-trust-flow { grid-template-columns: 1fr; }
+  .hash-purpose-process { gap: 6px; }
+  .hash-purpose-process > div { font-size: 10px; }
+}
+@media (prefers-reduced-motion:reduce) { .xor-cancellation b { transition: none; } }
+.exchange-process h3 { margin: 20px 0 10px; font: 24px var(--serif); color: var(--text); }
+.exchange-process svg { display: block; width: 100%; }
+.exchange-process svg text { font: 17px var(--sans); fill: var(--soft); }
+.exchange-process svg g[class^="exchange-token"] text { font: 16px var(--mono); fill: #15212a; }
+.exchange-process .exchange-key-left { fill: #ff9f81; font: 16px var(--mono); }
+.exchange-process .exchange-key-right { fill: var(--purple); font: 16px var(--mono); }
+.exchange-process .exchange-block text { fill: var(--green); font-size: 15px; }
+@media (max-width:900px) { .exchange-process h3 { font-size:20px; } .exchange-process svg text { font-size:22px; } }
+.xor-cancellation { grid-template-columns: repeat(6,minmax(0,1fr)); }
+.xor-cancellation > span { transition: transform .3s; }
+.xor-cancellation.paired b:first-of-type { transform: translateX(calc(200% + 12px)); }
+.xor-cancellation.paired b:last-of-type { transform: none; }
+.xor-cancellation.paired > span:last-of-type { transform: translateX(calc(-200% - 12px)); }
+@media (prefers-reduced-motion:reduce) { .xor-cancellation > span { transition: none; } }
+.hash-bucket-process { position: relative; }
+.hash-dropping-card { position: relative; z-index: 2; pointer-events: none; transform-origin: center; }
