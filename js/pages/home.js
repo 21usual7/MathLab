@@ -5,6 +5,8 @@ import { Stage } from '../ui/stage.js';
 import { renderTex } from '../ui/tex.js';
 import { t } from '../core/i18n.js';
 import { SUBJECTS, TRACKS, CATALOG, topicMeta } from '../topics/index.js';
+import { WORLDS } from '../worlds/index.js';
+import { solvedIn } from './world.js';
 
 const TEXT = {
   lead: {
@@ -19,10 +21,28 @@ const TEXT = {
     { title: { en: 'Back to the cause', ru: 'Назад к причине' },
       text: { en: 'Topics are connected. If something is unclear, step back to what it is built on.', ru: 'Темы связаны. Если что-то непонятно, можно шагнуть назад — к тому, на чём это построено.' } },
   ],
+  worlds: {
+    en: 'Not pages to read, but systems to play with. The mathematics is the mechanics: you shoot, descend, vaccinate — and the rule shows itself. Free exploration and challenges with a concrete goal.',
+    ru: 'Не страницы для чтения, а системы, с которыми можно играть. Математика здесь — сама механика: вы бьёте, спускаетесь, прививаете — и закон проявляется сам. Свободное исследование и испытания с конкретной целью.',
+  },
   map: {
     en: n => `Topics are connected: each one says what it builds on. ${n} are ready, the rest are on the way.`,
     ru: n => `Темы связаны: у каждой написано, на чём она построена. Готово: ${n}, остальные в пути.`,
   },
+};
+
+// Small drawings on the world cards: a path between the foci of an ellipse, level lines with a descent, cells of an outbreak
+const ART = {
+  billiard: `<svg viewBox="0 0 240 120" aria-hidden="true"><ellipse cx="120" cy="60" rx="104" ry="50" fill="none" stroke="#b69df8" stroke-width="2"/>
+    <polyline points="37,60 70,15 203,60 150,108 37,60 96,11 203,60" fill="none" stroke="#f4d35e" stroke-width="1.6" opacity="0.85"/>
+    <circle cx="37" cy="60" r="4" fill="#58c4dd"/><circle cx="203" cy="60" r="4" fill="#fc6255"/></svg>`,
+  descent: `<svg viewBox="0 0 240 120" aria-hidden="true">${[14, 28, 42, 56, 70].map(r => `<ellipse cx="150" cy="64" rx="${r * 1.5}" ry="${r * 0.62}" fill="none" stroke="#58c4dd" stroke-opacity="${0.75 - r / 120}" stroke-width="1.4"/>`).join('')}
+    <polyline points="40,22 70,60 92,38 112,70 128,52 140,66 150,64" fill="none" stroke="#f4d35e" stroke-width="2"/><circle cx="150" cy="64" r="4" fill="#f4d35e"/></svg>`,
+  epidemic: `<svg viewBox="0 0 240 120" aria-hidden="true">${Array.from({ length: 96 }, (_, i) => {
+    const x = i % 16, y = Math.floor(i / 16), d = Math.hypot(x - 5, (y - 2.5) * 1.3), h = (Math.sin(i * 12.9898) * 43758.5) % 1;
+    const c = d < 2.2 ? '#ff9f5a' : d < 4.2 && Math.abs(h) < 0.7 ? '#fc6255' : Math.abs(h) < 0.12 ? '#58c4dd' : '#222a37';
+    return `<rect x="${8 + x * 14}" y="${8 + y * 17}" width="11" height="14" rx="2" fill="${c}" opacity="${c === '#fc6255' ? 0.55 : 1}"/>`;
+  }).join('')}</svg>`,
 };
 
 // One topic on the map: a link when it is ready, a dashed card when it is planned
@@ -44,7 +64,7 @@ export function mountHome(root) {
           <p class="lead">${t(TEXT.lead)}</p>
           <div class="cta">
             <a class="btn primary" href="#topic/graph">Start from the beginning</a>
-            <a class="btn" href="#topic/derivative">The derivative</a>
+            <a class="btn" href="#worlds">Enter a world</a>
             <a class="btn" href="#lab">Open the Lab</a>
           </div>
         </div>
@@ -57,6 +77,20 @@ export function mountHome(root) {
       <section class="principles">
         ${TEXT.principles.map((p, i) => `
           <div class="principle"><span class="num">0${i + 1}</span><h3>${t(p.title)}</h3><p>${t(p.text)}</p></div>`).join('')}
+      </section>
+
+      <section class="worlds" id="worlds">
+        <div class="section-head"><h2>Worlds</h2><p>${t(TEXT.worlds)}</p></div>
+        <div class="world-cards">
+          ${WORLDS.map(w => `
+            <a class="world-card" href="#world/${w.id}">
+              <span class="world-art">${ART[w.id] || ''}</span>
+              <span class="world-kicker">${t(w.kicker)}</span>
+              <span class="world-title">${t(w.title)}</span>
+              <span class="world-summary">${t(w.summary)}</span>
+              <span class="node-meta">${w.minutes} min${solvedIn(w.id).length ? ` · ✓ ${solvedIn(w.id).length}` : ''}</span>
+            </a>`).join('')}
+        </div>
       </section>
 
       <section class="map" id="map">

@@ -1,9 +1,11 @@
-// Router: #  ·  #algebra / #geometry / #linalg (the map, scrolled to that subject)  ·  #lab?s=...  ·  #topic/<id>[/<step>]
+// Router: #  ·  #worlds / #algebra / #geometry / #linalg (the home page, scrolled there)  ·  #lab?s=...  ·  #topic/<id>[/<step>]
+// ·  #world/<id>[/<mode>]
 // Every page returns a cleanup function (stops animations, frees WebGL) that runs before the next one.
 
 import { mountHome } from './pages/home.js';
 import { mountLab } from './pages/lab.js';
 import { mountTopic } from './pages/topic.js';
+import { mountWorld } from './pages/world.js';
 import { getLang, setLang } from './core/i18n.js';
 import { closeKeypad } from './ui/keypad.js';
 
@@ -18,12 +20,14 @@ async function route() {
   const [path, query] = location.hash.slice(1).split('?');
   const [page, id, step] = path.split('/');
   document.body.dataset.page = page || 'home';
-  document.querySelectorAll('[data-nav]').forEach(a => a.classList.toggle('active', a.dataset.nav === (page || 'home')));
+  const nav = page === 'world' ? 'worlds' : page || 'home';
+  document.querySelectorAll('[data-nav]').forEach(a => a.classList.toggle('active', a.dataset.nav === nav));
   window.scrollTo(0, 0);
 
   let c;
   if (page === 'lab') c = mountLab(app, new URLSearchParams(query || ''));
   else if (page === 'topic') c = await mountTopic(app, id, (parseInt(step, 10) || 1) - 1);
+  else if (page === 'world') c = await mountWorld(app, id, parseInt(step, 10) || 0);
   else {
     c = mountHome(app);
     const subject = document.getElementById(page);

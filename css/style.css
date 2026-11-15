@@ -401,6 +401,54 @@ body.keypad-open { padding-bottom: var(--kb, 0px); }
   body.keypad-open .lab, body.keypad-open .topic { height: calc(100dvh - var(--header) - var(--kb, 0px)); }
 }
 
+/* ---------- Worlds: cards on the home page ---------- */
+
+.worlds { padding-top: 72px; scroll-margin-top: 40px; }
+.world-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.world-card { display: flex; flex-direction: column; gap: 8px; padding: 0 0 20px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--panel); color: var(--text); overflow: hidden; transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s; }
+.world-card:hover { transform: translateY(-3px); border-color: rgba(244, 211, 94, 0.55); box-shadow: 0 14px 40px -18px rgba(244, 211, 94, 0.35); text-decoration: none; }
+.world-card > span:not(.world-art) { padding: 0 20px; }
+.world-art { display: block; height: 132px; background: var(--stage); border-bottom: 1px solid var(--line-soft); margin-bottom: 8px; }
+.world-art svg { display: block; width: 100%; height: 100%; }
+.world-kicker { font: 600 11px var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--yellow); }
+.world-title { font-family: var(--serif); font-size: 22px; line-height: 1.2; }
+.world-summary { color: var(--muted); font-size: 14.5px; line-height: 1.55; flex: 1; }
+.world-card .node-meta { color: var(--yellow); }
+
+/* ---------- A world: the panel and the world itself ---------- */
+
+.modes { display: flex; flex-wrap: wrap; gap: 6px; }
+.mode-tab { border: 1px solid var(--line); background: none; color: var(--muted); border-radius: 999px; padding: 4px 12px; font-size: 13px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+.mode-tab:hover { color: var(--text); border-color: var(--faint); }
+.mode-tab.active { color: var(--text); border-color: var(--yellow); background: rgba(244, 211, 94, 0.08); }
+.mode-tab.solved::after { content: ' ✓'; color: var(--green); }
+.world .topic-head { margin-bottom: 22px; padding-bottom: 18px; }
+.world .world-kicker { display: block; margin: 0 0 8px; }
+.world .step-num { color: var(--yellow); }
+.goal { margin: 18px 0 0; padding: 10px 14px; border-left: 2px solid var(--orange); background: rgba(255, 159, 90, 0.05); border-radius: 0 10px 10px 0; color: var(--soft); font-size: 15px; line-height: 1.6; }
+.goal-label { display: block; font: 600 11px var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--orange); margin-bottom: 2px; }
+.world-status { margin: 14px 0 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--soft); font-size: 15px; line-height: 1.6; }
+.world-status.fail { border-color: rgba(252, 98, 85, 0.5); }
+.world-status.progress { border-color: rgba(88, 196, 221, 0.4); }
+.world-status.right { border-color: rgba(131, 193, 103, 0.6); background: rgba(131, 193, 103, 0.05); }
+.world-status .verdict.right { color: var(--green); font-weight: 600; }
+.world-status .kit-row { margin-top: 12px; }
+.world-live { margin-top: 18px; }
+.world-live:has(.readout:empty):has(.controls:empty) { display: none; }
+.readout { display: grid; grid-template-columns: auto 1fr; gap: 3px 14px; font-size: 14px; }
+.readout:empty { display: none; }
+.ro-k { color: var(--muted); }
+.ro-v { font: 13px var(--mono); color: var(--text); font-variant-numeric: tabular-nums; text-align: right; }
+.kit-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.kit-row .btn { padding: 7px 14px; font-size: 14px; }
+.kit-row .ghost { padding: 6px 12px; font-size: 13px; }
+.controls .kit-label { font: 600 11px var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); margin-top: 6px; }
+.param.off { opacity: 0.4; }
+.param .pname { white-space: nowrap; }
+.world-stage .stage-host > .plot2d, .world-stage .stage-host > .plot3d { position: absolute; inset: 0; }
+.world-hud { position: absolute; left: 12px; bottom: 12px; z-index: 3; max-width: min(440px, calc(100% - 24px)); padding: 8px 12px; border-radius: 10px; background: rgba(13, 17, 23, 0.82); backdrop-filter: blur(6px); border: 1px solid var(--line-soft); color: var(--soft); font-size: 13px; line-height: 1.5; pointer-events: none; }
+.world-chart { width: 100%; height: 120px; display: block; border-radius: 8px; background: var(--stage); border: 1px solid var(--line-soft); }
+
 /* ---------- Phones and narrow windows ---------- */
 
 @media (max-width: 430px) {
@@ -409,6 +457,7 @@ body.keypad-open { padding-bottom: var(--kb, 0px); }
 
 @media (max-width: 1100px) {
   .tracks { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .world-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 900px) {
@@ -417,6 +466,8 @@ body.keypad-open { padding-bottom: var(--kb, 0px); }
   .hero { grid-template-columns: 1fr; gap: 28px; padding: 36px 0 32px; }
   .hero-visual { height: 340px; }
   .principles { grid-template-columns: 1fr; }
+  .world-cards { grid-template-columns: 1fr; }
+  .worlds { padding-top: 56px; }
   .tracks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .map { padding-top: 56px; }
 
