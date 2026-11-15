@@ -163,6 +163,7 @@ export class Plot3D {
   // z = f(x, y) on [-R, R]²; colored by height, with a light grid on top
   surface(key, f, color, n = 72) {
     const R = this.R, Z = this.zmax, N = n;
+    let full = null, fullLines = null;
     const o = this.entry(key, () => {
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array((N + 1) ** 2 * 3), 3));
@@ -175,6 +176,7 @@ export class Plot3D {
         }
       }
       geo.setIndex(index);
+      full = index;
       const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
         vertexColors: true, side: THREE.DoubleSide, roughness: 0.55, metalness: 0.05,
         clippingPlanes: this.clip, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1,
@@ -186,24 +188,26 @@ export class Plot3D {
       const wireGeo = new THREE.BufferGeometry();
       wireGeo.setAttribute('position', geo.getAttribute('position'));
       wireGeo.setIndex(lines);
+      fullLines = lines;
       const wire = new THREE.LineSegments(wireGeo, new THREE.LineBasicMaterial({
         color: 0xffffff, transparent: true, opacity: 0.16, clippingPlanes: this.clip,
       }));
       const group = new THREE.Group();
       group.add(mesh, wire);
-      return { group, mesh };
+      return { group, mesh, wire, full, fullLines, cut: false };
     });
 
     const geo = o.mesh.geometry;
     const pos = geo.getAttribute('position'), col = geo.getAttribute('color');
     const base = new THREE.Color(color);
     const low = base.clone().multiplyScalar(0.28), high = base.clone().lerp(WHITE, 0.3), c = new THREE.Color();
+    const bad = new Uint8Array((N + 1) ** 2);
     for (let j = 0, k = 0; j <= N; j++) {
       for (let i = 0; i <= N; i++, k++) {
         const x = -R + 2 * R * i / N, y = -R + 2 * R * j / N;
         let z = f(x, y);
-        // Undefined or far away: push outside the box, the clipping planes hide it
-        if (!isFinite(z)) z = 3 * Z;
+        // Undefined: its triangles are left out below; far away: push outside the box, the clipping planes hide it
+        if (!isFinite(z)) { bad[k] = 1; z = 3 * Z; }
         z = Math.max(-3 * Z, Math.min(3 * Z, z));
         pos.setXYZ(k, x, y, z);
         c.copy(low).lerp(high, Math.max(0, Math.min(1, (z + Z) / (2 * Z))));
@@ -212,6 +216,18 @@ export class Plot3D {
     }
     pos.needsUpdate = true;
     col.needsUpdate = true;
+    // Where the function is undefined there is no surface — not a wall up to the top of the box
+    // (z = √(1 − x² − y²) ends at its rim; in the fog of the descent world only explored ground is drawn)
+    if (bad.includes(1)) {
+      const keep = (list, step) => { const out = []; for (let i = 0; i < list.length; i += step) { const tri = list.slice(i, i + step); if (!tri.some(v => bad[v])) out.push(...tri); } return out; };
+      geo.setIndex(keep(o.full, 3));
+      o.wire.geometry.setIndex(keep(o.fullLines, 2));
+      o.cut = true;
+    } else if (o.cut) {
+      geo.setIndex(o.full);
+      o.wire.geometry.setIndex(o.fullLines);
+      o.cut = false;
+    }
     geo.computeVertexNormals();
     geo.computeBoundingSphere();
   }
