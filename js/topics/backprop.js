@@ -133,6 +133,7 @@ export default {
   view: '2d',
   view2d: WIN,
   lab: false,
+  film: () => import('./films/backprop.js').then(m => m.default),
 
   setup(scene) {
     scene.ensureParam('w', 0.5, { min: -2, max: 2, step: 0.05 });

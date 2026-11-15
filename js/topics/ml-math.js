@@ -244,3 +244,22 @@ export function eigenSym(C) {
   }
   return A.map((_, i) => ({ value: A[i][i], vector: V.map(r => r[i]) })).sort((a, b) => b.value - a.value);
 }
+
+// ---- The introduction: one neuron decides whether to go for a walk ----
+// The diary: sun, weekend, rain → went for a walk (1) or stayed at home (0). The rule behind it:
+// no rain, and sun or a weekend
+export const DAYS = [[1, 1, 0, 1], [0, 0, 1, 0], [1, 0, 0, 1], [0, 1, 1, 0], [0, 0, 0, 0], [1, 1, 1, 0], [0, 1, 0, 1], [1, 0, 1, 0]];
+export const fires = (w, th, x) => (w[0] * x[0] + w[1] * x[1] + w[2] * x[2] > th ? 1 : 0);
+// The perceptron rule: after a mistake every input that was on moves its weight by η towards the right answer.
+// Returns the weights before every example and what happened: [{ w, day, guess, ok }]
+export function perceptron(days, n, eta = 0.5, th = 0.5) {
+  let w = [0, 0, 0];
+  const out = [];
+  for (let k = 0; k < n; k++) {
+    const day = k % days.length, x = days[day], guess = fires(w, th, x), ok = guess === x[3];
+    out.push({ w, day, guess, ok });
+    if (!ok) w = w.map((v, i) => v + eta * (x[3] - guess) * x[i]);
+  }
+  out.push({ w, day: n % days.length });
+  return out;
+}

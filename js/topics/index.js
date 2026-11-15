@@ -248,6 +248,12 @@ export const CATALOG = [
     } },
 
   // Machine learning: the same linear algebra and derivatives, now learning from data
+  { id: 'ml-intro', track: 'learn', status: 'ready', minutes: 10, prereqs: [], next: ['regression', 'classify', 'network'],
+    title: { en: 'An introduction to machine learning', ru: 'Введение в машинное обучение' },
+    summary: {
+      en: 'A film first: why rules fail and examples work, how a nerve cell fires, how an artificial neuron is made of numbers, why knowledge lives in weights, and how a neuron learns from its mistakes. Then decide, train and tune it yourself.',
+      ru: 'Сначала ролик: почему правила не справляются, а примеры — да, как срабатывает нервная клетка, как из неё получается искусственный нейрон, почему знания живут в весах и как нейрон учится на ошибках. Потом — решайте, обучайте и настраивайте его сами.',
+    } },
   { id: 'regression', track: 'learn', status: 'ready', minutes: 15, prereqs: ['derivative', 'surfaces'], next: ['classify', 'overfit', 'gradient'],
     title: { en: 'Linear regression: learning is rolling downhill', ru: 'Линейная регрессия: учиться — значит катиться вниз' },
     summary: {
@@ -323,6 +329,7 @@ const MODULES = {
   chain: () => import('./chain.js'),
   surfaces: () => import('./surfaces.js'),
   gradient: () => import('./gradient.js'),
+  'ml-intro': () => import('./ml-intro.js'),
   regression: () => import('./regression.js'),
   classify: () => import('./classify.js'),
   network: () => import('./network.js'),

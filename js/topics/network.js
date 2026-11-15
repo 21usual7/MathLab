@@ -119,6 +119,7 @@ export default {
   view2d: WIN,
   view3d: { R: 4, zmax: 4, camera: [7.5, 6.2, 5.2], axes: false },
   lab: false,
+  film: () => import('./films/network.js').then(m => m.default),
 
   setup(scene) {
     // Three folds: the direction of each (angle) and its distance from the centre

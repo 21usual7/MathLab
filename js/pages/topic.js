@@ -17,6 +17,7 @@ import { SUBJECTS, TRACKS, topicMeta, loadTopic } from '../topics/index.js';
 import { encodeLab } from './lab.js';
 import { taskHTML, bindTask } from '../ui/task.js';
 import { CRYPTO_TOPIC_LABS, CRYPTO_WORLDS } from '../worlds/crypto/catalog.js';
+import { mountFilm } from '../ui/film.js';
 
 const PRACTICE = {
   title: { en: 'Try it yourself', ru: 'Попробуйте сами' },
@@ -135,11 +136,13 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
         <div class="scene-tools">
           <span class="scene-step-title"></span>
           <button class="ghost" type="button" data-act="restart">↺ ${t({ en: 'Reset scene', ru: 'Сбросить сцену' })}</button>
+          ${topic.film ? `<button class="ghost" type="button" data-act="film">▶ ${t({ en: 'Story', ru: 'Ролик' })}</button>` : ''}
           ${topic.lab === false ? '' : '<button class="ghost" type="button" data-act="lab">Open in Lab</button>'}
         </div>
         <div class="stage-host"></div>
         <div class="scene-action" hidden></div>
       </aside>
+      ${topic.film ? '<div class="film-host" hidden></div>' : ''}
     </article>`;
   renderMath(root.querySelector('.panel-body'));
 
@@ -310,6 +313,7 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
   }));
   $('[data-act="restart"]').addEventListener('click', () => show(active, true));
   const onKey = e => {
+    if (film) return; // the film has its own keys
     if (e.target.closest('input, textarea, summary, .step-menu button, [contenteditable]') || e.altKey || e.ctrlKey || e.metaKey) return;
     if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); show(active + 1); }
     if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(active - 1); }
@@ -330,11 +334,35 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
 
   show(Math.max(0, Math.min(N - 1, startStep)));
 
+  // ---- The film: a short story before the steps; it opens by itself at the start of the topic ----
+  let film = null, filmToken = 0;
+  const closeFilm = () => {
+    filmToken++;
+    film?.dispose(); film = null;
+    $('.topic-player').classList.remove('film-mode');
+    $('.film-host').hidden = true;
+    stage.p2?.request?.(); scene.changed();
+  };
+  const openFilm = async () => {
+    const token = ++filmToken, def = await topic.film();
+    if (token !== filmToken || !root.isConnected) return;
+    film?.dispose();
+    $('.topic-player').classList.add('film-mode');
+    $('.film-host').hidden = false;
+    film = mountFilm($('.film-host'), def, { onExplore: closeFilm });
+  };
+  if (topic.film) {
+    $('[data-act=film]').addEventListener('click', openFilm);
+    if (startStep === 0) openFilm();
+  }
+
   return () => {
     narrow.removeEventListener('change', syncExplanations);
     window.removeEventListener('keydown', onKey);
     root.removeEventListener('click', onTaskClick);
     clearTimeout(solvedTimer);
+    filmToken++;
+    film?.dispose();
     off();
     stage.dispose();
     scene.dispose();

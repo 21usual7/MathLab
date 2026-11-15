@@ -65,6 +65,7 @@ export default {
   view2d: WIN,
   view3d: { R: 4, zmax: 4, camera: [7.5, -8.5, 5.5], axes: false },
   lab: false,
+  film: () => import('./films/regression.js').then(m => m.default),
 
   setup(scene) {
     scene.ensureParam('w', -0.3, { min: -2, max: 2, step: 0.01 });
