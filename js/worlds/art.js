@@ -4,6 +4,7 @@ import { CRYPTO_WORLDS } from './crypto/catalog.js';
 // Small drawings on the cards of the worlds (inline SVG: no requests, sharp at any size)
 
 export const ART = {
+  'binary-search': `<svg viewBox="0 0 240 120" aria-hidden="true"><path d="M24 25H216M72 48H216M72 71H144" fill="none" stroke="#58c4dd" stroke-width="3"/>${[1, 3, 3, 6, 8, 12].map((v, i) => `<rect x="${22 + 33 * i}" y="86" width="29" height="24" rx="4" fill="${i === 3 ? '#574923' : '#172d3d'}"/><text x="${36 + 33 * i}" y="103" text-anchor="middle" font-size="13" fill="#f4d35e">${v}</text>`).join('')}<path d="M135 15V77" stroke="#f4d35e" stroke-width="2" stroke-dasharray="4 4"/></svg>`,
   billiard: `<svg viewBox="0 0 240 120" aria-hidden="true"><ellipse cx="120" cy="60" rx="104" ry="50" fill="none" stroke="#b69df8" stroke-width="2"/>
     <polyline points="37,60 70,15 203,60 150,108 37,60 96,11 203,60" fill="none" stroke="#f4d35e" stroke-width="1.6" opacity="0.85"/>
     <circle cx="37" cy="60" r="4" fill="#58c4dd"/><circle cx="203" cy="60" r="4" fill="#fc6255"/></svg>`,

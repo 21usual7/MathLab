@@ -2,6 +2,7 @@
 
 import { COLORS } from '../core/palette.js';
 import { fmt } from '../core/numeric.js';
+import { setupReasoning, reasoningSteps, transferStep } from './derivative-reasoning.js';
 
 const WHITE = '#ffffff';
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -13,6 +14,7 @@ export default {
   controls: ['a', 'h'],
 
   setup(scene) {
+    setupReasoning(scene);
     const f = scene.add('y = x^3/4 - x', { id: 'f', color: 'blue' });
     const df = scene.add('y = 3x^2/4 - 1', { id: 'df', color: 'yellow', visible: false });
     const g = scene.add('y = x^2', { id: 'g', color: 'blue', visible: false }); // for the task about g'
@@ -117,8 +119,8 @@ export default {
     {
       title: { en: 'How steep is it — right here?', ru: 'Насколько круто — прямо здесь?' },
       text: {
-        en: 'This is the graph of $\\blue{f(x) = \\frac{x^3}{4} - x}$. Read it as a road: walking from left to right you climb, go down, then climb again, and the steepness keeps changing. How steep the road is <b>between</b> two places is easy to measure. But how steep is it <b>at one point</b>? That question is the whole idea of the derivative.',
-        ru: 'Это график $\\blue{f(x) = \\frac{x^3}{4} - x}$. Представьте, что это дорога: идя слева направо, вы поднимаетесь, спускаетесь и снова поднимаетесь, а крутизна всё время меняется. Крутизну <b>между</b> двумя местами измерить легко. Но какова крутизна <b>в одной точке</b>? Этот вопрос — и есть вся идея производной.',
+        en: 'This is the graph of $\\blue{f(x) = \\frac{x^3}{4} - x}$. Read it as a road: walking from left to right you climb, go down, then climb again, and the steepness keeps changing. How steep the road is <b>between</b> two places is easy to measure. But how steep is it <b>at one point</b>? That question is the whole idea of the derivative. By the end, use a slope to predict a small change and explain why a minimum and zero derivative are different conditions.',
+        ru: 'Это график $\\blue{f(x) = \\frac{x^3}{4} - x}$. Представьте, что это дорога: идя слева направо, вы поднимаетесь, спускаетесь и снова поднимаетесь, а крутизна всё время меняется. Крутизну <b>между</b> двумя местами измерить легко. Но какова крутизна <b>в одной точке</b>? Этот вопрос — и есть вся идея производной. К концу темы попробуйте предсказать маленькое изменение по наклону и объяснить, почему минимум и нулевая производная — разные условия.',
       },
       try: { en: 'Drag the white point along the curve.', ru: 'Перетащите белую точку вдоль кривой.' },
       state: { show: ['f', 'names', 'point'], params: { a: -2.2, h: 1.5 }, window: { cx: 0, cy: 0, unit: 72 }, controls: ['a'] },
@@ -177,20 +179,21 @@ export default {
     {
       title: { en: 'Reading one graph from the other', ru: 'Как читать один график по другому' },
       text: {
-        en: 'That new function is the derivative: $\\yellow{f\'(x) = \\frac{3x^2}{4} - 1}$. Where $\\blue{f}$ climbs, $\\yellow{f\'} > 0$; where it falls, $\\yellow{f\'} < 0$. At the top of the hill and the bottom of the valley the tangent is flat, so $\\yellow{f\'} = 0$ — the yellow curve crosses the axis exactly under them. This is how derivatives find maxima and minima.',
-        ru: 'Эта новая функция и есть производная: $\\yellow{f\'(x) = \\frac{3x^2}{4} - 1}$. Где $\\blue{f}$ растёт, там $\\yellow{f\'} > 0$; где убывает — $\\yellow{f\'} < 0$. На вершине холма и на дне впадины касательная горизонтальна, значит $\\yellow{f\'} = 0$ — жёлтая кривая пересекает ось точно под ними. Так производная находит максимумы и минимумы.',
+        en: 'Record each tangent slope as a height on a new graph. Before revealing it at the middle of the road, predict its sign. The height of the road and the height of this new graph measure different things.',
+        ru: 'Записываем наклон каждой касательной как высоту нового графика. Прежде чем показать его в середине дороги, предскажите знак. Высота дороги и высота нового графика измеряют разные вещи.',
       },
       check: {
         q: { en: 'Between the hill and the valley $\\blue{f}$ goes down. What is the sign of $\\yellow{f\'}$ there?', ru: 'Между холмом и впадиной $\\blue{f}$ спускается. Какой знак у $\\yellow{f\'}$ там?' },
         options: [{ text: '$f\' > 0$' }, { text: '$f\' < 0$', ok: true }, { text: '$f\' = 0$' }],
         explain: {
-          en: 'Going down means every tangent there points down: negative slope. The yellow curve is under the axis exactly between the two guides.',
-          ru: 'Спуск — значит каждая касательная там смотрит вниз: наклон отрицательный. Жёлтая кривая лежит под осью ровно между двумя пунктирами.',
+          en: 'Moving right makes the height decrease: rise over a positive run is negative. The yellow derivative lies below the axis here. At the two turning points its value is zero. This gives candidates for extrema; zero slope alone will need a separate check.',
+          ru: 'При движении вправо высота уменьшается: отрицательное приращение делим на положительный шаг. Здесь жёлтая производная ниже оси. На двух поворотах её значение нулевое. Так получаем кандидатов на экстремум; достаточно ли нулевого наклона — проверим отдельно.',
         },
-        reveal: scene => scene.animateParams({ a: 0 }, 1200),
+        reveal: scene => { scene.get('df').visible = true; scene.get('guides').visible = true; scene.animateParams({ a: 0 }, 1200); },
       },
-      state: { show: ['f', 'df', 'guides', 'tangent', 'names', 'point'], params: { a: X_EXT }, ms: 1500, window: { cx: 0, cy: 0, unit: 72 }, controls: ['a'] },
+      state: { show: ['f', 'tangentT', 'names', 'point'], params: { a: X_EXT }, ms: 1500, window: { cx: 0, cy: 0, unit: 72 }, controls: ['a'] },
     },
+    ...reasoningSteps,
     {
       title: { en: 'Your turn', ru: 'Теперь сами' },
       text: {
@@ -347,5 +350,6 @@ export default {
       },
       state: { show: ['dk'], window: { cx: 0, cy: 0.5, unit: 60 }, controls: [] },
     },
+    transferStep,
   ],
 };

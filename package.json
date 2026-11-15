@@ -5,7 +5,9 @@
   "description": "Static ES modules with mathematical and browser acceptance tests.",
   "scripts": {
     "test": "node --test tests/",
-    "test:crypto:browser": "node scripts/check-crypto.mjs"
+    "test:crypto:browser": "node scripts/check-crypto.mjs",
+    "test:learning:browser": "node scripts/check-learning.mjs",
+    "test:algorithms:browser": "node scripts/check-binary-search.mjs"
   },
   "devDependencies": {
     "mathjs": "12.4.2",

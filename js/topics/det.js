@@ -180,8 +180,8 @@ export default {
     {
       title: { en: 'The formula: ad − bc', ru: 'Формула: ad − bc' },
       text: {
-        en: 'In general the area of the parallelogram on $\\green{\\binom{a}{c}}$ and $\\red{\\binom{b}{d}}$ is $$\\det \\begin{pmatrix} \\green{a} & \\red{b} \\\\ \\green{c} & \\red{d} \\end{pmatrix} = ad - bc.$$ The first product is the stretch along the axes; the second one corrects for how much each arrow leans towards the other axis. With $b = 0$ or $c = 0$ it is a stretch with a shear, and only $ad$ is left.',
-        ru: 'В общем случае площадь параллелограмма на $\\green{\\binom{a}{c}}$ и $\\red{\\binom{b}{d}}$ равна $$\\det \\begin{pmatrix} \\green{a} & \\red{b} \\\\ \\green{c} & \\red{d} \\end{pmatrix} = ad - bc.$$ Первое произведение — растяжение вдоль осей; второе поправляет на то, насколько каждая стрелка наклонена к другой оси. При $b = 0$ или $c = 0$ это растяжение со сдвигом, и остаётся только $ad$.',
+        en: 'In general the signed area of the parallelogram on $\\green{\\binom{a}{c}}$ and $\\red{\\binom{b}{d}}$ is $$\\det \\begin{pmatrix} \\green{a} & \\red{b} \\\\ \\green{c} & \\red{d} \\end{pmatrix} = ad - bc.$$ Ordinary area is the absolute value of this number. The first product is the stretch along the axes; the second one corrects for how much each arrow leans towards the other axis. With $b = 0$ or $c = 0$ it is a stretch with a shear, and only $ad$ is left.',
+        ru: 'В общем случае ориентированная площадь параллелограмма на $\\green{\\binom{a}{c}}$ и $\\red{\\binom{b}{d}}$ равна $$\\det \\begin{pmatrix} \\green{a} & \\red{b} \\\\ \\green{c} & \\red{d} \\end{pmatrix} = ad - bc.$$ Обычная площадь равна модулю этого числа. Первое произведение — растяжение вдоль осей; второе поправляет на то, насколько каждая стрелка наклонена к другой оси. При $b = 0$ или $c = 0$ это растяжение со сдвигом, и остаётся только $ad$.',
       },
       try: { en: 'Drag $\\hat\\imath\'$ and $\\hat\\jmath\'$ and count the cells inside the parallelogram.', ru: 'Тяните $\\hat\\imath\'$ и $\\hat\\jmath\'$ и считайте клетки внутри параллелограмма.' },
       check: {
@@ -279,6 +279,7 @@ export default {
       task: {
         kind: 'drag',
         target: Array.from({ length: 21 }, (_, k) => ({ jx: -5 + k / 2, jy: 3 })),
+        ok: s => Math.abs(s.jy - 3) <= 0.13,
         back: 2,
         right: {
           en: 'With $\\hat\\imath\' = (1;\\ 0)$ the determinant is $1 \\cdot d - b \\cdot 0 = d$: only the height of $\\hat\\jmath\'$ matters. Any point of the line $y = 3$ works — sliding along it is a shear, and a shear keeps the area.',
@@ -333,6 +334,7 @@ export default {
       task: {
         kind: 'drag',
         target: Array.from({ length: 21 }, (_, k) => ({ jx: 1, jy: -5 + k / 2 })),
+        ok: s => Math.abs(s.jx - 1) <= 0.13,
         back: 8,
         right: {
           en: '$\\det = 0 \\cdot d - b \\cdot 1 = -b$, so $b = 1$: $\\hat\\jmath\'$ is on the right of $\\hat\\imath\'$, at distance $1$ from its line. The square turned purple.',
