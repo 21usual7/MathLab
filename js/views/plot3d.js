@@ -160,7 +160,7 @@ export class Plot3D {
 
   // ---------- Primitives ----------
 
-  // z = f(x, y) on [-R, R]²; colored by height, with a light grid on top
+  // z = f(x, y) on [-R, R]²; colored by height, with a light grid on top (n: a multiple of 12 — the grid takes every n/12-th line)
   surface(key, f, color, n = 72) {
     const R = this.R, Z = this.zmax, N = n;
     let full = null, fullLines = null;

@@ -190,7 +190,7 @@ export default {
 
     function draw(p) {
       const fogged = S.fog && !S.reveal;
-      p.surface('land', fogged ? (x, y) => (seen(x, y) ? S.f(x, y) : NaN) : S.f, LANDS[S.land].color, fogged ? 110 : 80);
+      p.surface('land', fogged ? (x, y) => (seen(x, y) ? S.f(x, y) : NaN) : S.f, LANDS[S.land].color, fogged ? 120 : 96);
       [...S.done].forEach((pa, i) => {
         if (pa.length > 1) p.tube(`old${i}`, hops(pa), '#8b95a7', 0.03);
         if (pa.length) p.sphere(`oldEnd${i}`, [...pa[pa.length - 1], lift(...pa[pa.length - 1])], '#8b95a7', 0.09);
