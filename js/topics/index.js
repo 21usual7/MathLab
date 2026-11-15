@@ -114,7 +114,7 @@ export const CATALOG = [
       en: 'A function of two variables is a landscape. Cut it with planes and you are back to ordinary graphs — and to partial derivatives.',
       ru: 'Функция двух переменных — это ландшафт. Разрежьте его плоскостями, и вы снова увидите обычные графики, а с ними и частные производные.',
     } },
-  { id: 'gradient', track: 'multivar', status: 'ready', minutes: 12, prereqs: ['surfaces', 'dot'], next: ['regression', 'network'],
+  { id: 'gradient', track: 'multivar', status: 'ready', minutes: 12, prereqs: ['surfaces', 'dot'], next: ['regression', 'network', 'backprop'],
     title: { en: 'Gradient: the steepest way up', ru: 'Градиент: самый крутой подъём' },
     summary: {
       en: 'A hiker\'s map, rain that runs across the level lines, a plank laid on the slope in any direction. Why the steepest way is the gradient and the flat one is at a right angle to it — and why ∇f = 0 at a pass, not only at a top.',
@@ -272,8 +272,12 @@ export const CATALOG = [
       en: 'No line separates a ring. A neuron is a line and a fold; three neurons lift the plane into space, ReLU folds it into a corner, and a flat cut there is a bent boundary back in the plane. Then training finds the folds by itself.',
       ru: 'Кольцо не отделить прямой. Нейрон — это прямая и сгиб; три нейрона поднимают плоскость в пространство, ReLU складывает её в угол, и плоский срез там — изогнутая граница на плоскости. А потом обучение само находит сгибы.',
     } },
-  { id: 'backprop', track: 'nets', status: 'planned', prereqs: ['network', 'chain'],
-    title: { en: 'Backpropagation: the chain rule on a graph', ru: 'Обратное распространение: цепное правило на графе' } },
+  { id: 'backprop', track: 'nets', status: 'ready', minutes: 14, prereqs: ['network', 'chain', 'gradient'], next: ['overfit', 'conv'],
+    title: { en: 'Backpropagation: the chain rule on a graph', ru: 'Обратное распространение: цепное правило на графе' },
+    summary: {
+      en: 'A computation as a graph of tiny machines: numbers run forward, the blame for the error runs back. Along a path the local stretches multiply, where paths split they add, a silent ReLU stops the blame — and all the derivatives cost 2 runs instead of N + 1.',
+      ru: 'Вычисление как граф маленьких машин: числа бегут вперёд, вина за ошибку — назад. Вдоль пути местные растяжения перемножаются, где пути расходятся — складываются, молчащий ReLU останавливает вину. И все производные стоят 2 прогона вместо N + 1.',
+    } },
   { id: 'conv', track: 'nets', status: 'planned', prereqs: ['network'],
     title: { en: 'Convolution: how a network sees a picture', ru: 'Свёртка: как сеть видит картинку' } },
   { id: 'pca', track: 'structure', status: 'ready', minutes: 14, prereqs: ['eigen', 'regression', 'pythagoras'], next: ['kmeans'],
@@ -322,6 +326,7 @@ const MODULES = {
   regression: () => import('./regression.js'),
   classify: () => import('./classify.js'),
   network: () => import('./network.js'),
+  backprop: () => import('./backprop.js'),
   overfit: () => import('./overfit.js'),
   pca: () => import('./pca.js'),
 };
