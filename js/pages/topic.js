@@ -318,7 +318,7 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
   $('[data-act="restart"]').addEventListener('click', () => show(active, true));
   const onKey = e => {
     if (film) return; // the film has its own keys
-    if (e.target.closest('input, textarea, summary, .step-menu button, [contenteditable]') || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.target.closest('input, textarea, select, button, summary, [contenteditable]') || e.altKey || e.ctrlKey || e.metaKey) return;
     if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); show(active + 1); }
     if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(active - 1); }
   };

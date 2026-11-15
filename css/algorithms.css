@@ -59,3 +59,64 @@
 .algorithm-result.right { color: #85d5b1; }
 .algorithm-result.wrong { color: #fa8e96; }
 .algorithm-back { display: block; margin-bottom: 16px; color: #97aabd; }
+
+/* Algorithm lessons share the topic navigation; scenes remain readable at phone size. */
+.pattern-topic .scene-tools [data-act="restart"] { display: none; }
+.pattern-lesson { max-width: 980px; }
+.pattern-lesson h2, .python-workbench h2 { font-size: clamp(21px, 2.3vw, 30px); line-height: 1.35; }
+.pattern-lesson p, .python-workbench p { line-height: 1.75; }
+.pattern-label { color: #97aabd; font-size: 12px; letter-spacing: .04em; margin: 16px 0 10px; }
+.pattern-cells { display: flex; flex-wrap: wrap; gap: 8px; min-height: 60px; }
+.pattern-cell { border: 1px solid #314152; background: #111b28; border-radius: 8px; min-width: 48px; padding: 10px 12px; text-align: center; transition: border-color .18s, background .18s; }
+.pattern-cell strong { display: block; font: 22px ui-monospace, monospace; }
+.pattern-cell small { display: block; margin-top: 8px; color: #97aabd; font: 11px ui-monospace, monospace; }
+.pattern-cell.marked { color: #f4ce73; border-color: #f4ce73; background: #28251c; }
+.pattern-memory .pattern-cell { border-color: #477565; color: #85d5b1; }
+.pattern-memory .pattern-cell strong { font-size: 17px; }
+.stack-memory { flex-direction: column-reverse; align-items: flex-start; min-height: 70px; }
+.stack-memory .pattern-cell { min-width: 90px; }
+.pattern-formula { font: clamp(18px, 2.4vw, 27px)/1.6 ui-monospace, monospace; padding: 16px; color: #85d5b1; border-left: 3px solid #85d5b1; background: #101f20; overflow-wrap: anywhere; }
+.pattern-reason { color: #c1cfde; }
+.pattern-intervention { color: #f4ce73; }
+.pattern-code span { display: block; padding: 2px 8px; border-left: 2px solid transparent; }
+.pattern-code span.active { border-color: #f4ce73; background: #26303a; color: #f4ce73; }
+.pattern-choices { display: flex; gap: 10px; flex-direction: column; align-items: flex-start; margin: 24px 0; }
+.prefix-plot { width: 100%; height: 120px; margin-top: 12px; }
+.python-editor { display: block; width: 100%; min-height: 280px; box-sizing: border-box; resize: vertical; tab-size: 4; font: 14px/1.75 ui-monospace, monospace; background: #0a121c; color: #edf3fa; border: 1px solid #3a5067; border-radius: 8px; padding: 16px; margin-top: 10px; white-space: pre; overflow-x: auto; }
+.algorithm-topic textarea:focus-visible { outline: 2px solid #f4ce73; outline-offset: 3px; }
+.python-output, .python-case pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.7 ui-monospace, monospace; }
+.python-output { background: #101922; padding: 14px; border-radius: 8px; min-height: 42px; }
+.python-case { border-left: 2px solid #85d5b1; padding: 10px 14px; margin: 8px 0; background: #101b20; }
+.python-case.right { color: #85d5b1; }
+.python-case.wrong { color: #fa8e96; border-color: #fa8e96; }
+.python-workbench [hidden] { display: none; }
+.algorithm-topic .btn:disabled { cursor: default; opacity: .45; }
+@media(max-width:900px) {
+  .pattern-topic > .topic-stage { min-height: 350px; }
+  .pattern-topic .scene-tools { flex-wrap: wrap; height: auto; }
+}
+@media(max-width:480px) {
+  .pattern-cell { min-width: 36px; padding: 8px; }
+  .pattern-cell strong { font-size: 18px; }
+  .python-editor { padding: 10px; font-size: 13px; }
+}
+@media(prefers-reduced-motion: reduce) { .pattern-cell { transition: none; } }
+.binary-story .algorithm-caption { min-height: 0; }
+.binary-story .binary-input { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.binary-story .binary-input .algorithm-field { margin: 10px 0; }
+.binary-cells .pattern-cell { flex: 1 0 54px; }
+.binary-cells .pattern-cell.proven { border-color: #477565; color: #85d5b1; background: #11231e; }
+.binary-boundaries { gap: 6px; min-height: 35px; }
+.binary-boundary { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: #526176; border: 1px solid #26313e; }
+.binary-boundary.possible { color: #85d5b1; border-color: #85d5b1; background: #11231e; }
+.binary-scene .pattern-formula { white-space: pre-line; }
+@media(max-width:480px) { .binary-cells .pattern-cell { flex-basis: 42px; } .binary-boundary { width: 25px; height: 25px; } }
+
+.python-custom { display: block; box-sizing: border-box; width: 100%; min-height: 65px; color: #edf3fa; background: #0a121c; border: 1px solid #3a5067; padding: 12px; font: 14px/1.6 ui-monospace, monospace; margin: 12px 0; }
+@media(max-width:900px) {
+  .topic-player.algorithm-topic:not(.algorithm-film-mode) { height: auto; grid-template-rows: auto auto; }
+  .algorithm-topic:not(.algorithm-film-mode) > .panel { min-height: 0; }
+  .algorithm-topic:not(.algorithm-film-mode) .panel-body { overflow: visible; }
+  .algorithm-topic:not(.algorithm-film-mode) > .topic-stage { min-height: 0; }
+  .algorithm-topic:not(.algorithm-film-mode) .stage-host { overflow: visible; flex: none; }
+}

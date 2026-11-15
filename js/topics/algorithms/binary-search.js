@@ -1,3 +1,5 @@
+import { mountPython } from './python-editor.js';
+import { BINARY_TASK } from './pattern-lessons.js';
 import { t } from '../../core/i18n.js';
 import { L, el, button, input } from './ui.js';
 import { binarySearchStory } from './binary-search-story.js';
@@ -7,6 +9,7 @@ const steps = [
   { id: 'story', title: L('Право отбросить половину', 'Permission to discard half'), text: L('Один поиск, один инвариант и одна сломанная строка. Останавливайте историю и проверяйте причину каждого шага.', 'One search, one invariant, and one broken line. Pause the story and inspect the reason for each step.') },
   { id: 'transfer', title: L('Граница в новых данных', 'A boundary in new data'), text: L('Индексы начинаются с нуля. Найдите первую позицию a[i] ≥ x. Если таких значений нет, верните n — длину массива. Готового запуска здесь нет.', 'Indices start at zero. Find the first position a[i] ≥ x. If no value qualifies, return n, the array length. There is no worked trace here.'), goal: L('Решите три новых примера и объясните случай n.', 'Solve three new cases and explain the n case.'), after: L('Дубликаты требуют первой границы; отсутствие точного совпадения не означает отсутствие ответа; n — допустимая позиция границы.', 'Duplicates require the first boundary; no exact match does not mean no answer; n is a valid boundary position.') },
   { id: 'counterexample', title: L('Ваш контрпример', 'Your counterexample'), text: L('В программе заменили lo = mid + 1 на lo = mid. Постройте свой отсортированный массив и запрос, на котором поиск застрянет. Укажите, какое требование нарушено.', 'The program now uses lo = mid instead of lo = mid + 1. Construct a sorted array and target that make it stall. Identify which requirement fails.'), goal: L('Постройте контрпример и отличите инвариант от завершения.', 'Construct a counterexample and distinguish the invariant from termination.'), after: L('Инвариант может сохраняться бесконечно. Для завершения нужен отдельный довод: неотрицательная целая длина hi − lo должна строго уменьшаться.', 'An invariant can remain true forever. Termination needs a separate argument: the nonnegative integer hi − lo must strictly decrease.') },
+  { id: 'python', title: L('Свой бинарный поиск на Python', 'Your binary search in Python'), text: L('Напишите алгоритм и проверьте дубликаты, пустой массив и границу n.', 'Write the algorithm and check duplicates, empty input, and boundary n.'), after: L('Ваш код прошёл примеры. Теперь объясните, почему ответ сохраняется внутри [lo, hi] и почему длина уменьшается.', 'Your code passed the examples. Now explain why the answer stays in [lo, hi] and why the length shrinks.') },
 ];
 
 export default {
@@ -80,8 +83,9 @@ export default {
         film?.dispose(); film = null; root.replaceChildren(); root.hidden = id === 'story';
         feedback.textContent = ''; feedback.className = 'algorithm-result';
         player.classList.toggle('algorithm-film-mode', id === 'story');
-        if (id === 'story') film = binarySearchStory(ui.host, { onTransfer: () => ui.goto(1), onCounterexample: () => ui.goto(2) });
+        if (id === 'story') film = binarySearchStory(ui.host, { onTransfer: () => ui.goto(1), onCounterexample: () => ui.goto(2), onCode: () => ui.goto(3) });
         else if (id === 'transfer') transfer(); else if (id === 'counterexample') counterexample();
+        else if (id === 'python') film = mountPython(root, BINARY_TASK, { key: 'binary-search', onSolve: () => ui.solve('python') });
       },
       dispose() { film?.dispose(); root.remove(); feedback.remove(); player.classList.remove('algorithm-topic', 'algorithm-film-mode'); css.remove(); },
     };

@@ -15,6 +15,7 @@ export const SUBJECTS = [
 ];
 
 export const TRACKS = [
+  { id: 'patterns', subject: 'algorithms', title: { en: 'Start here · arrays, pairs, memory', ru: 'Начните здесь · массивы, пары, память' } },
   { id: 'search', subject: 'algorithms', title: { en: 'Search and invariants', ru: 'Поиск и инварианты' } },
   { id: 'b-geom', subject: 'basics', title: { en: 'Geometry 7–9', ru: 'Геометрия 7–9' } },
   { id: 'b-alg', subject: 'basics', title: { en: 'Algebra 7–9', ru: 'Алгебра 7–9' } },
