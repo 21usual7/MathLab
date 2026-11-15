@@ -1,11 +1,13 @@
-// Router: #  ·  #worlds / #algebra / #geometry / #linalg (the home page, scrolled there)  ·  #lab?s=...  ·  #topic/<id>[/<step>]
-// ·  #world/<id>[/<mode>]
+// Router: #  ·  #topics[/<subject>]  ·  #worlds[/<collection>]  ·  #topic/<id>[/<step>]  ·  #world/<id>[/<mode>]  ·  #lab?s=...
+// Old links to a subject (#algebra, #geometry, …) open the topics catalog filtered to it.
 // Every page returns a cleanup function (stops animations, frees WebGL) that runs before the next one.
 
 import { mountHome } from './pages/home.js';
 import { mountLab } from './pages/lab.js';
 import { mountTopic } from './pages/topic.js';
 import { mountWorld } from './pages/world.js';
+import { mountTopics, mountWorlds } from './pages/catalog.js';
+import { SUBJECTS } from './topics/index.js';
 import { getLang, setLang } from './core/i18n.js';
 import { closeKeypad } from './ui/keypad.js';
 
@@ -18,9 +20,10 @@ async function route() {
   if (cleanup) { cleanup(); cleanup = null; }
   closeKeypad();
   const [path, query] = location.hash.slice(1).split('?');
-  const [page, id, step] = path.split('/');
+  let [page, id, step] = path.split('/');
+  if (SUBJECTS.some(sub => sub.id === page)) { id = page; page = 'topics'; history.replaceState(null, '', `#topics/${id}`); }
   document.body.dataset.page = page || 'home';
-  const nav = page === 'world' ? 'worlds' : page || 'home';
+  const nav = { world: 'worlds', topic: 'topics' }[page] || page || 'home';
   document.querySelectorAll('[data-nav]').forEach(a => a.classList.toggle('active', a.dataset.nav === nav));
   window.scrollTo(0, 0);
 
@@ -28,11 +31,9 @@ async function route() {
   if (page === 'lab') c = mountLab(app, new URLSearchParams(query || ''));
   else if (page === 'topic') c = await mountTopic(app, id, (parseInt(step, 10) || 1) - 1);
   else if (page === 'world') c = await mountWorld(app, id, parseInt(step, 10) || 0);
-  else {
-    c = mountHome(app);
-    const subject = document.getElementById(page);
-    if (subject) subject.scrollIntoView();
-  }
+  else if (page === 'topics') c = mountTopics(app, id);
+  else if (page === 'worlds') c = mountWorlds(app, id);
+  else c = mountHome(app);
 
   // A newer route started while this one was loading
   if (my !== seq) { if (c) c(); return; }

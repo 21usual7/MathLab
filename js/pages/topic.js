@@ -51,7 +51,7 @@ export async function mountTopic(root, id, startStep = 0) {
     <article class="topic">
       <section class="panel">
         <div class="panel-top">
-          <div class="crumbs"><a href="#${subject.id}">${t(subject.title)}</a><span>/</span><span>${t(track.title)}</span></div>
+          <div class="crumbs"><a href="#topics/${subject.id}">${t(subject.title)}</a><span>/</span><span>${t(track.title)}</span></div>
           <div class="dots" role="tablist">
             ${topic.steps.map((s, i) => `<button type="button" class="dot${s.task ? ' is-task' : ''}" data-go="${i}" title="${i + 1}. ${t(s.title).replace(/"/g, '&quot;')}" aria-label="Step ${i + 1}"></button>`).join('')}
             <span class="counter"></span>
@@ -86,7 +86,7 @@ export async function mountTopic(root, id, startStep = 0) {
             <div class="step-num">✓</div>
             <h2>${t({ en: 'Where next', ru: 'Куда дальше' })}</h2>
             <div class="next-list">${(meta.next || []).map(chip).join('')}</div>
-            <p><a href="#${subject.id}">← ${t({ en: 'Back to the map', ru: 'Назад к карте' })}</a></p>
+            <p><a href="#topics/${subject.id}">← ${t({ en: 'Back to the map', ru: 'Назад к карте' })}</a></p>
           </section>
           <div class="live">
             <div class="legend"></div>

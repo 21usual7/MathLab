@@ -403,7 +403,26 @@ body.keypad-open { padding-bottom: var(--kb, 0px); }
 
 /* ---------- Worlds: cards on the home page ---------- */
 
-.worlds { padding-top: 72px; scroll-margin-top: 40px; }
+/* Catalog pages (#topics, #worlds) and the shelves of the home page: a head, filter chips, rows of cards */
+.catalog { padding-bottom: 64px; }
+.page-head { padding: 56px 0 22px; max-width: 760px; }
+.page-head h1 { font-size: clamp(36px, 4.4vw, 54px); line-height: 1.05; letter-spacing: -0.02em; }
+.page-head .lead { margin: 14px 0 0; color: var(--soft); font-size: 17px; line-height: 1.6; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 36px; }
+.chips .chip { font-size: 14px; padding: 5px 14px; }
+.chip.active { border-color: var(--yellow); color: var(--text); background: rgba(244, 211, 94, 0.08); }
+.shelf { padding-top: 64px; }
+.catalog .shelf, .catalog .subject { padding-top: 0; margin-bottom: 52px; }
+.section-head .more { margin-left: auto; font-size: 15px; white-space: nowrap; }
+.featured-topics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.featured-topics .node { margin: 0; }
+.world-cards { align-items: start; }
+.shelf .subject-head h3 { white-space: nowrap; }
+.world-howto { display: none; margin: 14px 0 0; font-size: 14px; color: var(--muted); line-height: 1.5; }
+.world-card.planned { border-style: dashed; background: transparent; padding: 18px 0; min-height: 0; }
+.world-card.planned .world-title { font-size: 18px; color: var(--muted); }
+.world-card.planned .node-meta { color: var(--faint); }
+.world-card.planned:hover { transform: none; box-shadow: none; border-color: var(--line); }
 .world-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .world-card { display: flex; flex-direction: column; gap: 8px; padding: 0 0 20px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--panel); color: var(--text); overflow: hidden; transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s; }
 .world-card:hover { transform: translateY(-3px); border-color: rgba(244, 211, 94, 0.55); box-shadow: 0 14px 40px -18px rgba(244, 211, 94, 0.35); text-decoration: none; }
@@ -449,6 +468,19 @@ body.keypad-open { padding-bottom: var(--kb, 0px); }
 .world-hud { position: absolute; left: 12px; bottom: 12px; z-index: 3; max-width: min(440px, calc(100% - 24px)); padding: 8px 12px; border-radius: 10px; background: rgba(13, 17, 23, 0.82); backdrop-filter: blur(6px); border: 1px solid var(--line-soft); color: var(--soft); font-size: 13px; line-height: 1.5; pointer-events: none; }
 .world-chart { width: 100%; height: 120px; display: block; border-radius: 8px; background: var(--stage); border: 1px solid var(--line-soft); }
 
+/* The JPEG world: the picture with a divider, and a side column with one block and its 64 waves */
+.jp { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr) clamp(220px, 22vw, 300px); }
+.jp-main { position: relative; min-width: 0; min-height: 0; }
+.jp-view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+.jp-side { border-left: 1px solid var(--line-soft); padding: 14px 14px 64px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.jp-cap { font: 600 11px var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin-top: 6px; }
+.jp-cap:empty { display: none; }
+.jp-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.jp-pair canvas, .jp-basis { width: 100%; aspect-ratio: 1; display: block; border-radius: 6px; image-rendering: pixelated; }
+.jp-basis { cursor: pointer; }
+.jp-info { font-size: 13px; line-height: 1.5; color: var(--soft); min-height: 3em; }
+.jp[data-mode="waves"] .jp-pair, .jp[data-mode="waves"] .jp-cap-block { display: none; }
+
 /* ---------- Phones and narrow windows ---------- */
 
 @media (max-width: 430px) {
@@ -467,7 +499,20 @@ body.keypad-open { padding-bottom: var(--kb, 0px); }
   .hero-visual { height: 340px; }
   .principles { grid-template-columns: 1fr; }
   .world-cards { grid-template-columns: 1fr; }
-  .worlds { padding-top: 56px; }
+  /* Worlds on a phone: a taller stage; the tip moves from over the world into the panel */
+  .world-stage { height: 64vh; height: 64dvh; }
+  .world-hud { display: none; }
+  .world-howto { display: block; }
+  .jp { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+  .jp-side { border-left: 0; border-top: 1px solid var(--line-soft); display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px; align-items: start; padding: 8px 12px 10px; overflow: visible; }
+  .jp-side .jp-pair, .jp-side .jp-cap { display: none; }
+  .jp-side .jp-basis { grid-column: 1; }
+  .jp-side .jp-info { grid-column: 2; font-size: 12.5px; }
+  .jp[data-mode="waves"] .jp-side { grid-template-columns: 210px minmax(0, 1fr); }
+  .featured-topics { grid-template-columns: 1fr 1fr; }
+  .shelf { padding-top: 48px; }
+  .page-head { padding: 32px 0 18px; }
+  .section-head .more { margin-left: 0; }
   .tracks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .map { padding-top: 56px; }
 

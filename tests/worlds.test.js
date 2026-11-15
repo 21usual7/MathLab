@@ -65,3 +65,28 @@ test('epidemic: the threshold is near one half', () => {
   for (let y = 0; y < 64; y++) wall[y * 64 + 30] = 1;
   assert.equal(cross(1, 0, Math.random, wall).cross, false);
 });
+
+test('JPEG: waves, quantization and the challenges', async () => {
+  const J = await import('../js/worlds/jpeg-math.js');
+  // The DCT is only another way to write the same 64 numbers
+  const b = Float64Array.from({ length: 64 }, (_, i) => ((i * 37) % 255) - 128);
+  const back = J.idct(J.dct(b));
+  assert.ok(b.every((v, i) => Math.abs(v - back[i]) < 1e-9));
+  // A single wave has a single coefficient
+  const c = J.dct(J.wave(3, 1));
+  assert.ok(c.every((v, i) => (i === 1 * 8 + 3 ? Math.abs(v) > 1 : Math.abs(v) < 1e-9)));
+  // The zigzag visits every wave once, slow ones first
+  assert.equal(new Set(J.ZIGZAG).size, 64);
+  assert.deepEqual(J.ZIGZAG.slice(0, 3), [0, 1, 8]);
+  // Lower quality — fewer bits, further from the original
+  const img = J.sunset(), hi = J.jpeg(img, { qy: 90, gray: true }), lo = J.jpeg(img, { qy: 30, gray: true });
+  assert.ok(lo.bits < hi.bits && lo.psnrY < hi.psnrY);
+  // «Ten times smaller, unnoticed»: possible near quality 60–70, not at the extremes
+  const ok = q => { const r = J.jpeg(img, { qy: q, gray: true }); return r.raw / r.bits >= 10 && r.psnrY >= 37; };
+  assert.ok(ok(65));
+  assert.ok(!ok(90) && !ok(30));
+  // «Colour almost for free»: needs colour at half size; full-size colour is too expensive at any quality
+  const col = (qc, sub) => { const r = J.jpeg(img, { qy: 75, qc, sub }); return r.bitsC <= 0.12 * r.bitsY && r.psnrRGB >= 34; };
+  assert.ok(col(40, true));
+  assert.ok(![5, 20, 40, 75].some(q => col(q, false)));
+});

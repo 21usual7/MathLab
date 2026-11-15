@@ -23,9 +23,11 @@ const L = {
 
 export async function mountWorld(root, id, startMode = 0) {
   const meta = worldMeta(id);
-  const world = meta ? await loadWorld(id) : null;
+  const world = meta && meta.status !== 'planned' ? await loadWorld(id) : null;
   if (!world) {
-    root.innerHTML = `<div class="empty"><h1>Not found</h1><a href="#worlds">← ${t(L.worlds)}</a></div>`;
+    root.innerHTML = meta
+      ? `<div class="empty"><h1>${t(meta.title)}</h1><p>${t({ en: 'This world is on the way.', ru: 'Этот мир в работе.' })}</p><a href="#worlds/${meta.collection}">← ${t(L.worlds)}</a></div>`
+      : `<div class="empty"><h1>Not found</h1><a href="#worlds">← ${t(L.worlds)}</a></div>`;
     return () => {};
   }
   const modes = world.modes;
@@ -35,7 +37,7 @@ export async function mountWorld(root, id, startMode = 0) {
     <article class="topic world">
       <section class="panel">
         <div class="panel-top">
-          <div class="crumbs"><a href="#worlds">${t(L.worlds)}</a><span>/</span><span>${t(meta.title)}</span></div>
+          <div class="crumbs"><a href="#worlds/${meta.collection}">${t(L.worlds)}</a><span>/</span><span>${t(meta.title)}</span></div>
           <div class="modes" role="tablist">
             ${modes.map((m, i) => `<button type="button" class="mode-tab" data-m="${i}" title="${t(m.title).replace(/"/g, '&quot;')}">${tabName(m, i)}</button>`).join('')}
           </div>
@@ -51,6 +53,7 @@ export async function mountWorld(root, id, startMode = 0) {
             <div class="step-text"></div>
             <div class="goal" hidden><span class="goal-label">${t(L.goal)}</span><div class="goal-text"></div></div>
             <div class="world-status" aria-live="polite" hidden></div>
+            <p class="world-howto"></p>
           </section>
           <div class="live world-live">
             <div class="readout"></div>
@@ -66,7 +69,7 @@ export async function mountWorld(root, id, startMode = 0) {
 
   const $ = s => root.querySelector(s);
   const info = $('.mode-info'), status = $('.world-status'), readoutEl = $('.readout'), controls = $('.controls');
-  const hud = $('.world-hud'), tabs = [...root.querySelectorAll('.mode-tab')];
+  const hud = $('.world-hud'), howto = $('.world-howto'), tabs = [...root.querySelectorAll('.mode-tab')];
   let current = -1;
 
   const markTabs = () => {
@@ -98,7 +101,10 @@ export async function mountWorld(root, id, startMode = 0) {
       renderMath(status);
     },
     // A tip over the world (how to interact)
-    hud(html) { hud.hidden = !html; hud.innerHTML = html || ''; renderMath(hud); },
+    hud(html) {
+      hud.hidden = !html; hud.innerHTML = html || ''; renderMath(hud);
+      howto.innerHTML = html || ''; // on a phone the tip is shown here, not over the world
+    },
     // The challenge is solved: remember it and show what it was about
     solve(modeId, html = '') {
       const s = load();
