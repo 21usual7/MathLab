@@ -89,7 +89,7 @@ export default {
       path: [], vel: [0, 0], fixedStart: null, limit: Infinity, jumps: 0, maxJumps: Infinity,
       done: [], reveal: false, mode: 'free', low: null, running: false, out: false,
     };
-    const plot = new Plot3D(ui.host, p => draw(p), { R, zmax: ZMAX, camera: [8, -9.5, 7.5] });
+    let plot = null; // created below, when everything it draws is defined: Plot3D draws its first frame at once
     let timer = 0;
 
     const cur = () => S.path[S.path.length - 1];
@@ -222,6 +222,8 @@ export default {
       if (S.mode === 'fog') rows.push([t({ en: 'Jumps', ru: 'Прыжков' }), `${S.jumps} / ${S.maxJumps}`]);
       ui.readout(rows);
     }
+
+    plot = new Plot3D(ui.host, p => draw(p), { R, zmax: ZMAX, camera: [8, -9.5, 7.5] });
 
     // Clicking the landscape (not dragging the view): where the ray from the eye meets z = f(x, y)
     const ray = new THREE.Raycaster();
