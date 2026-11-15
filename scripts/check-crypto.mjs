@@ -29,14 +29,55 @@ try {
   const page = await context.newPage(), errors = [];
   page.on('pageerror', e => errors.push(e.message));
   const base = `http://127.0.0.1:${server.address().port}`;
-  const go = async (world, mode = 0) => {
-    await page.goto(`${base}/#world/${world}/${mode}`);
+  const go = async (world, mode = 0, story = false) => {
+    const target=`${base}/#world/${world}/${mode}`;
+    if(page.url()===target)await page.reload();else await page.goto(target);
+    if(world==='crypto-xor'&&mode===0) { await page.waitForSelector('.xor-film-root'); if(story)return; await page.getByRole('button',{name:/^(Открыть лабораторию|Open laboratory) ↗$/}).click(); }
     await page.waitForSelector('.crypto-experiment');
     assert.equal(await page.locator('.crypto-lab').count(), 1);
   };
   const mode = async i => { await page.locator(`.mode-tab[data-m="${i}"]`).click(); assert.equal(await page.locator('.stage-host').evaluate(el => el.scrollTop), 0); };
   const solved = () => page.waitForSelector('.world-status.right');
   const button = text => page.getByRole('button', { name: text, exact: true });
+
+  await go('crypto-xor',0,true);
+  assert(await page.locator('.xor-film-cover').isVisible());
+  await page.getByRole('button',{name:'▶ Смотреть историю',exact:true}).click();
+  await page.waitForTimeout(150);await page.locator('.xor-film-nav > button').first().click();
+  const filmTime=await page.locator('.xor-film-root').getAttribute('data-time');await page.waitForTimeout(100);
+  assert.equal(await page.locator('.xor-film-root').getAttribute('data-time'),filmTime,'the story must actually pause');
+  await page.getByRole('combobox',{name:'Сцена истории'}).selectOption('1');
+  await page.getByRole('button',{name:'⌕ Под микроскопом',exact:true}).click();
+  const result=+(await page.locator('.xor-film-lens').getAttribute('data-result'));
+  await page.locator('.xor-film-lens [data-row="0"][data-bit="0"]').click();
+  assert.equal(+(await page.locator('.xor-film-lens').getAttribute('data-result')),result^1);
+  await page.getByRole('button',{name:'Вернуться к истории',exact:true}).click();
+  await page.getByRole('combobox',{name:'Сцена истории'}).selectOption('1');
+  await page.locator('.xor-film-nav > button').first().click();await page.waitForTimeout(100);
+  await page.getByRole('button',{name:'⌕ Под микроскопом',exact:true}).click();
+  const lensTime=+(await page.locator('.xor-film-root').getAttribute('data-time'));
+  await page.waitForTimeout(120);assert.equal(+(await page.locator('.xor-film-root').getAttribute('data-time')),lensTime);
+  await page.keyboard.press('Escape');assert(await page.locator('.xor-film-lens').isHidden());
+  await page.waitForTimeout(120);assert(+(await page.locator('.xor-film-root').getAttribute('data-time'))>lensTime);
+  await page.getByRole('combobox',{name:'Сцена истории'}).selectOption('5');
+  const heldCipher=await page.locator('.xor-film-root').getAttribute('data-cipher');
+  await page.getByRole('button',{name:'⌕ Под микроскопом',exact:true}).click();
+  const inferred=+(await page.locator('.xor-film-lens').getAttribute('data-result'));
+  await page.locator('.xor-film-lens [data-row="1"][data-bit="0"]').click();
+  assert.equal(+(await page.locator('.xor-film-lens').getAttribute('data-result')),inferred^1);
+  assert.equal(await page.locator('.xor-film-root').getAttribute('data-cipher'),heldCipher,'an assumption must not rewrite the intercept');
+  assert(await page.locator('.xor-film-lens [data-row="0"][data-bit="0"]').isDisabled());
+  await page.getByRole('button',{name:'Вернуться к истории',exact:true}).click();
+  await page.getByRole('combobox',{name:'Сцена истории'}).selectOption('6');
+  const recovered=await page.locator('.xor-film-root').getAttribute('data-recovered'),opened=await page.locator('.xor-film-root').getAttribute('data-opened');
+  await page.getByRole('checkbox',{name:'Повторить маску во втором сообщении'}).uncheck();
+  assert.equal(await page.locator('.xor-film-root').getAttribute('data-recovered'),recovered);
+  assert.notEqual(await page.locator('.xor-film-root').getAttribute('data-opened'),opened);
+  await page.getByRole('combobox',{name:'Сцена истории'}).selectOption('7');
+  await page.getByRole('button',{name:'Известно позиций: 2',exact:true}).click();
+  assert.equal(await page.locator('.xor-film-root').getAttribute('data-known'),'2');
+  await page.getByRole('button',{name:'Открыть лабораторию ↗',exact:true}).click();
+  assert.equal(await page.locator('.xor-film-root').count(),0);
 
   await go('crypto-xor');
   assert.equal(await page.locator('.crypto-cast').isVisible(),false,'XOR should show its own algorithm scene');
@@ -127,7 +168,7 @@ try {
   for (const w of CRYPTO_WORLDS) { const expected=(await loadCryptoWorld(w.id)).modes.filter(m=>m.goal).length; assert.equal(stored[w.id].length, expected, `challenges must be saved for ${w.id}`); }
   await go('crypto-xor'); assert.equal(await page.locator('.mode-tab.solved').count(), 2);
   assert.equal(await page.locator('.proof-nav').isVisible(), false);
-  await page.getByRole('button', { name: 'EN', exact: true }).click(); await page.waitForSelector('.crypto-experiment');
+  await page.getByRole('button', { name: 'EN', exact: true }).click(); await page.waitForSelector('.xor-film-root'); await page.getByRole('button',{name:'Open laboratory ↗',exact:true}).click(); await page.waitForSelector('.crypto-experiment');
   assert.match(await page.locator('.crypto-work-head').innerText(), /Lift the reused mask/);
   await page.goto(`${base}/#worlds/crypto`); await page.waitForSelector('.world-cards');
   assert.equal(await page.locator('.world-card').count(), CRYPTO_WORLDS.length);
@@ -135,7 +176,18 @@ try {
   const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
   const phone = await mobile.newPage(); phone.on('pageerror', e => errors.push(e.message));
   for (const w of CRYPTO_WORLDS) {
-    await phone.goto(`${base}/#world/${w.id}`); await phone.waitForSelector('.crypto-experiment');
+    await phone.goto(`${base}/#world/${w.id}`);
+    if(w.id==='crypto-xor') {
+      await phone.waitForSelector('.xor-film-root');
+      await phone.getByRole('button',{name:'▶ Смотреть историю',exact:true}).tap();
+      assert.equal(await phone.locator('.xor-film-cover').isVisible(),false);
+      await phone.getByRole('combobox',{name:'Сцена истории'}).selectOption('1');
+      await phone.getByRole('button',{name:'⌕ Под микроскопом',exact:true}).tap();
+      await phone.locator('.xor-film-lens [data-row="0"][data-bit="0"]').tap();
+      await phone.getByRole('button',{name:'Вернуться к истории',exact:true}).tap();
+      await phone.getByRole('button',{name:'Открыть лабораторию ↗',exact:true}).tap();
+    }
+    await phone.waitForSelector('.crypto-experiment');
     assert.equal(await phone.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${w.id}: viewport overflow`);
     assert(await phone.locator('.crypto-cast:not([hidden]), .xor-process, .hash-round-process, .exchange-process').first().isVisible());
     await phone.locator('.crypto-play').tap();
@@ -148,7 +200,7 @@ try {
   await page.waitForTimeout(120); assert.equal(await page.locator('.crypto-transport input').inputValue(), progress);
   await page.goto(`${base}/#topics`); await page.waitForSelector('.catalog'); assert.equal(await page.locator('.crypto-lab').count(), 0);
   assert.deepEqual(errors, []);
-  console.log('Crypto browser checks passed: all 15 challenges, algorithm scenes, proofs, saved progress, EN/RU, catalog, seven mobile layouts, reduced motion, pause and cleanup.');
+  console.log('Crypto browser checks passed: XOR story/microscope with pause, causal interventions and resume; all 15 challenges, algorithm scenes, proofs, saved progress, EN/RU, catalog, seven mobile layouts, reduced motion, pause and cleanup.');
 } finally {
   if (browser) await browser.close();
   await new Promise(resolve => server.close(resolve));

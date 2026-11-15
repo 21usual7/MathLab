@@ -2,6 +2,7 @@ import { t } from '../../core/i18n.js';
 import { bytes, xor, crib, printable, randomPad } from './math.js';
 import { L, el, action, field, check, line, workshop } from './ui.js';
 import { xorProcess } from './xor-process.js';
+import { xorStory } from './xor-story.js';
 
 const modes = [
   { id: 'free', title: L('Два письма, один ключ', 'Two letters, one pad'),
@@ -29,7 +30,10 @@ export default {
     const w = workshop(ui, { next: 'crypto-tamper', title: L('Снимите повторную маску', 'Lift the reused mask'), links: [['mod', L('Остатки и XOR', 'Remainders and XOR')]], sources: [['https://www.rfc-editor.org/rfc/rfc8439.html#section-4', 'RFC 8439 · nonce']], note: L('Исходные сообщения — ASCII: один символ = один байт. Переключение битов может дать непечатный байт (·). Ключи генерируются в браузере. Это модель одноразового блокнота.', 'Initial messages use ASCII: one character = one byte. Flipping bits may produce a non-printable byte (·). Pads are generated in your browser. This is a one-time-pad model.') });
     let mode = 'free', m1, m2, k1, k2, c1, c2, fresh = false, eve = false, selected = 0, guess = '', offset = 0, proof = 0;
     let table, bitbox, fragment, result, sender;
-    let pair = false, decrypt = false;
+    let pair = false, decrypt = false, film = null;
+    const world = ui.host.closest('.world');
+    function openLab() { film?.dispose(); film = null; world.classList.remove('xor-film-mode'); w.root.hidden = false; ui.host.scrollTop = 0; story(); }
+    function openStory() { film?.dispose(); w.story({}); w.root.hidden = true; world.classList.add('xor-film-mode'); ui.host.scrollTop = 0; film = xorStory(ui.host, { onExplore: openLab }); }
     const process = xorProcess((row, bit) => {
       if (mode !== 'free' || eve || pair) return;
       if (row === 0) m1[selected] ^= 1 << bit;
@@ -79,6 +83,7 @@ export default {
     function build() {
       w.experiment.replaceChildren();
       if (mode === 'free') {
+        w.experiment.append(action(L('Смотреть историю XOR', 'Watch the XOR story'), openStory));
         const view = check(L('Глазами Евы: скрыть письма и ключ', 'Eve’s view: hide letters and pad'), eve, v => { eve = v; build(); story(); });
         w.experiment.append(view.el);
       }
@@ -127,9 +132,9 @@ export default {
       drawBytes();
     }
     return {
-      setMode(id) { mode = id; fresh = false; eve = id !== 'free'; selected = 0; guess = ''; offset = 0; proof = 0; pair = id !== 'free'; decrypt = false; init(); build(); story(); },
+      setMode(id) { film?.dispose(); film = null; world.classList.remove('xor-film-mode'); w.root.hidden = false; mode = id; fresh = false; eve = id !== 'free'; selected = 0; guess = ''; offset = 0; proof = 0; pair = id !== 'free'; decrypt = false; init(); build(); story(); if (id === 'free') openStory(); },
       slide(k) { proof = k; drawBytes(); },
-      dispose() { w.dispose(); },
+      dispose() { film?.dispose(); world.classList.remove('xor-film-mode'); w.dispose(); },
     };
   },
 };
