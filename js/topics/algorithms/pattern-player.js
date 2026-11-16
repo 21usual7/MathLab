@@ -37,10 +37,12 @@ function graphPlot(frame, { edges, pos }) {
 function drawSnapshot(host, frame, lesson) {
   host.replaceChildren(el('p', 'pattern-label', frame.labels ? L('Данные', 'Data') : L('Данные · индексы с нуля', 'Data · zero-based indices')), cells(frame.values, frame.marks, { labels: frame.labels, dim: frame.dim }));
   if (lesson.graph) host.append(graphPlot(frame, lesson.graph));
-  host.append(el('p', 'pattern-label', lesson.memoryTitle));
-  const memory = cells(frame.memory, [], { indices: lesson === LESSONS['prefix-sums'], prefix: true }); memory.classList.add('pattern-memory');
-  if (lesson === LESSONS['bracket-stack']) memory.classList.add('stack-memory');
-  host.append(memory);
+  if (lesson.memoryTitle) {
+    host.append(el('p', 'pattern-label', lesson.memoryTitle));
+    const memory = cells(frame.memory, [], { indices: lesson === LESSONS['prefix-sums'], prefix: true }); memory.classList.add('pattern-memory');
+    if (lesson === LESSONS['bracket-stack']) memory.classList.add('stack-memory');
+    host.append(memory);
+  }
   if (lesson === LESSONS['prefix-sums'] && frame.memory.length > 1 && frame.memory.every(v => typeof v === 'number')) host.append(prefixPlot(frame.memory, frame.values));
   host.append(el('p', 'pattern-formula', frame.formula), el('p', 'pattern-reason', frame.note));
 }
@@ -50,17 +52,25 @@ export function mountTrace(host, lesson, getRun = lesson.trace) {
   function renderCode() { code.replaceChildren(); rows = (run.code || lesson.code).map((text, i) => { const row = el('span', '', `${String(i + 1).padStart(2, ' ')}  ${text}`); code.append(row); return row; }); }
   renderCode();
   const counter = el('span', 'algorithm-muted'); counter.setAttribute('role', 'status');
-  const back = button(L('← Назад', '← Back'), () => show(index - 1)), next = button(L('Один шаг →', 'One step →'), () => show(index + 1)), reset = button(L('↺ С начала', '↺ Restart'), () => show(0));
-  const controls = el('div', 'algorithm-actions'); controls.append(back, counter, next, reset);
-  const side = el('div', 'pattern-side'); side.append(controls, code); root.append(snapshot, side); host.append(root);
-  root.tabIndex = -1; root.addEventListener('keydown', e => { if (e.key === 'ArrowRight') show(index + 1); if (e.key === 'ArrowLeft') show(index - 1); });
+  let timer = null;
+  const halt = () => { clearInterval(timer); timer = null; play.textContent = t(L('▶ Авто', '▶ Auto')); };
+  const back = button(L('← Назад', '← Back'), () => { halt(); show(index - 1); }), next = button(L('Один шаг →', 'One step →'), () => { halt(); show(index + 1); }), reset = button(L('↺ С начала', '↺ Restart'), () => { halt(); show(0); });
+  const play = button(L('▶ Авто', '▶ Auto'), () => {
+    if (timer) return halt();
+    if (index === run.frames.length - 1) show(0);
+    timer = setInterval(() => index < run.frames.length - 1 ? show(index + 1) : halt(), 1300); play.textContent = t(L('⏸ Пауза', '⏸ Pause'));
+  });
+  const controls = el('div', 'algorithm-actions'); controls.append(back, counter, next, play, reset);
+  const main = el('div', 'pattern-main'), stage = el('div', 'pattern-scene'); let scene = lesson.scene?.(stage, run);
+  main.append(snapshot); const side = el('div', 'pattern-side'); side.append(controls, code); root.append(stage, main, side); host.append(root);
+  root.tabIndex = -1; root.addEventListener('keydown', e => { if (e.key === 'ArrowRight') { halt(); show(index + 1); } if (e.key === 'ArrowLeft') { halt(); show(index - 1); } });
   function show(i) {
     index = Math.max(0, Math.min(run.frames.length - 1, i)); const frame = run.frames[index];
-    drawSnapshot(snapshot, frame, lesson); rows.forEach((row, k) => { row.classList.toggle('active', k === frame.line); if (k === frame.line) row.setAttribute('aria-current', 'step'); else row.removeAttribute('aria-current'); });
+    drawSnapshot(snapshot, frame, lesson); scene?.update(frame); rows.forEach((row, k) => { row.classList.toggle('active', k === frame.line); if (k === frame.line) row.setAttribute('aria-current', 'step'); else row.removeAttribute('aria-current'); });
     counter.textContent = `${index + 1} / ${run.frames.length}`; back.disabled = index === 0; next.disabled = index === run.frames.length - 1;
   }
   show(0);
-  return { refresh() { run = getRun(); renderCode(); show(0); }, dispose() { root.remove(); } };
+  return { refresh() { halt(); run = getRun(); renderCode(); stage.replaceChildren(); scene = lesson.scene?.(stage, run); show(0); }, dispose() { halt(); root.remove(); } };
 }
 export function createPatternTopic(id) {
   const lesson = LESSONS[id];
@@ -77,7 +87,7 @@ export function createPatternTopic(id) {
     mountStage(ui) {
       const player = ui.host.closest('.topic-player'); player.classList.add('algorithm-topic', 'pattern-topic');
       const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = new URL('../../../css/algorithms.css', import.meta.url).href; document.head.append(css);
-      const root = el('section', 'algorithm-lab pattern-lesson'); ui.host.append(root); let child = null;
+      const root = el('section', 'algorithm-lab pattern-lesson'); ui.host.append(root); let child = null, widget = null;
       const solved = new Set(); try { JSON.parse(localStorage.getItem(`mathlab-pattern-${id}`) || '[]').filter(Number.isInteger).forEach(i => solved.add(i)); } catch {}
       function solve(i) { solved.add(i); try { localStorage.setItem(`mathlab-pattern-${id}`, JSON.stringify([...solved])); } catch {} ui.onSolve(); }
       function question(q, options, correct, explanation, step) {
@@ -89,13 +99,13 @@ export function createPatternTopic(id) {
         mode: '2d', solved,
         reset() { this.setStep(this.active); },
         setStep(i) {
-          this.active = i; child?.dispose(); child = null; root.replaceChildren(); ui.host.scrollTop = 0;
+          this.active = i; child?.dispose(); child = null; widget?.dispose(); widget = null; root.replaceChildren(); ui.host.scrollTop = 0;
           if (i === 0) { const q = lesson.prediction; const hook = el('div', 'pattern-hook'); hook.append(el('p', 'algorithm-eyebrow', L('Задача урока', 'The problem')), el('p', '', lesson.lead)); root.append(hook); question(q.q, q.options, q.correct, q.feedback, 0); root.append(el('p', 'algorithm-muted', L('Готовая трассировка — на следующем шаге. Сначала сформулируйте, что должно произойти.', 'The worked trace is on the next step. First decide what should happen.'))); }
           if (i === 1) child = mountTrace(root, lesson);
           if (i === 2) {
             const card = (cls, head, text) => { const c = el('div', `pattern-card ${cls}`); c.append(el('h3', '', head), el('p', 'pattern-reason', text)); return c; };
             const grid = el('div', 'pattern-cards'); grid.append(card('idea', L('Идея', 'The idea'), lesson.math), card('proof', L('Почему это работает и сколько стоит', 'Why it works and what it costs'), lesson.invariant));
-            root.append(el('h2', '', L('Математика → программа', 'Mathematics → program')), grid, card('experiment', lesson.experiment.title, lesson.experiment.control));
+            root.append(el('h2', '', L('Математика → программа', 'Mathematics → program')), grid); widget = lesson.widget?.(root); root.append(card('experiment', lesson.experiment.title, lesson.experiment.control));
             const label = el('label', 'algorithm-field', L('Изменяемая причина', 'Intervention')), select = el('select'); select.setAttribute('aria-label', t(L('Изменяемая причина', 'Intervention')));
             [L('Исходный алгоритм', 'Original algorithm'), lesson.experiment.broken].forEach((v, j) => { const option = el('option', '', v); option.value = j; select.append(option); }); label.append(select); root.append(label);
             const warning = el('p', 'pattern-intervention'); root.append(warning);
@@ -103,7 +113,7 @@ export function createPatternTopic(id) {
               const broken = select.value === '1', run = lesson.experiment.trace(broken);
               if (broken) {
                 run.code = [...lesson.code];
-                if (lesson.experiment.bug) run.code[lesson.experiment.bug.line] = lesson.experiment.bug.text;
+                [].concat(lesson.experiment.bug || []).forEach(b => { run.code[b.line] = b.text; });
                 if (id === 'prefix-sums') run.code[3] = 'return prefix[right] - prefix[left]  # BUG';
                 if (id === 'hash-two-sum') {
                   run.code = ['seen = {}', 'for i, value in enumerate(nums):', '    seen[value] = i  # BUG: inserted too soon', '    need = target - value', '    if need in seen:', '        return [seen[need], i]', 'return None'];
@@ -114,7 +124,7 @@ export function createPatternTopic(id) {
               return run;
             });
             select.addEventListener('change', () => {
-              warning.textContent = select.value === '1' ? t(L('Это намеренно испорченный запуск: формула показывает, где перестаёт действовать доказательство. Ниже показан код этого запуска.', 'This run is deliberately broken: the formula shows where the proof fails. The code below matches this run.')) : '';
+              warning.textContent = select.value === '1' ? t(lesson.experiment.warning || L('Это намеренно испорченный запуск: формула показывает, где перестаёт действовать доказательство. Ниже показан код этого запуска.', 'This run is deliberately broken: the formula shows where the proof fails. The code below matches this run.')) : '';
               child.refresh();
             });
           }
@@ -140,7 +150,7 @@ export function createPatternTopic(id) {
             root.append(el('h2', '', L('Шпаргалка', 'Cheat sheet')), cost, grid, el('h3', '', L('Шаблон на Python', 'Python template')), el('pre', 'algorithm-code', lesson.task.solution), el('p', 'algorithm-muted', L('Проверьте себя завтра: объясните инвариант на новом примере без подсказок.', 'Check yourself tomorrow: explain the invariant on a fresh example without hints.')), next);
           }
         },
-        dispose() { child?.dispose(); root.remove(); css.remove(); player.classList.remove('algorithm-topic', 'pattern-topic'); },
+        dispose() { child?.dispose(); widget?.dispose(); root.remove(); css.remove(); player.classList.remove('algorithm-topic', 'pattern-topic'); },
       };
     },
   };

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { prefixTrace, pointerTrace, hashTrace, stackTrace, dupTrace, windowTrace, mergeTrace, bfsTrace, stairsTrace, pairOK } from '../js/topics/algorithms/pattern-models.js';
+import { prefixTrace, pointerTrace, hashTrace, stackTrace, dupTrace, windowTrace, mergeTrace, bfsTrace, stairsTrace, hanoiTrace, bstTrace, bstPath, heapTrace, heapPushAll, dijkstraTrace, queensTrace, pairOK } from '../js/topics/algorithms/pattern-models.js';
 import { LESSONS, BINARY_TASK } from '../js/topics/algorithms/pattern-lessons.js';
 import { ALGORITHM_TOPICS, loadAlgorithmTopic } from '../js/topics/algorithms/catalog.js';
 
@@ -43,8 +43,8 @@ test('controlled interventions expose each named bug on the same mathematical ta
   assert(!pairOK([[3, 2, 4], 6], hashTrace([3, 2, 4], 6, 'insert-first').result));
   assert.equal(stackTrace('([)]').result, false); assert.equal(stackTrace('([)]', 'count-only').result, true);
 });
-test('all ten lessons load as Topics and every Python task has adversarial cases and a callable scaffold', async () => {
-  assert.equal(ALGORITHM_TOPICS.length, 10);
+test('all fifteen lessons load as Topics and every Python task has adversarial cases and a callable scaffold', async () => {
+  assert.equal(ALGORITHM_TOPICS.length, 15);
   for (const l of Object.values(LESSONS)) assert(l.signals.length && l.pitfalls.length && l.cost);
   for (const meta of ALGORITHM_TOPICS) {
     const topic = await loadAlgorithmTopic(meta.id); assert(topic.steps.length >= 4); assert.equal(typeof topic.mountStage, 'function'); assert(!topic.modes);
@@ -84,5 +84,34 @@ test('each new intervention breaks exactly the named cause', () => {
   assert.deepEqual(mergeTrace([1, 4, 9], [2, 3, 10, 12], 'no-tail').result, [1, 2, 3, 4, 9]);
   assert.deepEqual(bfsTrace(LESSONS.bfs.graph.edges, 0, 'stack').result, [0, 1, 1, 3, 2, 4]);
   assert.equal(stairsTrace(6, 'base-zero').result, 8); assert.equal(stairsTrace(6).result, 13);
-  for (const l of Object.values(LESSONS)) if (l.experiment.bug) assert(l.code[l.experiment.bug.line] !== l.experiment.bug.text);
+  for (const l of Object.values(LESSONS)) for (const b of [].concat(l.experiment.bug || [])) assert(l.code[b.line] !== b.text);
+});
+test('recursion, tree, heap, weighted-graph and backtracking models agree with oracles', () => {
+  const hanoiCase = n => ({ args: [n] }), hanoiOK = LESSONS.recursion.task.check;
+  for (let n = 0; n <= 8; n++) { const r = hanoiTrace(n); assert(r.legal); assert(hanoiOK(hanoiCase(n), r.result), `hanoi ${n}`); }
+  for (let n = 2; n <= 5; n++) assert.equal(hanoiTrace(n, 'move-first').legal, false);
+  assert(!hanoiOK(hanoiCase(2), [[0, 2], [0, 1], [2, 1]])); assert(!hanoiOK(hanoiCase(1), [[0, 1]]));
+  const rnd = (n, seed) => Array.from({ length: n }, (_, i) => (i * 37 + seed * 11) % 23 - 5);
+  for (let n = 0; n <= 9; n++) for (let seed = 0; seed < 6; seed++) {
+    const a = rnd(n, seed), keys = [...new Set(a)];
+    for (const t of [...keys, 100]) {
+      const run = bstTrace(keys, t), path = run.result; assert.deepEqual(path, bstPath(keys, t));
+      assert.deepEqual(run.frames.at(-1).tree.map(x => x.key), [...keys].sort((p, q) => p - q), 'in-order is sorted');
+      if (keys.includes(t)) assert.equal(path.at(-1), t); else assert(!path.includes(t));
+    }
+    const h = heapPushAll(a); assert.deepEqual([...h].sort((p, q) => p - q), [...a].sort((p, q) => p - q));
+    h.forEach((x, i) => assert(i === 0 || h[(i - 1) >> 1] <= x)); assert.deepEqual(heapTrace(a).result, h);
+  }
+  assert.equal(bstTrace([20, 30, 40, 50, 60, 70, 80], 65).height, 7); assert.equal(bstTrace([50, 30, 70, 20, 40, 60, 80], 65).height, 3);
+  assert(heapTrace([5, 3, 8, 1, 9, 2], 'no-sift').frames.at(-1).bad);
+  for (let n = 1; n <= 7; n++) for (let seed = 0; seed < 15; seed++) {
+    const edges = [], D = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => i === j ? 0 : Infinity));
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) if ((i * 13 + j * 7 + seed) % 3) { const w = (i * 5 + j * 3 + seed) % 9; edges.push([i, j, w]); D[i][j] = D[j][i] = Math.min(D[i][j], w); }
+    for (let k = 0; k < n; k++) for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) D[i][j] = Math.min(D[i][j], D[i][k] + D[k][j]);
+    assert.deepEqual(dijkstraTrace(n, edges, 0).result, D[0].map(v => v === Infinity ? -1 : v));
+  }
+  assert.notDeepEqual(dijkstraTrace(6, [[0, 1, 4], [0, 2, 1], [2, 1, 2], [1, 3, 1], [2, 3, 5], [3, 4, 3], [2, 4, 8], [4, 5, 1], [3, 5, 6]], 0, 'first-fix').result, [0, 3, 1, 4, 7, 8]);
+  const safe = q => q.every((c, r) => q.every((d, s) => r === s || (c !== d && Math.abs(c - d) !== Math.abs(r - s))));
+  for (let n = 1; n <= 8; n++) { const q = queensTrace(n).result; if ([2, 3].includes(n)) assert.equal(q, null); else assert(q && safe(q), `queens ${n}`); }
+  assert.equal(queensTrace(4, 'no-undo').result, null);
 });

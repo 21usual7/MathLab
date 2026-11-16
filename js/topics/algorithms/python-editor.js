@@ -43,7 +43,7 @@ export function mountPython(host, task, { key, onSolve } = {}) {
           const row = el('div', `python-case ${ok ? 'right' : 'wrong'}`);
           row.append(el('strong', '', `${ok ? '✓' : '×'} ${t(c.label)}`));
           if (customMode && !r.error) row.append(el('pre', '', JSON.stringify(r.value)));
-          if (!ok) row.append(el('pre', '', `${t(L('Вход', 'Input'))}: ${JSON.stringify(c.args)}\n${r.error || `${t(L('Получено', 'Got'))}: ${JSON.stringify(r.value)}\n${t(L('Ожидание', 'Expected'))}: ${c.expected !== undefined ? JSON.stringify(c.expected) : t(L('два разных индекса с нужной суммой либо None, если пары нет', 'two distinct indices with the target sum, or None when absent'))}`}`));
+          if (!ok) row.append(el('pre', '', `${t(L('Вход', 'Input'))}: ${JSON.stringify(c.args)}\n${r.error || `${t(L('Получено', 'Got'))}: ${JSON.stringify(r.value)}\n${t(L('Ожидание', 'Expected'))}: ${c.expected !== undefined ? JSON.stringify(c.expected) : t(task.expectText || L('два разных индекса с нужной суммой либо None, если пары нет', 'two distinct indices with the target sum, or None when absent'))}`}`));
           results.append(row);
         });
         output.textContent = data.error || (customMode ? t(L('Пример выполнен. Проверьте результат самостоятельно.', 'Example executed. Check the result yourself.')) + (data.stdout ? `\n\nstdout:\n${data.stdout}` : '') : `${passed} / ${cases.length} ${t(L('проверок пройдено', 'checks passed'))}${data.stdout ? `\n\nstdout:\n${data.stdout}` : ''}`);

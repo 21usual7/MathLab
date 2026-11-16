@@ -119,3 +119,118 @@ export function stairsTrace(n, variant = 'correct') {
   frames.push({ values: shown(n), marks: [n], memory: [], line: 5, formula: `return ${ways[n]}`, note: L('Каждая клетка посчитана один раз из готовых: O(n) вместо экспоненты.', 'Each cell is computed once from finished ones: O(n) instead of exponential.') });
   return { frames, result: ways[n] };
 }
+// Scenes: frames below also carry the full state a picture needs (pegs, tree, board, graph).
+export function hanoiTrace(n, variant = 'correct') {
+  const P = 'ABC', pegs = [Array.from({ length: n }, (_, i) => n - i), [], []], stack = [], frames = [], moves = [];
+  let bad = false;
+  const snap = (line, formula, note, extra = {}) => frames.push({ values: pegs.map(p => p.length ? p.join(' ') : '·'), labels: [...P], marks: [], memory: [...stack], line, formula, note, pegs: pegs.map(p => [...p]), ...extra });
+  const move = (s, d, line) => {
+    const disk = pegs[s].pop(); bad = pegs[d].length > 0 && pegs[d].at(-1) < disk; pegs[d].push(disk); moves.push([s, d]);
+    snap(line, `${moves.length}. [${disk}] ${P[s]} → ${P[d]}`, bad ? L('Ошибка: большой диск лёг на маленький. Шаг «переставить диск k» случился раньше, чем убрали k − 1 дисков над ним.', 'Bug: a large disk landed on a small one. "Move disk k" happened before the k − 1 disks above it were cleared.') : line === 2 ? L('База: один диск переносится сразу.', 'Base case: a single disk moves directly.') : L('Над диском k пусто, цель свободна от меньших дисков — переносим самый большой из задачи.', 'Disk k is uncovered and the target holds no smaller disk — move the largest disk of this subproblem.'), { marks: [s, d], lift: disk, bad });
+  };
+  const rec = (k, s, d, v) => {
+    if (bad) return;
+    stack.push(`${k}: ${P[s]}→${P[d]}`);
+    if (k === 1) move(s, d, 2);
+    else {
+      snap(0, `hanoi(${k}, ${P[s]}→${P[d]}) = hanoi(${k - 1}, ${P[s]}→${P[v]}) + 1 + hanoi(${k - 1}, ${P[v]}→${P[d]})`, L('Чтобы перенести k дисков, уберём k − 1 верхних на свободный стержень, переставим нижний и вернём k − 1 сверху. Та же задача, только меньше.', 'To move k disks, park the top k − 1 on the spare peg, move the bottom one, and bring the k − 1 back on top. The same problem, only smaller.'), { marks: [s, d] });
+      if (variant === 'move-first') { move(s, d, 3); rec(k - 1, s, v, d); rec(k - 1, v, d, s); }
+      else { rec(k - 1, s, v, d); if (!bad) move(s, d, 4); rec(k - 1, v, d, s); }
+    }
+    stack.pop();
+  };
+  if (n > 0) rec(n, 0, 2, 1);
+  if (!bad) snap(5, `T(${n}) = 2^${n} − 1 = ${moves.length}`, L('T(k) = 2·T(k − 1) + 1, T(1) = 1, поэтому T(n) = 2ⁿ − 1. Глубина стека вызовов — n.', 'T(k) = 2·T(k − 1) + 1, T(1) = 1, hence T(n) = 2ⁿ − 1. The call stack is n deep.'));
+  return { frames, result: moves, legal: !bad };
+}
+// Tree layout shared by BST and heap pictures: x in [0, 1], depth d.
+function bstLayout(root) {
+  const out = [], walk = (node, d, parent) => { if (!node) return; walk(node.left, d + 1, node.key); out.push({ id: node.key, key: node.key, d, parent }); walk(node.right, d + 1, node.key); };
+  walk(root, 0, null); out.forEach((n, i) => { n.x = out.length < 2 ? 0.5 : i / (out.length - 1); });
+  return out;
+}
+export function bstPath(values, target) {
+  let root = null;
+  for (const x of values) { if (!root) { root = { key: x }; continue; } let n = root; for (;;) { const side = x < n.key ? 'left' : 'right'; if (!n[side]) { n[side] = { key: x }; break; } n = n[side]; } }
+  const path = []; let n = root; while (n) { path.push(n.key); if (n.key === target) break; n = target < n.key ? n.left : n.right; }
+  return path;
+}
+export function bstTrace(values, target) {
+  let root = null; const frames = [], height = r => r ? 1 + Math.max(height(r.left), height(r.right)) : 0;
+  values.forEach((x, i) => {
+    const path = []; if (!root) root = { key: x };
+    else { let n = root; for (;;) { path.push(n.key); const side = x < n.key ? 'left' : 'right'; if (!n[side]) { n[side] = { key: x }; break; } n = n[side]; } }
+    frames.push({ values, marks: [i], memory: [...path, x], line: 1, tree: bstLayout(root), hot: [...path, x], fresh: x, formula: path.length ? `${x}: ${path.map(k => `${k} ${x < k ? '←' : '→'}`).join(' ')} ${x}` : `root = ${x}`, note: L('Меньшие ключи уходят влево, большие — вправо. Новый узел всегда становится листом.', 'Smaller keys go left, larger keys go right. A new node always becomes a leaf.') });
+  });
+  const path = []; let n = root;
+  while (n) {
+    path.push(n.key); const found = n.key === target;
+    frames.push({ values, marks: [], memory: [...path], line: found ? 8 : 7, tree: bstLayout(root), hot: [...path], formula: found ? `${target} = ${n.key}` : `${target} ${target < n.key ? '<' : '>'} ${n.key} → ${target < n.key ? 'left' : 'right'}`, note: L('Каждое сравнение отбрасывает целое поддерево — как бинарный поиск, только по указателям.', 'Each comparison discards a whole subtree — binary search over pointers.') });
+    if (found) break; n = target < n.key ? n.left : n.right;
+  }
+  if (!n) frames.push({ values, marks: [], memory: [...path], line: 8, tree: bstLayout(root), hot: [...path], formula: `${target}: None · ${path.length} / h = ${height(root)}`, note: L('Дошли до пустого места — ключа нет. Сравнений не больше высоты дерева h: log₂ n у сбалансированного, n у «палки».', 'We reached an empty slot — the key is absent. Comparisons never exceed the height h: log₂ n when balanced, n for a "stick".') });
+  return { frames, result: path, height: height(root) };
+}
+export function heapPushAll(values) {
+  const h = [];
+  for (const x of values) { h.push(x); let i = h.length - 1; while (i > 0 && h[(i - 1) >> 1] > h[i]) { const p = (i - 1) >> 1; [h[i], h[p]] = [h[p], h[i]]; i = p; } }
+  return h;
+}
+export function heapTrace(values, variant = 'correct') {
+  const h = [], frames = [];
+  const tree = () => h.map((it, i) => { const d = Math.floor(Math.log2(i + 1)), w = 2 ** d; return { id: it.id, key: it.key, d, i, x: (i - w + 1 + 0.5) / w, parent: i ? h[(i - 1) >> 1].id : null }; });
+  const snap = (line, marks, formula, note, extra = {}) => frames.push({ values: h.map(it => it.key), marks, memory: [], line, tree: tree(), hot: marks.map(i => h[i]?.id), formula, note, ...extra });
+  values.forEach((key, id) => {
+    h.push({ key, id }); let i = h.length - 1;
+    snap(0, [i], `heap.append(${key}) → i = ${i}`, L('Новый элемент — в первую свободную позицию нижнего уровня. Дерево остаётся «полным», массив — без дыр.', 'The new item takes the first free slot of the bottom level. The tree stays complete, the array has no gaps.'));
+    while (variant !== 'no-sift' && i > 0 && h[(i - 1) >> 1].key > h[i].key) {
+      const p = (i - 1) >> 1; [h[i], h[p]] = [h[p], h[i]];
+      snap(4, [p, i], `${h[i].key} > ${h[p].key} → swap(${p}, ${i})`, L('Родитель больше ребёнка — меняем их. Нарушение поднимается на уровень выше, ниже порядок уже верный.', 'The parent exceeds the child — swap them. The violation moves one level up; below, order is restored.'));
+      i = p;
+    }
+  });
+  const ok = h.every((it, i) => !i || h[(i - 1) >> 1].key <= it.key), min = Math.min(...values);
+  if (h.length) snap(6, [0], `heap[0] = ${h[0].key}${ok ? ` = min` : ` ≠ min = ${min}`}`, ok ? L('Каждый родитель не больше детей, значит корень — минимум. Вставка стоила не больше высоты log₂ n обменов.', 'Every parent is at most its children, so the root is the minimum. Each insertion cost at most log₂ n swaps.') : L('Ошибка: без просеивания вверх свойство кучи нарушено, и в корне не минимум.', 'Bug: without sifting up, the heap property breaks and the root is not the minimum.'), { bad: !ok });
+  return { frames, result: h.map(it => it.key) };
+}
+export function dijkstraTrace(n, edges, start, variant = 'correct') {
+  const adj = Array.from({ length: n }, () => []), name = v => String.fromCharCode(65 + v), frames = [];
+  edges.forEach(([u, v, w]) => { adj[u].push([v, w]); adj[v].push([u, w]); });
+  const dist = Array(n).fill(Infinity), parent = Array(n).fill(-1), done = new Set(); let pq = [[0, start]]; dist[start] = 0;
+  const snap = (line, marks, formula, note, extra = {}) => frames.push({ values: dist.map(d => d === Infinity ? '∞' : d), labels: dist.map((_, v) => name(v)), marks, memory: [...pq].sort((a, b) => a[0] - b[0]).map(([d, v]) => `${name(v)}:${d}`), line, formula, note, dist: [...dist], parent: [...parent], done: [...done], ...extra });
+  snap(1, [start], `dist[${name(start)}] = 0`, L('Все расстояния неизвестны (∞), кроме старта. В очереди с приоритетом — пары (расстояние, вершина).', 'All distances are unknown (∞) except the start. The priority queue holds (distance, vertex) pairs.'));
+  while (pq.length) {
+    pq.sort((a, b) => a[0] - b[0]); const [d, v] = pq.shift();
+    if (d > dist[v]) { snap(4, [v], `${d} > dist[${name(v)}] = ${dist[v]} → skip`, L('Устаревшая запись: к этой вершине уже нашли путь короче.', 'A stale entry: a shorter path to this vertex was already found.')); continue; }
+    done.add(v);
+    snap(3, [v], `pop ${name(v)}:${d}`, L('Из очереди выходит ближайшая из ещё открытых вершин. Все веса ≥ 0, поэтому путь к ней короче уже не станет — она «зафиксирована».', 'The nearest open vertex leaves the queue. All weights are ≥ 0, so no path to it can get shorter — it is settled.'));
+    for (const [u, w] of adj[v]) {
+      const better = variant === 'first-fix' ? dist[u] === Infinity : d + w < dist[u];
+      if (better) { dist[u] = d + w; parent[u] = v; pq.push([dist[u], u]); snap(7, [v, u], `dist[${name(u)}] = ${d} + ${w} = ${d + w}`, variant === 'first-fix' ? L('Ошибка: первое найденное расстояние объявлено окончательным. Более короткий обходной путь позже будет проигнорирован.', 'Bug: the first distance found is declared final. A shorter detour found later will be ignored.') : L('Релаксация: путь через v короче известного — обновляем расстояние и запоминаем, откуда пришли.', 'Relaxation: the path through v beats the known one — update the distance and remember where we came from.'), { edge: [v, u], improved: true }); }
+      else if (!done.has(u)) snap(6, [v, u], `${d} + ${w} = ${d + w} ≥ ${dist[u]}`, L('Путь через v не короче — ничего не меняем.', 'The path through v is no shorter — nothing changes.'), { edge: [v, u] });
+    }
+  }
+  snap(9, [], `dist = [${dist.map(d => d === Infinity ? '∞' : d).join(', ')}]`, L('Жирные рёбра — дерево кратчайших путей. С кучей это O((V + E) log V).', 'Bold edges form the shortest-path tree. With a heap this is O((V + E) log V).'));
+  return { frames, result: dist.map(d => d === Infinity ? -1 : d) };
+}
+export function queensTrace(n, variant = 'correct') {
+  const cols = [], d1 = [], d2 = [], q = Array(n).fill(-1), frames = []; let found = false, tries = 0;
+  const snap = (line, formula, note, extra = {}) => frames.push({ values: q.map(c => c < 0 ? '·' : c), labels: q.map((_, r) => `r${r}`), marks: [], memory: [`cols={${[...cols].sort().join(',')}}`, `tries=${tries}`], line, formula, note, n, queens: q.map((c, r) => [r, c]).filter(([, c]) => c >= 0), cols: [...cols], d1: [...d1], d2: [...d2], ...extra });
+  const del = (a, x) => a.splice(a.indexOf(x), 1);
+  const place = row => {
+    if (row === n) { found = true; snap(1, `row = ${n} → ✓`, L('Все строки заняты без конфликтов — решение найдено.', 'Every row is filled with no conflicts — a solution.'), { solved: true }); return; }
+    for (let c = 0; c < n && !found; c++) {
+      tries++;
+      if (cols.includes(c) || d1.includes(row - c) || d2.includes(row + c)) { snap(3, `(${row}, ${c}) ✗`, L('Клетка под боем: тот же столбец или диагональ. Всё поддерево ниже отсечено, не начавшись.', 'The square is attacked: same column or diagonal. The whole subtree below is pruned before it starts.'), { trying: [row, c, false] }); continue; }
+      cols.push(c); d1.push(row - c); d2.push(row + c); q[row] = c;
+      snap(4, `(${row}, ${c}) ♛`, L('Ставим ферзя и спускаемся на следующую строку. Множества cols, d1, d2 помнят, что теперь под боем.', 'Place a queen and go down to the next row. The sets cols, d1, d2 remember what is now attacked.'), { trying: [row, c, true] });
+      place(row + 1); if (found) return;
+      q[row] = -1;
+      if (variant !== 'no-undo') { del(cols, c); del(d1, row - c); del(d2, row + c); }
+      snap(6, `(${row}, ${c}) ↩`, variant === 'no-undo' ? L('Ошибка: ферзя сняли, а его бой остался в множествах. Свободные клетки ложно считаются занятыми.', 'Bug: the queen is gone but its attacks remain in the sets. Free squares are falsely treated as attacked.') : L('Тупик ниже — снимаем ферзя и возвращаем состояние ровно таким, каким оно было до хода.', 'Dead end below — remove the queen and restore the state exactly as it was before the move.'), { trying: [row, c, false], undo: true });
+    }
+  };
+  place(0);
+  if (!found) snap(6, `${tries} → 0`, variant === 'no-undo' ? L('Перебор закончился без решения, хотя оно есть. Возврат обязан отменять всё, что сделал ход.', 'The search ended with no solution although one exists. Backtracking must undo everything a move did.') : L('Решений нет.', 'No solutions.'));
+  return { frames, result: found ? [...q] : null, tries };
+}

@@ -146,3 +146,76 @@
 .graph-plot circle.known { fill: #11231e; stroke: #85d5b1; }
 .graph-plot circle.current { fill: #28251c; stroke: #f4ce73; }
 .graph-plot text { fill: #edf3fa; font: 13px ui-monospace, monospace; }
+
+/* Animated scenes (pattern-scenes.js). Motion itself is JS tweens that respect reduced motion. */
+.pattern-scene:empty { display: none; }
+.pattern-scene { margin: 6px 0 4px; }
+.scene { display: block; width: 100%; height: auto; max-height: 420px; }
+.scene text { fill: #edf3fa; font: 13px ui-monospace, monospace; }
+.hanoi-scene .peg { fill: #3a5067; }
+.hanoi-scene .peg-label { fill: #97aabd; font-size: 12px; }
+.hanoi-scene .disk rect { stroke: #0a0d12; stroke-width: 1.5; }
+.hanoi-scene .disk text { fill: #0a0d12; font-weight: 700; }
+.hanoi-scene .disk.bad rect { stroke: #fa8e96; stroke-width: 4; }
+.tree-scene .tree-edge { stroke: #3a5067; stroke-width: 2; }
+.tree-scene .tree-edge.hot { stroke: #f4ce73; stroke-width: 3; }
+.tree-scene circle { fill: #111b28; stroke: #65b7fa; stroke-width: 2; }
+.tree-scene .hot circle { fill: #28251c; stroke: #f4ce73; }
+.tree-scene .fresh circle { fill: #11231e; stroke: #85d5b1; stroke-width: 3; }
+.tree-scene .bad circle { stroke: #fa8e96; stroke-width: 4; }
+.tree-scene .tree-index { fill: #97aabd; font-size: 10px; }
+.weighted-scene .w-edge { stroke: #314152; stroke-width: 2.5; }
+.weighted-scene .w-edge.tree { stroke: #85d5b1; stroke-width: 5; }
+.weighted-scene .w-edge.hot { stroke: #f4ce73; stroke-width: 5; }
+.weighted-scene .w-edge.tried { stroke: #6b7c90; stroke-dasharray: 6 5; }
+.weighted-scene .w-weight-bg { fill: #0a0d12; stroke: #314152; }
+.weighted-scene .w-weight { font-size: 11px; fill: #c1cfde; }
+.weighted-scene .w-node circle { fill: #111b28; stroke: #3a5067; stroke-width: 2; transition: fill .3s, stroke .3s; }
+.weighted-scene .w-node.open circle { stroke: #65b7fa; }
+.weighted-scene .w-node.settled circle { fill: #11231e; stroke: #85d5b1; }
+.weighted-scene .w-node.current circle { fill: #28251c; stroke: #f4ce73; stroke-width: 3; }
+.weighted-scene .w-node .w-dist { font-size: 11px; fill: #f4ce73; }
+.weighted-scene .w-node.pop .w-dist { animation: w-pop .5s; }
+.weighted-scene .w-pulse { fill: #f4ce73; filter: drop-shadow(0 0 6px #f4ce73); }
+.weighted-scene .w-pulse.tried { fill: #6b7c90; filter: none; }
+@keyframes w-pop { 50% { font-size: 17px; } }
+.board-scene .sq { fill: #22303f; }
+.board-scene .sq.dark { fill: #172230; }
+.board-scene .sq.attacked { fill: #522830; }
+.board-scene .sq.attacked.dark { fill: #441f27; }
+.board-scene .sq.ghost, .board-scene .sq.ghost.dark { fill: #5b2f6b; }
+.board-scene .try { fill: none; stroke: #f4ce73; stroke-width: 3; }
+.board-scene .try.no { stroke: #fa8e96; }
+.board-scene .try.undo { stroke: #97aabd; stroke-dasharray: 5 4; }
+.board-scene .queen { fill: #f4ce73; font-family: serif; }
+.board-scene.solved .queen { fill: #85d5b1; }
+.board-scene { max-width: 320px; }
+@media(prefers-reduced-motion: reduce) { .weighted-scene .w-node.pop .w-dist { animation: none; } .weighted-scene .w-node circle { transition: none; } }
+
+/* Widgets in the "why" step */
+.pattern-widget { border: 1px solid #263445; border-top: 3px solid #b69df8; background: #0e1621; border-radius: 12px; padding: 16px 18px; margin: 4px 0 16px; }
+.pattern-widget h3 { font-size: 17px; margin: 0 0 10px; }
+.growth-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.growth-head input[type=range] { flex: 1; min-width: 140px; accent-color: #b69df8; }
+.growth-head strong { font: 16px ui-monospace, monospace; min-width: 64px; }
+.growth-body { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 20px; align-items: start; margin-top: 12px; }
+.growth-grid .pair { fill: #58c4dd; } .growth-grid .self { fill: #2a3646; } .growth-grid .none { fill: #121a25; } .growth-grid .pass { fill: #ff9f5a; }
+.growth-stats p { margin: 0 0 8px; color: #c1cfde; } .growth-stats b { font: 18px ui-monospace, monospace; color: #edf3fa; }
+.pair-dot, .pass-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 8px; background: #58c4dd; } .pass-dot { background: #ff9f5a; }
+.growth-table { border-collapse: collapse; font-size: 13px; margin-top: 10px; width: 100%; }
+.growth-table th, .growth-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #263445; color: #c1cfde; }
+.growth-table th { color: #97aabd; font-weight: 500; }
+.calltree-memo { display: inline-flex; align-items: center; gap: 6px; color: #c1cfde; font-size: 14px; }
+.calltree-memo input { width: 18px; height: 18px; accent-color: #85d5b1; }
+.calltree-pic { overflow-x: auto; margin: 10px 0 4px; }
+.calltree-scene { min-width: 480px; max-height: 420px; }
+.calltree-scene .ct-edge { stroke: #3a5067; stroke-width: 1.5; }
+.calltree-scene .ct-node circle { fill: var(--c); stroke: #0a0d12; stroke-width: 1.5; }
+.calltree-scene .ct-node text { fill: #0a0d12; font-weight: 700; font-size: 11px; }
+.calltree-scene .ct-node.hit circle { fill: #0e1621; stroke: var(--c); stroke-dasharray: 3 2; stroke-width: 2; }
+.calltree-scene .ct-node.hit text { fill: #c1cfde; }
+.calltree-stats { color: #c1cfde; } .calltree-stats b { font: 17px ui-monospace, monospace; color: #edf3fa; }
+@media(max-width: 650px) { .growth-body { grid-template-columns: 1fr; } }
+@media(min-width: 1280px) { .pattern-trace > .pattern-scene { grid-column: 1 / -1; } }
+.pattern-scene .scene { max-width: 860px; margin: 0 auto; }
+.pattern-scene .board-scene { max-width: 320px; margin: 0; }
