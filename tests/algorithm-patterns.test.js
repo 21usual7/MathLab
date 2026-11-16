@@ -43,8 +43,8 @@ test('controlled interventions expose each named bug on the same mathematical ta
   assert(!pairOK([[3, 2, 4], 6], hashTrace([3, 2, 4], 6, 'insert-first').result));
   assert.equal(stackTrace('([)]').result, false); assert.equal(stackTrace('([)]', 'count-only').result, true);
 });
-test('all fifteen lessons load as Topics and every Python task has adversarial cases and a callable scaffold', async () => {
-  assert.equal(ALGORITHM_TOPICS.length, 15);
+test('all twenty lessons load as Topics and every Python task has adversarial cases and a callable scaffold', async () => {
+  assert.equal(ALGORITHM_TOPICS.length, 20);
   for (const l of Object.values(LESSONS)) assert(l.signals.length && l.pitfalls.length && l.cost);
   for (const meta of ALGORITHM_TOPICS) {
     const topic = await loadAlgorithmTopic(meta.id); assert(topic.steps.length >= 4); assert.equal(typeof topic.mountStage, 'function'); assert(!topic.modes);

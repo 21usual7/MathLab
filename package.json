@@ -7,7 +7,7 @@
     "test": "node --test tests/",
     "test:crypto:browser": "node scripts/check-crypto.mjs",
     "test:learning:browser": "node scripts/check-learning.mjs",
-    "test:algorithms:browser": "node scripts/check-binary-search.mjs && node scripts/check-algorithm-patterns.mjs"
+    "test:algorithms:browser": "node scripts/check-binary-search.mjs && node scripts/check-algorithm-patterns.mjs && node scripts/check-structures.mjs"
   },
   "devDependencies": {
     "mathjs": "12.4.2",

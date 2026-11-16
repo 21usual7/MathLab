@@ -3,7 +3,7 @@
 
 import { t } from '../core/i18n.js';
 import { tween, lerp } from '../core/anim.js';
-import { ALGORITHMS_SUBJECT, ALGORITHM_TRACKS, ALGORITHM_TOPICS, algorithmProgress, LESSON_SHAPE } from '../topics/algorithms/catalog.js';
+import { ALGORITHMS_SUBJECT, ALGORITHM_TRACKS, ALGORITHM_TOPICS, algorithmProgress, LESSON_SHAPE, STRUCTURE_SHAPE } from '../topics/algorithms/catalog.js';
 
 const L = (ru, en) => ({ ru, en });
 const COLORS = ['#5cd0b3', '#58c4dd', '#b69df8', '#f4d35e', '#ff9f5a', '#83c167', '#e88bd0'];
@@ -14,13 +14,14 @@ const TEXT = {
   lessons: L('уроков', 'lessons'), modules: L('модулей', 'modules'), hours: L('часа', 'hours'), python: L('Python в браузере', 'Python in the browser'),
   start: L('Начать с первого урока', 'Start with lesson one'), next: L('Продолжить', 'Continue'), again: L('Пройдено! Повторить', 'Done! Revisit'),
   map: L('Карта маршрута', 'Route map'), mapLead: L('Модули идут по порядку, но каждая станция открыта: можно начать с того, что нужно сейчас. Заполненная станция — урок пройден.', 'Modules go in order, but every station is open: start wherever you need. A filled station is a finished lesson.'),
-  shape: L('Как устроен урок', 'How a lesson works'),
+  shape: L('Как устроены уроки', 'How lessons work'), kinds: L('Два вида уроков. Квадратная станция — структура данных: что это и как устроено внутри. Круглая — алгоритм: приём, который на структуре работает.', 'Two kinds of lessons. A square station is a data structure: what it is and how it works inside. A round one is an algorithm: a technique that runs on a structure.'),
+  structure: L('Структура данных', 'Data structure'), algorithm: L('Алгоритм', 'Algorithm'),
   shapeText: [L('Сначала ответ на вопрос — без подсказок.', 'Answer a question first — no hints.'), L('Одна операция за шаг, с анимацией и кодом.', 'One operation per step, animated, beside the code.'), L('Идея, инвариант и одна сломанная строка.', 'The idea, the invariant, and one broken line.'), L('Настоящий CPython в браузере, проверки с разбором.', 'Real CPython in the browser, checks that explain.'), L('Новые данные без готовой трассировки.', 'New data without a worked trace.'), L('Признаки, стоимость, ошибки, шаблон.', 'Signals, cost, mistakes, template.')],
   route: L('Модули', 'Modules'), progress: L('пройдено', 'done'),
   cheat: L('Шпаргалка по стоимости', 'Cost cheat sheet'), cheatLead: L('Все приёмы раздела на одной странице. Название ведёт к уроку.', 'Every technique of the section on one page. A name leads to its lesson.'),
   lesson: L('Урок', 'Lesson'), cost: L('Стоимость', 'Cost'), hero: L('Сортировка слиянием: каждый уровень сливает соседние отсортированные куски.', 'Merge sort: each level merges neighbouring sorted pieces.'),
 };
-const short = m => t(m.title).split(':')[0];
+const short = m => m.short ? t(m.short) : t(m.title).split(':')[0];
 const done = m => algorithmProgress(m.id) >= 3;
 const still = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -41,7 +42,7 @@ function metro() {
   const train = still() ? '' : `<circle r="7" class="metro-train"><animateMotion dur="${ROUTE.length * 2.4}s" repeatCount="indefinite" path="${whole}"/></circle>`;
   const stations = ROUTE.map((m, i) => {
     const [x, y] = station(i);
-    return `<a class="metro-station${done(m) ? ' done' : ''}${m === next ? ' next' : ''}" href="#topic/${m.id}" style="left:${x / 10}%;top:${y / H * 100}%;--mc:${m.color}">
+    return `<a class="metro-station${m.kind === 'structure' ? ' structure' : ''}${done(m) ? ' done' : ''}${m === next ? ' next' : ''}" href="#topic/${m.id}" style="left:${x / 10}%;top:${y / H * 100}%;--mc:${m.color}">
       <span class="metro-dot"></span><span class="metro-name"><small>${String(i + 1).padStart(2, '0')}</small>${short(m)}</span></a>`;
   }).join('');
   return `<div class="metro" style="aspect-ratio:1000/${H}"><svg viewBox="0 0 1000 ${H}" aria-hidden="true">${segs}${train}</svg>${stations}</div>`;
@@ -98,12 +99,15 @@ export function mountAlgorithms(root) {
 
       <section class="algo-block" id="algo-map">
         <div class="section-head"><h2>${t(TEXT.map)}</h2><p>${t(TEXT.mapLead)}</p></div>
-        <div class="metro-legend">${ALGORITHM_TRACKS.map((tr, k) => `<a href="#algorithms" data-scroll="#algo-m${k + 1}" style="--mc:${COLORS[k]}"><span></span>${t(tr.title)}</a>`).join('')}</div>
+        <div class="metro-legend"><span class="metro-kind"><i class="sq"></i>${t(TEXT.structure)}</span><span class="metro-kind"><i></i>${t(TEXT.algorithm)}</span>${ALGORITHM_TRACKS.map((tr, k) => `<a href="#algorithms" data-scroll="#algo-m${k + 1}" style="--mc:${COLORS[k]}"><span></span>${t(tr.title)}</a>`).join('')}</div>
         ${metro()}
       </section>
 
       <section class="algo-block">
-        <div class="section-head"><h2>${t(TEXT.shape)}</h2></div>
+        <div class="section-head"><h2>${t(TEXT.shape)}</h2><p>${t(TEXT.kinds)}</p></div>
+        <h3 class="algo-kind structure">${t(TEXT.structure)} · ${STRUCTURE_SHAPE.length} ${t(L('шагов', 'steps'))}</h3>
+        <ol class="algo-chain">${STRUCTURE_SHAPE.map(s => `<li>${t(s)}</li>`).join('')}</ol>
+        <h3 class="algo-kind">${t(TEXT.algorithm)} · ${LESSON_SHAPE.length} ${t(L('шагов', 'steps'))}</h3>
         <ol class="algo-shape">${LESSON_SHAPE.map((s, i) => `<li><span>${i + 1}</span><b>${t(s)}</b><p>${t(TEXT.shapeText[i])}</p></li>`).join('')}</ol>
       </section>
 
@@ -114,7 +118,7 @@ export function mountAlgorithms(root) {
             <div class="path-body"><h3>${t(tr.title)}</h3><p>${t(tr.summary)}</p>
               <div class="path-cards">${ROUTE.filter(m => m.track === tr.id).map(m => {
                 const p = Math.min(3, algorithmProgress(m.id));
-                return `<a class="node ready path-card" href="#topic/${m.id}">
+                return `<a class="node ready path-card${m.kind === 'structure' ? ' is-structure' : ''}" href="#topic/${m.id}">
                   <span class="node-kicker">${t(m.kicker)}</span><span class="node-title">${t(m.title)}</span>
                   <span class="node-summary">${t(m.summary)}</span>
                   <span class="node-meta">${m.minutes} min<span class="card-progress" aria-label="${p} / 3">${[0, 1, 2].map(j => `<i class="${j < p ? 'on' : ''}"></i>`).join('')}</span></span></a>`;
@@ -136,9 +140,9 @@ export function mountAlgorithms(root) {
   root.addEventListener('click', onClick);
   // The cheat sheet needs the lesson texts; load them after the page is on screen.
   let alive = true;
-  import('../topics/algorithms/pattern-lessons.js').then(({ LESSONS }) => {
+  Promise.all([import('../topics/algorithms/pattern-lessons.js'), import('../topics/algorithms/structure-lessons.js')]).then(([{ LESSONS }, { STRUCTURES }]) => {
     if (!alive) return;
-    root.querySelectorAll('[data-cost]').forEach(td => { const l = LESSONS[td.dataset.cost]; if (l) td.textContent = t(l.cost); });
+    root.querySelectorAll('[data-cost]').forEach(td => { const l = LESSONS[td.dataset.cost] || STRUCTURES[td.dataset.cost]; if (l) td.textContent = t(l.cost); });
   });
   return () => { alive = false; stopSort(); root.removeEventListener('click', onClick); };
 }

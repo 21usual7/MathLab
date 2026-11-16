@@ -975,7 +975,7 @@ body.keypad-open { padding-bottom: var(--kb, 0px); }
 .metro-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: -8px 0 18px; }
 .metro-legend a { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--soft); }
 .metro-legend a:hover { color: var(--text); text-decoration: none; }
-.metro-legend span { width: 22px; height: 5px; border-radius: 3px; background: var(--mc); }
+.metro-legend a span { width: 22px; height: 5px; border-radius: 3px; background: var(--mc); }
 .metro { position: relative; width: 100%; border: 1px solid var(--line); border-radius: 20px; background:
   radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0) 0 0 / 22px 22px, var(--stage); }
 .metro svg { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -1032,3 +1032,13 @@ body.keypad-open { padding-bottom: var(--kb, 0px); }
   .site-nav a { padding: 6px 8px; font-size: 14px; }
 }
 @media (prefers-reduced-motion: reduce) { .metro-station.next .metro-dot { animation: none; box-shadow: 0 0 0 4px color-mix(in srgb, var(--mc) 35%, transparent); } }
+.metro-station.structure .metro-dot { border-radius: 6px; width: 26px; height: 26px; }
+.metro-kind { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+.metro-kind i { width: 14px; height: 14px; border: 3px solid var(--soft); border-radius: 50%; box-sizing: border-box; }
+.metro-kind i.sq { border-radius: 4px; }
+.algo-kind { font: 600 12px var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--faint); margin: 18px 0 10px; }
+.algo-kind.structure { color: var(--teal); margin-top: 0; }
+.algo-chain { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0 0 8px; counter-reset: chain; }
+.algo-chain li { counter-increment: chain; padding: 7px 12px; border: 1px solid rgba(92, 208, 179, 0.4); border-radius: 8px; background: rgba(92, 208, 179, 0.06); font-size: 14px; color: var(--soft); }
+.algo-chain li::before { content: counter(chain) ' '; font-family: var(--mono); color: var(--teal); }
+.path-card.is-structure { border-style: solid; border-width: 1px 1px 1px 4px; }
