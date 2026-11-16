@@ -8,7 +8,7 @@ await algorithmBrowser(async (browser, base) => {
   const go = async (id, step) => { await page.goto(`${base}/#topic/${id}/${step}`); await page.waitForSelector('.pattern-lesson, .algorithm-lab'); };
   const button = name => page.getByRole('button', { name, exact: true });
   const run = async code => { await page.locator('.python-editor').fill(code); await button('▶ Запустить проверки').click(); await page.waitForFunction(() => !document.querySelector('.python-workbench')?.hasAttribute('aria-busy'), null, { timeout: 60000 }); };
-  await page.goto(`${base}/#topics/algorithms`); await page.waitForSelector('.subject'); assert.equal(await page.locator('.node.ready').count(), 15);
+  await page.goto(`${base}/#algorithms`); await page.waitForSelector('.algo-page'); assert.equal(await page.locator('.node.ready').count(), 15);
   for (const [id, lesson] of Object.entries(LESSONS)) {
     await go(id, 1); const choice = page.locator('.pattern-choices .btn'); await choice.nth((lesson.prediction.correct + 1) % lesson.prediction.options.length).click();
     assert.equal(await page.locator('.dot.solved').count(), 0); await choice.nth(lesson.prediction.correct).click(); assert.equal(await page.locator('.dot.solved').count(), 1);
@@ -37,7 +37,7 @@ await algorithmBrowser(async (browser, base) => {
   await run(BINARY_TASK.solution); assert.equal(await page.locator('.python-case.right').count(), BINARY_TASK.cases.length, 'runner recovers after timeout');
   await run(BINARY_TASK.solution + '\nprint("hello from Python")'); assert.match(await page.locator('.python-output').innerText(), /hello from Python/);
   await page.locator('.python-editor').fill('while True:\n    pass'); await button('▶ Запустить проверки').click(); await button('■ Остановить').click(); assert(await button('▶ Запустить проверки').isEnabled());
-  await button('▶ Запустить проверки').click(); await page.goto(`${base}/#topics/algorithms`); await page.waitForSelector('.subject'); assert.equal(await page.locator('link[href$="/css/algorithms.css"]').count(), 0);
+  await button('▶ Запустить проверки').click(); await page.goto(`${base}/#algorithms`); await page.waitForSelector('.algo-page'); assert.equal(await page.locator('link[href$="/css/algorithms.css"]').count(), 0);
   const offline = await browser.newPage();
   await offline.addInitScript(() => localStorage.setItem('mathlab-lang', 'en'));
   await offline.route('https://cdn.jsdelivr.net/pyodide/**', route => route.abort());
@@ -50,7 +50,7 @@ await algorithmBrowser(async (browser, base) => {
   for (const id of Object.keys(LESSONS)) for (const step of [1, 2, 3, 4, 5]) {
     await phone.goto(`${base}/#topic/${id}/${step}`); await phone.waitForSelector('.pattern-lesson');
     assert.equal(await phone.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, `${id}/${step}: no horizontal overflow`);
-    assert.equal(await phone.locator('.site-nav [data-nav="topics"].active').count(), 1);
+    assert.equal(await phone.locator('.site-nav [data-nav="algorithms"].active').count(), 1);
   }
   if (process.env.ALGORITHM_SCREENSHOT) {
     await page.goto(`${base}/#topic/prefix-sums/2`); await page.waitForSelector('.pattern-snapshot'); await page.evaluate(() => document.getAnimations().forEach(a => a.finish())); await page.screenshot({ path: process.env.ALGORITHM_SCREENSHOT, fullPage: true });

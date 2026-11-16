@@ -5,13 +5,13 @@ await algorithmBrowser(async (browser, base) => {
   await context.addInitScript(() => localStorage.setItem('mathlab-lang', 'ru'));
   const page = await context.newPage(), errors = []; page.on('pageerror', e => errors.push(e.message));
   const button = name => page.getByRole('button', { name, exact: true });
-  await page.goto(`${base}/#topics/algorithms`); await page.waitForSelector('.subject');
+  await page.goto(`${base}/#algorithms`); await page.waitForSelector('.algo-page');
   assert.equal(await page.locator('a.node[href="#topic/binary-search"]').count(), 1);
   await page.goto(`${base}/#worlds`); await page.waitForSelector('.world-cards');
   assert.equal(await page.locator('a[href="#world/binary-search"], a[href="#worlds/algorithms"]').count(), 0);
-  await page.goto(`${base}/#worlds/algorithms`); await page.waitForSelector('.subject'); assert.equal(new URL(page.url()).hash, '#topics/algorithms');
+  await page.goto(`${base}/#worlds/algorithms`); await page.waitForSelector('.algo-page'); assert.equal(new URL(page.url()).hash, '#algorithms');
   await page.goto(`${base}/#world/binary-search/0`); await page.waitForSelector('.binary-story');
-  assert.equal(await page.locator('.site-nav [data-nav="topics"].active').count(), 1);
+  assert.equal(await page.locator('.site-nav [data-nav="algorithms"].active').count(), 1);
   await button('Следующий шаг →').click();
   assert.equal(await button('Следующий шаг →').isDisabled(), true, 'a comparison waits for a justified prediction');
   await button('lo = mid + 1').click(); assert.match(await page.locator('.binary-story > .algorithm-feedback').innerText(), /потерять ответ/);
@@ -36,7 +36,7 @@ await algorithmBrowser(async (browser, base) => {
   await page.locator('[data-field="array"]').fill('1, 3'); await page.locator('[data-field="target"]').fill('3'); await page.locator('[data-field="failure-reason"]').selectOption('progress');
   await button('Испытать мой контрпример').click(); await page.waitForSelector('.algorithm-result.right');
   await page.goto(`${base}/#topic/binary-search`); await page.waitForSelector('.binary-story'); await button('⌕ Причинный микроскоп').click();
-  await page.goto(`${base}/#topics/algorithms`); await page.waitForSelector('.subject'); assert.equal(await page.locator('dialog, link[href$="/css/algorithms.css"]').count(), 0);
+  await page.goto(`${base}/#algorithms`); await page.waitForSelector('.algo-page'); assert.equal(await page.locator('dialog, link[href$="/css/algorithms.css"]').count(), 0);
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' }); await phone.addInitScript(() => localStorage.setItem('mathlab-lang', 'en')); phone.on('pageerror', e => errors.push(e.message));
   await phone.goto(`${base}/#topic/binary-search`); await phone.waitForSelector('.binary-story');
   assert.equal(await phone.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);

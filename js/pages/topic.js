@@ -75,7 +75,7 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
     <article class="topic topic-player">
       <section class="panel">
         <div class="panel-top">
-          <div class="crumbs"><a href="#topics/${subject.id}">${t(subject.title)}</a><span>/</span><span>${t(track.title)}</span></div>
+          <div class="crumbs"><a href="${subject.href || `#topics/${subject.id}`}">${t(subject.title)}</a><span>/</span><span>${t(track.title)}</span></div>
           <details class="step-menu">
             <summary>${t({ en: 'Lesson steps', ru: 'Шаги темы' })}<span class="step-position"></span></summary>
             <nav class="step-list" aria-label="${t({ en: 'Lesson steps', ru: 'Шаги темы' })}">
@@ -118,7 +118,7 @@ export async function mountTopic(root, id, startStep = 0, { signal } = {}) {
             <div class="step-num">✓</div>
             <h2>${t({ en: 'Where next', ru: 'Куда дальше' })}</h2>
             <div class="next-list">${(meta.next || []).map(chip).join('')}</div>
-            <p><a href="#topics/${subject.id}">← ${t({ en: 'Back to the map', ru: 'Назад к карте' })}</a></p>
+            <p><a href="${subject.href || `#topics/${subject.id}`}">← ${t({ en: 'Back to the map', ru: 'Назад к карте' })}</a></p>
           </section>
           <div class="live">
             <div class="legend"></div>

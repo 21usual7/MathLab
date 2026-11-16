@@ -1,4 +1,4 @@
-// Router: #  ·  #topics[/<subject>]  ·  #worlds[/<collection>]  ·  #topic/<id>[/<step>]  ·  #world/<id>[/<mode>]  ·  #lab?s=...
+// Router: #  ·  #algorithms  ·  #topics[/<subject>]  ·  #worlds[/<collection>]  ·  #topic/<id>[/<step>]  ·  #world/<id>[/<mode>]  ·  #lab?s=...
 // Old links to a subject (#algebra, #geometry, …) open the topics catalog filtered to it.
 // Every page returns a cleanup function (stops animations, frees WebGL) that runs before the next one.
 
@@ -7,6 +7,8 @@ import { mountLab } from './pages/lab.js';
 import { mountTopic } from './pages/topic.js';
 import { mountWorld } from './pages/world.js';
 import { mountTopics, mountWorlds } from './pages/catalog.js';
+import { mountAlgorithms } from './pages/algorithms.js';
+import { ALGORITHM_TOPICS } from './topics/algorithms/catalog.js';
 import { SUBJECTS } from './topics/index.js';
 import { getLang, setLang } from './core/i18n.js';
 import { closeKeypad } from './ui/keypad.js';
@@ -25,16 +27,15 @@ async function route() {
   closeKeypad();
   const [path, query] = location.hash.slice(1).split('?');
   let [page, id, step] = path.split('/');
-  if (SUBJECTS.some(sub => sub.id === page)) { id = page; page = 'topics'; history.replaceState(null, '', `#topics/${id}`); }
-  if (page === 'worlds' && id === 'algorithms') {
-    page = 'topics'; history.replaceState(null, '', '#topics/algorithms');
-  }
+  // Algorithms grew into a section of their own; old catalog links land there.
+  if (id === 'algorithms' && (page === 'topics' || page === 'worlds')) { page = 'algorithms'; id = undefined; history.replaceState(null, '', '#algorithms'); }
+  if (page !== 'algorithms' && SUBJECTS.some(sub => sub.id === page)) { id = page; page = 'topics'; history.replaceState(null, '', `#topics/${id}`); }
   if (page === 'world' && id === 'binary-search') {
     page = 'topic'; step = String(Math.max(0, Math.min(2, parseInt(step, 10) || 0)) + 1);
     history.replaceState(null, '', `#topic/${id}/${step}`);
   }
   document.body.dataset.page = page || 'home';
-  const nav = { world: 'worlds', topic: 'topics' }[page] || page || 'home';
+  const nav = page === 'topic' && ALGORITHM_TOPICS.some(m => m.id === id) ? 'algorithms' : { world: 'worlds', topic: 'topics' }[page] || page || 'home';
   document.querySelectorAll('[data-nav]').forEach(a => a.classList.toggle('active', a.dataset.nav === nav));
   window.scrollTo(0, 0);
 
@@ -42,6 +43,7 @@ async function route() {
   if (page === 'lab') c = mountLab(app, new URLSearchParams(query || ''));
   else if (page === 'topic') c = await mountTopic(app, id, (parseInt(step, 10) || 1) - 1, { signal });
   else if (page === 'world') c = await mountWorld(app, id, parseInt(step, 10) || 0, { signal });
+  else if (page === 'algorithms') c = mountAlgorithms(app);
   else if (page === 'topics') c = mountTopics(app, id);
   else if (page === 'worlds') c = mountWorlds(app, id);
   else c = mountHome(app);

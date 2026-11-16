@@ -1,6 +1,6 @@
 const L = (ru, en) => ({ ru, en });
 export const ALGORITHMS_SUBJECT = {
-  id: 'algorithms', path: true, title: L('Алгоритмы и структуры данных', 'Algorithms and data structures'),
+  id: 'algorithms', path: true, href: '#algorithms', title: L('Алгоритмы и структуры данных', 'Algorithms and data structures'),
   summary: L('Программа как проверяемое рассуждение: эксперимент, инвариант и контрпример.', 'A program as an argument you can test: experiment, invariant, and counterexample.'),
 };
 // Modules of one route, in order. Each lesson: prediction → trace → why → Python → transfer → cheat sheet.

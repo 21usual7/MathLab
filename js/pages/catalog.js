@@ -5,7 +5,7 @@
 
 import { t } from '../core/i18n.js';
 import { SUBJECTS, TRACKS, CATALOG, topicMeta } from '../topics/index.js';
-import { algorithmProgress, LESSON_SHAPE } from '../topics/algorithms/catalog.js';
+import { ALGORITHM_TOPICS } from '../topics/algorithms/catalog.js';
 import { COLLECTIONS, WORLDS, ready } from '../worlds/index.js';
 import { ART } from '../worlds/art.js';
 import { solvedIn } from './world.js';
@@ -58,43 +58,37 @@ const chips = (base, groups, active) => `
     ${groups.map(g => `<a class="chip${g.id === active ? ' active' : ''}" href="#${base}/${g.id}">${t(g.title)}</a>`).join('')}
   </nav>`;
 
-// A route subject: numbered modules in order, cards with what each lesson is about.
-const pathCard = m => {
-  const done = algorithmProgress(m.id);
-  return `<a class="node ready path-card" href="#topic/${m.id}">
-    <span class="node-kicker">${t(m.kicker)}</span><span class="node-title">${t(m.title)}</span>
-    <span class="node-summary">${t(m.summary)}</span><span class="node-meta">${m.minutes} min${done ? ` · ✓ ${done}` : ''}</span></a>`;
-};
-const path = (sub, tracks) => `
-  <p class="path-lead">${t(sub.summary)}</p>
-  <ol class="path-shape">${LESSON_SHAPE.map(s => `<li>${t(s)}</li>`).join('')}</ol>
-  <ol class="path">${tracks.map((tr, i) => `
-    <li class="path-module"><span class="path-num">${i + 1}</span>
-      <div class="path-body"><h3>${t(tr.title)}</h3><p>${t(tr.summary)}</p>
-        <div class="path-cards">${CATALOG.filter(m => m.track === tr.id).map(pathCard).join('')}</div></div></li>`).join('')}
-  </ol>`;
-
 const head = (title, lead) => `<header class="page-head"><h1>${title}</h1><p class="lead">${lead}</p></header>`;
 
+// Sections with their own page (algorithms) appear as one banner, not as a shelf of cards.
+const sectionBanner = sub => `
+  <a class="section-banner" href="${sub.href}">
+    <span class="eyebrow">${t({ en: 'Its own section', ru: 'Отдельный раздел' })}</span>
+    <span class="section-banner-title">${t(sub.title)} →</span>
+    <span class="section-banner-text">${t(sub.summary)} ${ALGORITHM_TOPICS.length} ${t({ en: 'lessons with animations and Python in the browser.', ru: 'уроков с анимациями и Python в браузере.' })}</span>
+  </a>`;
+
 export function mountTopics(root, subjectId) {
-  const active = SUBJECTS.some(s => s.id === subjectId) ? subjectId : null;
+  const SECTIONS = SUBJECTS.filter(s => s.href), SUBJECTS_HERE = SUBJECTS.filter(s => !s.href);
+  const active = SUBJECTS_HERE.some(s => s.id === subjectId) ? subjectId : null;
   root.innerHTML = `
     <div class="home catalog">
       ${head(t(L.topics), t(L.topicsLead))}
-      ${chips('topics', SUBJECTS, active)}
-      ${SUBJECTS.filter(s => !active || s.id === active).map(sub => {
+      ${chips('topics', SUBJECTS_HERE, active)}
+      ${active ? '' : SECTIONS.map(sectionBanner).join('')}
+      ${SUBJECTS_HERE.filter(s => !active || s.id === active).map(sub => {
         const tracks = TRACKS.filter(tr => tr.subject === sub.id);
         const n = CATALOG.filter(m => tracks.some(tr => tr.id === m.track) && m.status === 'ready').length;
         return `
         <section class="subject" id="${sub.id}">
           <div class="subject-head"><h3>${t(sub.title)}</h3><span>${n} ${t(L.ready)}</span></div>
-          ${sub.path ? path(sub, tracks) : `<div class="tracks" style="--cols: ${tracks.length}">
+          <div class="tracks" style="--cols: ${tracks.length}">
             ${tracks.map(tr => `
               <div class="track">
                 <h3>${t(tr.title)}</h3>
                 ${CATALOG.filter(m => m.track === tr.id).map(topicNode).join('')}
               </div>`).join('')}
-          </div>`}
+          </div>
         </section>`;
       }).join('')}
     </div>`;

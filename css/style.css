@@ -955,3 +955,80 @@ body.keypad-open { padding-bottom: var(--kb, 0px); }
 @keyframes xor-lens-in { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
 @media (prefers-reduced-motion:reduce) { .xor-film-lens { animation: none; } }
 .xor-film-root.lens-open .xor-film-footer { opacity: .4; }
+
+/* ---------- Algorithms section (#algorithms) ---------- */
+.algo-hero { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; padding: 64px 0 40px; }
+.algo-hero h1 { font-size: clamp(36px, 4.6vw, 58px); line-height: 1.06; letter-spacing: -0.02em; }
+.algo-hero h1 em { color: var(--teal); font-style: italic; }
+.algo-hero .lead { margin: 22px 0 26px; color: var(--soft); font-size: 18px; line-height: 1.6; max-width: 560px; }
+.algo-stats { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; padding: 0; margin: 0 0 26px; }
+.algo-stats li { display: flex; flex-direction: column; gap: 2px; padding: 10px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--muted); font-size: 13px; }
+.algo-stats b { font: 600 22px var(--mono); color: var(--text); }
+.algo-progress { height: 6px; max-width: 420px; margin-top: 26px; border-radius: 3px; background: var(--raised); overflow: hidden; }
+.algo-progress span { display: block; height: 100%; background: linear-gradient(90deg, var(--teal), var(--blue), var(--purple)); border-radius: 3px; }
+.algo-progress-label { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+.algo-hero-visual { margin: 0; padding: 28px 24px 18px; border: 1px solid var(--line); border-radius: 20px; background: radial-gradient(120% 90% at 50% 0%, rgba(92, 208, 179, 0.10), transparent 60%), var(--stage); }
+.algo-hero-visual svg { display: block; width: 100%; height: auto; }
+.algo-hero-visual .sort-band { fill: var(--yellow); transition: opacity .3s; }
+.algo-hero-visual figcaption { margin-top: 10px; font-size: 13px; color: var(--muted); text-align: center; }
+.algo-block { padding: 36px 0 20px; scroll-margin-top: 70px; }
+.metro-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: -8px 0 18px; }
+.metro-legend a { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--soft); }
+.metro-legend a:hover { color: var(--text); text-decoration: none; }
+.metro-legend span { width: 22px; height: 5px; border-radius: 3px; background: var(--mc); }
+.metro { position: relative; width: 100%; border: 1px solid var(--line); border-radius: 20px; background:
+  radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0) 0 0 / 22px 22px, var(--stage); }
+.metro svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.metro-line { fill: none; stroke-width: 9; stroke-linecap: round; }
+.metro-train { fill: #fff; filter: drop-shadow(0 0 6px #fff); }
+.metro-station { position: absolute; transform: translate(-50%, -12px); display: flex; flex-direction: column; align-items: center; gap: 8px; width: 150px; text-align: center; color: var(--text); }
+.metro-station:hover { text-decoration: none; }
+.metro-dot { width: 24px; height: 24px; flex: none; border-radius: 50%; background: var(--stage); border: 5px solid var(--mc); box-sizing: border-box; transition: transform .15s; }
+.metro-station.done .metro-dot { background: var(--mc); }
+.metro-station:hover .metro-dot, .metro-station:focus-visible .metro-dot { transform: scale(1.3); }
+.metro-station.next .metro-dot { animation: metro-pulse 1.8s infinite; }
+@keyframes metro-pulse { 0% { box-shadow: 0 0 0 0 var(--mc); } 70%, 100% { box-shadow: 0 0 0 14px transparent; } }
+.metro-name { font-size: 13px; line-height: 1.3; padding: 3px 8px; border-radius: 8px; background: rgba(13, 17, 23, 0.82); }
+.metro-name small { display: block; font: 11px var(--mono); color: var(--mc); }
+.metro-station:hover .metro-name { background: var(--raised); }
+.algo-shape { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; list-style: none; padding: 0; margin: 0; counter-reset: none; }
+.algo-shape li { position: relative; padding: 18px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+.algo-shape li:not(:last-child)::after { content: '→'; position: absolute; right: -11px; top: 22px; color: var(--faint); font-size: 14px; z-index: 1; }
+.algo-shape span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; font: 600 14px var(--mono); color: var(--teal); background: rgba(92, 208, 179, 0.1); border: 1px solid rgba(92, 208, 179, 0.4); }
+.algo-shape b { display: block; margin: 12px 0 6px; font: 500 17px var(--serif); }
+.algo-shape p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.algo-page .path-module { --mc: var(--teal); }
+.algo-page .path-num { color: var(--mc); border-color: var(--mc); background: color-mix(in srgb, var(--mc) 12%, transparent); }
+.algo-page .path-module:not(:last-child)::before { background: linear-gradient(var(--mc), var(--line-soft)); }
+.algo-page .path-card { border-color: color-mix(in srgb, var(--mc) 45%, transparent); }
+.algo-page .path-card:hover { border-color: var(--mc); }
+.algo-page .node-kicker { color: var(--mc); }
+.algo-page .node-meta { display: flex; align-items: center; justify-content: space-between; color: var(--muted); }
+.card-progress { display: inline-flex; gap: 4px; }
+.card-progress i { width: 14px; height: 4px; border-radius: 2px; background: var(--line); }
+.card-progress i.on { background: var(--mc); }
+.algo-cheat { width: 100%; border-collapse: collapse; font-size: 15px; }
+.algo-cheat th { text-align: left; font: 600 12px var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); padding: 8px 12px; }
+.algo-cheat td { padding: 11px 12px; border-top: 1px solid var(--line-soft); }
+.algo-cheat td:first-child { border-left: 3px solid var(--mc); white-space: nowrap; }
+.algo-cheat td:last-child { font: 14px var(--mono); color: var(--soft); }
+.section-banner { display: grid; gap: 6px; margin: 0 0 44px; padding: 24px 28px; border-radius: 18px; color: var(--text); border: 1px solid rgba(92, 208, 179, 0.45);
+  background: linear-gradient(110deg, rgba(92, 208, 179, 0.14), rgba(88, 196, 221, 0.06) 45%, rgba(182, 157, 248, 0.12)), var(--panel); transition: transform .15s, border-color .15s; }
+.section-banner:hover { text-decoration: none; transform: translateY(-2px); border-color: var(--teal); }
+.section-banner .eyebrow { margin: 0; color: var(--teal); }
+.section-banner-title { font: 500 28px var(--serif); }
+.section-banner-text { color: var(--soft); line-height: 1.5; max-width: 760px; }
+@media (max-width: 1100px) { .algo-shape { grid-template-columns: repeat(3, minmax(0, 1fr)); } .algo-shape li::after { display: none; } }
+@media (max-width: 900px) {
+  .algo-hero { grid-template-columns: 1fr; gap: 28px; padding: 36px 0 24px; }
+  /* The serpentine needs width; on narrow screens the module list below is the route. */
+  .metro { display: none; }
+  .metro-legend { margin: 0; }
+}
+@media (max-width: 560px) {
+  .algo-shape { grid-template-columns: 1fr 1fr; }
+  .algo-stats li { padding: 8px 12px; } .algo-stats b { font-size: 18px; }
+  .algo-cheat { font-size: 14px; } .algo-cheat td:first-child { white-space: normal; }
+  .site-nav a { padding: 6px 8px; font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .metro-station.next .metro-dot { animation: none; box-shadow: 0 0 0 4px color-mix(in srgb, var(--mc) 35%, transparent); } }

@@ -71,7 +71,7 @@ export function mountHome(root) {
         <div class="featured-topics">${FEATURED_TOPICS.map(id => topicNode(topicMeta(id))).join('')}</div>
       </section>
 
-      <footer class="foot">MathLab · <a href="#topics">Topics</a> · <a href="#worlds">Worlds</a> · <a href="#lab">Lab</a> · <a href="https://github.com/21usual7/MathLab">GitHub</a></footer>
+      <footer class="foot">MathLab · <a href="#topics">Topics</a> · <a href="#algorithms">Algorithms</a> · <a href="#worlds">Worlds</a> · <a href="#lab">Lab</a> · <a href="https://github.com/21usual7/MathLab">GitHub</a></footer>
     </div>`;
 
   // A breathing ripple: z = 2 cos(1.4 r − p) · e^(−r²/10)
