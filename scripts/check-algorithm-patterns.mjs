@@ -8,7 +8,7 @@ await algorithmBrowser(async (browser, base) => {
   const go = async (id, step) => { await page.goto(`${base}/#topic/${id}/${step}`); await page.waitForSelector('.pattern-lesson, .algorithm-lab'); };
   const button = name => page.getByRole('button', { name, exact: true });
   const run = async code => { await page.locator('.python-editor').fill(code); await button('▶ Запустить проверки').click(); await page.waitForFunction(() => !document.querySelector('.python-workbench')?.hasAttribute('aria-busy'), null, { timeout: 60000 }); };
-  await page.goto(`${base}/#topics/algorithms`); await page.waitForSelector('.subject'); assert.equal(await page.locator('.node.ready').count(), 5);
+  await page.goto(`${base}/#topics/algorithms`); await page.waitForSelector('.subject'); assert.equal(await page.locator('.node.ready').count(), 10);
   for (const [id, lesson] of Object.entries(LESSONS)) {
     await go(id, 1); const choice = page.locator('.pattern-choices .btn'); await choice.nth((lesson.prediction.correct + 1) % lesson.prediction.options.length).click();
     assert.equal(await page.locator('.dot.solved').count(), 0); await choice.nth(lesson.prediction.correct).click(); assert.equal(await page.locator('.dot.solved').count(), 1);

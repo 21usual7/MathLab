@@ -5,6 +5,7 @@
 
 import { t } from '../core/i18n.js';
 import { SUBJECTS, TRACKS, CATALOG, topicMeta } from '../topics/index.js';
+import { algorithmProgress, LESSON_SHAPE } from '../topics/algorithms/catalog.js';
 import { COLLECTIONS, WORLDS, ready } from '../worlds/index.js';
 import { ART } from '../worlds/art.js';
 import { solvedIn } from './world.js';
@@ -57,6 +58,22 @@ const chips = (base, groups, active) => `
     ${groups.map(g => `<a class="chip${g.id === active ? ' active' : ''}" href="#${base}/${g.id}">${t(g.title)}</a>`).join('')}
   </nav>`;
 
+// A route subject: numbered modules in order, cards with what each lesson is about.
+const pathCard = m => {
+  const done = algorithmProgress(m.id);
+  return `<a class="node ready path-card" href="#topic/${m.id}">
+    <span class="node-kicker">${t(m.kicker)}</span><span class="node-title">${t(m.title)}</span>
+    <span class="node-summary">${t(m.summary)}</span><span class="node-meta">${m.minutes} min${done ? ` · ✓ ${done}` : ''}</span></a>`;
+};
+const path = (sub, tracks) => `
+  <p class="path-lead">${t(sub.summary)}</p>
+  <ol class="path-shape">${LESSON_SHAPE.map(s => `<li>${t(s)}</li>`).join('')}</ol>
+  <ol class="path">${tracks.map((tr, i) => `
+    <li class="path-module"><span class="path-num">${i + 1}</span>
+      <div class="path-body"><h3>${t(tr.title)}</h3><p>${t(tr.summary)}</p>
+        <div class="path-cards">${CATALOG.filter(m => m.track === tr.id).map(pathCard).join('')}</div></div></li>`).join('')}
+  </ol>`;
+
 const head = (title, lead) => `<header class="page-head"><h1>${title}</h1><p class="lead">${lead}</p></header>`;
 
 export function mountTopics(root, subjectId) {
@@ -71,13 +88,13 @@ export function mountTopics(root, subjectId) {
         return `
         <section class="subject" id="${sub.id}">
           <div class="subject-head"><h3>${t(sub.title)}</h3><span>${n} ${t(L.ready)}</span></div>
-          <div class="tracks" style="--cols: ${tracks.length}">
+          ${sub.path ? path(sub, tracks) : `<div class="tracks" style="--cols: ${tracks.length}">
             ${tracks.map(tr => `
               <div class="track">
                 <h3>${t(tr.title)}</h3>
                 ${CATALOG.filter(m => m.track === tr.id).map(topicNode).join('')}
               </div>`).join('')}
-          </div>
+          </div>`}
         </section>`;
       }).join('')}
     </div>`;

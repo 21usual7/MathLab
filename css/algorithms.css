@@ -120,3 +120,29 @@
   .algorithm-topic:not(.algorithm-film-mode) > .topic-stage { min-height: 0; }
   .algorithm-topic:not(.algorithm-film-mode) .stage-host { overflow: visible; flex: none; }
 }
+
+/* Lesson layout: trace beside its code on wide screens, cards instead of text walls. */
+.pattern-trace:focus { outline: none; }
+@media(min-width: 1280px) { .pattern-trace { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 28px; align-items: start; } .pattern-side { position: sticky; top: 0; } }
+.pattern-cell.dim { opacity: .35; }
+.pattern-hook { border: 1px solid #2b4a42; background: linear-gradient(135deg, #10201c, #0c141e); border-radius: 12px; padding: 16px 20px; margin-bottom: 8px; }
+.pattern-hook p:last-child { font-size: 17px; line-height: 1.6; margin: 6px 0 0; }
+.pattern-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin: 16px 0; }
+.pattern-card { border: 1px solid #263445; background: #0e1621; border-radius: 12px; padding: 16px 18px; }
+.pattern-card h3 { font-size: 17px; margin: 0 0 8px; }
+.pattern-card p, .pattern-card li { line-height: 1.6; margin: 0; }
+.pattern-card ul { margin: 0; padding-left: 18px; color: #c1cfde; display: grid; gap: 6px; }
+.pattern-card.idea { border-top: 3px solid #65b7fa; }
+.pattern-card.proof { border-top: 3px solid #85d5b1; }
+.pattern-card.experiment { border-top: 3px solid #f4ce73; margin-bottom: 8px; }
+.pattern-cost { display: flex; flex-direction: column; gap: 6px; border-left: 3px solid #85d5b1; background: #101f20; padding: 12px 16px; margin: 12px 0; }
+.pattern-cost strong { font: 17px/1.5 ui-monospace, monospace; color: #85d5b1; }
+.algorithm-topic a.btn { display: inline-flex; align-items: center; text-decoration: none; }
+.graph-plot { display: block; width: 100%; max-width: 520px; margin: 10px 0; }
+.graph-plot line { stroke: #3a5067; stroke-width: 2; }
+.graph-plot line.hot { stroke: #f4ce73; stroke-width: 3; }
+.graph-plot circle { stroke-width: 2; }
+.graph-plot circle.unknown { fill: #111b28; stroke: #3a5067; }
+.graph-plot circle.known { fill: #11231e; stroke: #85d5b1; }
+.graph-plot circle.current { fill: #28251c; stroke: #f4ce73; }
+.graph-plot text { fill: #edf3fa; font: 13px ui-monospace, monospace; }

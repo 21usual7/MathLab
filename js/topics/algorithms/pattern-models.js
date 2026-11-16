@@ -52,3 +52,70 @@ export const pairOK = (args, result) => {
   if (result === null) return !a.some((v, i) => a.slice(i + 1).some(w => v + w === target));
   return Array.isArray(result) && result.length === 2 && result.every(i => Number.isInteger(i) && i >= 0 && i < a.length) && result[0] !== result[1] && a[result[0]] + a[result[1]] === target;
 };
+export function dupTrace(a, variant = 'correct') {
+  const frames = []; let k = 0;
+  for (let i = 0; i < a.length; i++) for (let j = variant === 'self' ? 0 : i + 1; j < a.length; j++) {
+    k++; const same = a[i] === a[j], memory = [`i=${i}`, `j=${j}`, `k=${k}`];
+    frames.push({ values: a, marks: [i, j], memory, line: 3, formula: `a[${i}] = ${a[i]} ${same ? '=' : '≠'} ${a[j]} = a[${j}]`, note: L('Одно сравнение — одна пара позиций. Счётчик k показывает, сколько работы уже сделано.', 'One comparison checks one pair of positions. The counter k shows how much work is done.') });
+    if (same) { frames.push({ values: a, marks: [i, j], memory, line: 4, formula: 'return True', note: i === j ? L('Ошибка: j = i, элемент сравнили с самим собой. Повтор «найден» в массиве без повторов.', 'Bug: j = i, an element was compared with itself. A duplicate is "found" where none exists.') : L('Две разные позиции хранят одно значение — повтор найден.', 'Two distinct positions hold one value: a duplicate.') }); return { frames, result: true, comparisons: k }; }
+  }
+  const n = a.length;
+  frames.push({ values: a, marks: [], memory: [`k=${k}`], line: 5, formula: `k = n(n − 1)/2 = ${n}·${n - 1}/2 = ${n * (n - 1) / 2}`, note: L('Каждая пара i < j проверена ровно один раз. Удвоение n почти учетверяет работу: это O(n²).', 'Every pair i < j was checked exactly once. Doubling n nearly quadruples the work: O(n²).') });
+  return { frames, result: false, comparisons: k };
+}
+export function windowTrace(a, k, variant = 'correct') {
+  const span = r => Array.from({ length: k }, (_, j) => r - k + 1 + j);
+  let total = a.slice(0, k).reduce((s, v) => s + v, 0), best = total;
+  const frames = [{ values: a, marks: span(k - 1), memory: [`total=${total}`, `best=${best}`], line: 1, formula: `${a.slice(0, k).map(v => v < 0 ? `(${v})` : v).join(' + ')} = ${total}`, note: L('Первое окно складываем целиком — единственный раз.', 'Add up the first window in full — the only time we do so.') }];
+  for (let r = k; r < a.length; r++) {
+    const old = total; total += variant === 'no-subtract' ? a[r] : a[r] - a[r - k];
+    frames.push({ values: a, marks: span(r), memory: [`total=${total}`, `best=${best}`], line: 3, formula: variant === 'no-subtract' ? `${old} + (${a[r]}) = ${total}` : `${old} + (${a[r]}) − (${a[r - k]}) = ${total}`, note: variant === 'no-subtract' ? L('Ошибка: окно сдвинулось, а ушедший элемент остался в сумме. total больше не равен сумме k подсвеченных чисел.', 'Bug: the window moved but the leaving element stayed in the sum. total no longer equals the k highlighted values.') : L('Соседние окна делят k − 1 общих чисел. Меняются только вошедшее и ушедшее.', 'Neighbouring windows share k − 1 values. Only the entering and leaving values change.') });
+    const prev = best; best = Math.max(best, total);
+    frames.push({ values: a, marks: span(r), memory: [`total=${total}`, `best=${best}`], line: 4, formula: `best = max(${prev}, ${total}) = ${best}`, note: L('best — лучшая сумма среди уже просмотренных окон.', 'best is the largest sum among the windows seen so far.') });
+  }
+  frames.push({ values: a, marks: [], memory: [`best=${best}`], line: 5, formula: `return ${best}`, note: L('n − k + 1 окон, каждое за O(1): весь проход O(n).', 'n − k + 1 windows, each in O(1): the whole pass is O(n).') });
+  return { frames, result: best };
+}
+export function mergeTrace(a, b, variant = 'correct') {
+  const values = [...a, ...b], labels = [...a.map((_, k) => `a${k}`), ...b.map((_, k) => `b${k}`)], out = [], frames = [];
+  let i = 0, j = 0;
+  const snap = (line, formula, note) => frames.push({ values, labels, marks: [i < a.length ? i : -1, j < b.length ? a.length + j : -1].filter(x => x >= 0), dim: [...Array(i).keys(), ...Array.from({ length: j }, (_, k) => a.length + k)], memory: [...out], line, formula, note });
+  while (i < a.length && j < b.length) {
+    const left = a[i] <= b[j], x = left ? a[i] : b[j];
+    snap(2, `a[${i}] = ${a[i]} ${left ? '≤' : '>'} ${b[j]} = b[${j}]`, L('Сравниваем только две «верхушки». Меньшая из них меньше всего, что осталось.', 'Compare only the two heads. The smaller one is smaller than everything left.'));
+    out.push(x); if (left) i++; else j++;
+    snap(left ? 3 : 5, `out ← ${x}`, L('Взятый элемент больше не участвует. out остаётся отсортированным.', 'The taken element is done. out stays sorted.'));
+  }
+  if (variant !== 'no-tail') out.push(...a.slice(i), ...b.slice(j));
+  const tail = variant === 'no-tail' ? [] : [...a.slice(i), ...b.slice(j)]; i = a.length; j = b.length;
+  snap(6, variant === 'no-tail' ? `out: ${out.length} из ${values.length}` : `out += [${tail.join(', ')}]`, variant === 'no-tail' ? L('Ошибка: одна стопка кончилась, а хвост другой забыт. Элементы потеряны.', 'Bug: one pile ran out and the other tail was forgotten. Elements are lost.') : L('Одна стопка пуста; хвост другой уже отсортирован и не меньше out[-1]. Дописываем целиком.', 'One pile is empty; the other tail is sorted and no smaller than out[-1]. Append it whole.'));
+  return { frames, result: out };
+}
+export function bfsTrace(graph, start, variant = 'correct') {
+  const name = v => String.fromCharCode(65 + v), dist = graph.map(() => -1), queue = [start], frames = [];
+  const shown = () => dist.map(d => d < 0 ? '?' : d), labels = graph.map((_, v) => name(v));
+  dist[start] = 0;
+  frames.push({ values: shown(), labels, marks: [start], memory: queue.map(name), line: 2, formula: `dist[${name(start)}] = 0`, note: L('Старт на расстоянии 0. Очередь — кто ждёт обработки.', 'The start is at distance 0. The queue holds what awaits processing.') });
+  while (queue.length) {
+    const v = variant === 'stack' ? queue.pop() : queue.shift();
+    frames.push({ values: shown(), labels, marks: [v], memory: queue.map(name), line: 4, formula: `v = ${name(v)}, dist = ${dist[v]}`, note: variant === 'stack' ? L('Ошибка: берём последнего пришедшего. Глубокая ветка обгоняет близкие вершины.', 'Bug: we take the latest arrival. A deep branch overtakes nearer vertices.') : L('Из очереди выходит самый ранний — вершины выходят слоями 0, 1, 2…', 'The earliest arrival leaves first — vertices leave in layers 0, 1, 2…') });
+    for (const u of graph[v]) if (dist[u] < 0) {
+      dist[u] = dist[v] + 1; queue.push(u);
+      frames.push({ values: shown(), labels, marks: [v, u], memory: queue.map(name), line: 7, formula: `dist[${name(u)}] = dist[${name(v)}] + 1 = ${dist[u]}`, note: L('Первое открытие фиксирует расстояние. Позже вершину не трогаем.', 'The first discovery fixes the distance. Later visits leave it alone.') });
+    }
+  }
+  frames.push({ values: shown(), labels, marks: [], memory: [], line: 9, formula: `dist = [${dist.join(', ')}]`, note: L('Каждая вершина и каждое ребро обработаны один раз: O(V + E).', 'Every vertex and edge is handled once: O(V + E).') });
+  return { frames, result: dist };
+}
+export function stairsTrace(n, variant = 'correct') {
+  const ways = Array(n + 1).fill(0), shown = k => ways.map((v, j) => j <= k ? v : '?'), frames = [];
+  ways[0] = variant === 'base-zero' ? 0 : 1;
+  frames.push({ values: shown(0), marks: [0], memory: [], line: 1, formula: `ways[0] = ${ways[0]}`, note: variant === 'base-zero' ? L('Ошибка: «0 способов стоять на месте». Неверная база испортит всю таблицу.', 'Bug: "0 ways to stay put". A wrong base spoils the whole table.') : L('Стоять на месте — один способ: пустая последовательность шагов.', 'Staying put is one way: the empty sequence of steps.') });
+  if (n >= 1) { ways[1] = 1; frames.push({ values: shown(1), marks: [1], memory: [], line: 2, formula: 'ways[1] = 1', note: L('На первую ступень — только шаг 1.', 'The first stair: only a step of 1.') }); }
+  for (let i = 2; i <= n; i++) {
+    ways[i] = ways[i - 1] + ways[i - 2];
+    frames.push({ values: shown(i), marks: [i - 2, i - 1, i], memory: [`+1: ${ways[i - 1]}`, `+2: ${ways[i - 2]}`], line: 4, formula: `ways[${i}] = ${ways[i - 1]} + ${ways[i - 2]} = ${ways[i]}`, note: L('Последний шаг — 1 или 2 ступени. Это два непересекающихся случая, их способы складываются.', 'The last step is 1 or 2 stairs. The cases are disjoint, so their counts add.') });
+  }
+  frames.push({ values: shown(n), marks: [n], memory: [], line: 5, formula: `return ${ways[n]}`, note: L('Каждая клетка посчитана один раз из готовых: O(n) вместо экспоненты.', 'Each cell is computed once from finished ones: O(n) instead of exponential.') });
+  return { frames, result: ways[n] };
+}

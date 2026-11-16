@@ -1,4 +1,4 @@
-import { ALGORITHMS_SUBJECT, ALGORITHM_TOPICS, loadAlgorithmTopic } from './algorithms/catalog.js';
+import { ALGORITHMS_SUBJECT, ALGORITHM_TRACKS, ALGORITHM_TOPICS, loadAlgorithmTopic } from './algorithms/catalog.js';
 
 // The map: tracks and topics. A topic lists what it needs (prereqs) and where it leads (next),
 // so a student can step back to the real cause of a gap. Planned topics are shown on the map too.
@@ -15,8 +15,7 @@ export const SUBJECTS = [
 ];
 
 export const TRACKS = [
-  { id: 'patterns', subject: 'algorithms', title: { en: 'Start here · arrays, pairs, memory', ru: 'Начните здесь · массивы, пары, память' } },
-  { id: 'search', subject: 'algorithms', title: { en: 'Search and invariants', ru: 'Поиск и инварианты' } },
+  ...ALGORITHM_TRACKS,
   { id: 'b-geom', subject: 'basics', title: { en: 'Geometry 7–9', ru: 'Геометрия 7–9' } },
   { id: 'b-alg', subject: 'basics', title: { en: 'Algebra 7–9', ru: 'Алгебра 7–9' } },
   { id: 'functions', subject: 'algebra', title: { en: 'Functions', ru: 'Функции' } },

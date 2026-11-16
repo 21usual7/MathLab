@@ -206,6 +206,26 @@ button { font: inherit; color: inherit; }
 .node.ready .node-meta { color: var(--blue); }
 .node.planned { border-style: dashed; background: transparent; }
 .node.planned .node-title { color: var(--muted); }
+.path-lead { color: var(--soft); font-size: 16px; line-height: 1.6; max-width: 760px; margin: 0 0 14px; }
+.path-shape { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0 0 30px; counter-reset: shape; }
+.path-shape li { counter-increment: shape; font-size: 13px; color: var(--muted); padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px; }
+.path-shape li::before { content: counter(shape) ' · '; color: var(--teal); font-family: var(--mono); }
+.path { list-style: none; padding: 0; margin: 0; }
+.path-module { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 18px; position: relative; padding-bottom: 30px; }
+.path-module:not(:last-child)::before { content: ''; position: absolute; left: 21px; top: 46px; bottom: 6px; width: 2px; background: linear-gradient(var(--teal), var(--line-soft)); opacity: 0.5; }
+.path-num { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font: 600 18px var(--mono); color: var(--teal); border: 1px solid rgba(92, 208, 179, 0.5); background: rgba(92, 208, 179, 0.08); }
+.path-body h3 { font: 500 22px var(--serif); margin: 8px 0 4px; }
+.path-body > p { color: var(--muted); margin: 0 0 14px; line-height: 1.5; }
+.path-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.path-card { margin: 0; gap: 6px; }
+.node-kicker { font: 12px var(--mono); color: var(--teal); }
+.node-summary { font-size: 14px; color: var(--soft); line-height: 1.5; flex: 1; }
+@media (max-width: 560px) {
+  .path-module { grid-template-columns: 34px minmax(0, 1fr); gap: 12px; }
+  .path-num { width: 34px; height: 34px; font-size: 15px; }
+  .path-module:not(:last-child)::before { left: 16px; top: 38px; }
+  .path-body h3 { margin-top: 4px; font-size: 19px; }
+}
 .foot { padding: 40px 0 48px; color: var(--faint); font-size: 14px; border-top: 1px solid var(--line-soft); margin-top: 40px; }
 
 /* ---------- Topic: one step at a time, the panel on the left, the scene on the right ---------- */
